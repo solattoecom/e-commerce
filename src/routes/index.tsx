@@ -234,9 +234,9 @@ function Index() {
           </Button>
           <a href="#inicio" className="text-xl font-bold uppercase tracking-[0.24em]">Solatto</a>
           <nav className={`${mobileMenu ? "flex" : "hidden"} absolute left-0 top-[72px] w-full flex-col gap-5 border-b border-border bg-background p-6 md:static md:flex md:w-auto md:flex-row md:border-0 md:p-0`}>
-            <a href="#categorias" className="text-sm hover:text-primary">Calçados</a>
-            <a href="#novidades" className="text-sm hover:text-primary">Novidades</a>
-            <a href="#faq" className="text-sm hover:text-primary">Ajuda</a>
+            <a href="#categorias" className="text-sm hover:text-foreground/60">Calçados</a>
+            <a href="#novidades" className="text-sm hover:text-foreground/60">Novidades</a>
+            <a href="#faq" className="text-sm hover:text-foreground/60">Ajuda</a>
           </nav>
           <div className="ml-auto hidden max-w-xs flex-1 items-center rounded-full border border-border px-4 lg:flex">
             <Input aria-label="Buscar produtos" placeholder="O que você procura?" className="h-9 border-0 p-0 shadow-none focus-visible:ring-0" />
@@ -250,7 +250,7 @@ function Index() {
       <main id="inicio">
         <section className="relative min-h-[620px] overflow-hidden bg-primary text-primary-foreground">
           <img src={heroImage} alt="Sapato social Solatto em couro preto" width={1600} height={900} className="absolute inset-0 h-full w-full object-cover object-[67%_center]" />
-          <div className="absolute inset-0 bg-gradient-to-r from-primary via-primary/70 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/80 via-primary/25 to-transparent" />
           <div className="relative mx-auto flex min-h-[620px] w-full max-w-[1180px] items-center px-5 py-20">
             <div className="max-w-lg animate-fade-in">
               <p className="mb-4 text-xs font-bold uppercase tracking-[0.2em]">Nova coleção · Movimento 26</p>
@@ -264,7 +264,7 @@ function Index() {
         <section id="categorias" className="py-20">
           <div className="mx-auto w-full max-w-[1180px] px-5">
             <div className="mb-10 flex items-end justify-between gap-5">
-              <div><p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-primary">Escolha o seu estilo</p><h2 className="text-3xl font-semibold sm:text-4xl">Feito para a vida em movimento.</h2></div>
+              <div><p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-foreground/60">Escolha o seu estilo</p><h2 className="text-3xl font-semibold sm:text-4xl">Feito para a vida em movimento.</h2></div>
               <a href="#novidades" className="hidden border-b border-foreground pb-1 text-sm md:block">Ver todos</a>
             </div>
             <div className="grid gap-4 md:grid-cols-3">
@@ -276,7 +276,7 @@ function Index() {
         </section>
 
         <section id="novidades" className="bg-muted py-16 text-center">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-primary">Solatto essencial</p>
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-foreground/60">Solatto essencial</p>
           <h2 className="mx-auto mt-4 max-w-2xl px-5 text-3xl font-medium leading-tight sm:text-5xl">Feito no Brasil, pensado para acompanhar você.</h2>
         </section>
 
