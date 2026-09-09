@@ -9,6 +9,7 @@ import {
   Truck,
 } from "lucide-react";
 
+import logoMark from "@/assets/solatto-logo-mark.png.asset.json";
 import social1 from "@/assets/social-1.jpg.asset.json";
 import social2 from "@/assets/social-2.jpg.asset.json";
 import social3 from "@/assets/social-3.jpg.asset.json";
