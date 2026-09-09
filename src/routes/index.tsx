@@ -66,12 +66,12 @@ const categories = [
   {
     name: "Oxford",
     description: "Clássico preto com cadarço",
-    images: [oxford1.url, oxford2.url, oxford3.url],
+    images: [infantil1.url, infantil2.url, infantil3.url],
   },
   {
     name: "Infantil",
     description: "Conforto e elegância para os pequenos",
-    images: [infantil1.url, infantil2.url, infantil3.url],
+    images: [oxford1.url, oxford2.url, oxford3.url],
   },
 ];
 
