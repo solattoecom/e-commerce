@@ -452,7 +452,7 @@ function Index() {
                   <a
                     key={label}
                     href={href}
-                    className="hero-readex rounded-full px-5 py-2 text-sm text-neutral-300 transition-colors hover:text-white"
+                    className="hero-readex cursor-pointer rounded-full px-5 py-2 text-sm text-neutral-300 transition-colors hover:text-white"
                   >
                     {label}
                   </a>
@@ -463,7 +463,7 @@ function Index() {
                 <button
                   type="button"
                   onClick={() => signOut()}
-                  className="hero-readex rounded-full bg-white px-6 py-3 text-sm font-normal text-black transition-colors hover:bg-neutral-200"
+                  className="hero-readex cursor-pointer rounded-full bg-white px-6 py-3 text-sm font-normal text-black transition-colors hover:bg-neutral-200"
                 >
                   sair
                 </button>
@@ -471,7 +471,7 @@ function Index() {
                 <button
                   type="button"
                   onClick={() => setShowAccess(true)}
-                  className="hero-readex rounded-full bg-white px-6 py-3 text-sm font-normal text-black transition-colors hover:bg-neutral-200"
+                  className="hero-readex cursor-pointer rounded-full bg-white px-6 py-3 text-sm font-normal text-black transition-colors hover:bg-neutral-200"
                 >
                   entrar
                 </button>
