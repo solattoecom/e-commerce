@@ -75,6 +75,128 @@ const categories = [
   },
 ];
 
+const headerLinks: [string, string][] = [
+  ["calçados", "#categorias"],
+  ["novidades", "#novidades"],
+  ["coleções", "#categorias"],
+  ["ajuda", "#faq"],
+];
+
+const headerCategories: [string, string][] = [
+  ["Social", "#categorias"],
+  ["Oxford", "#categorias"],
+  ["Infantil", "#categorias"],
+  ["Lançamentos", "#novidades"],
+  ["Mais vendidos", "#novidades"],
+  ["Promoções", "#novidades"],
+];
+
+function StickyHeader({
+  visible,
+  user,
+  onEnter,
+  onSignOut,
+  busca,
+  onBuscaChange,
+}: {
+  visible: boolean;
+  user: { email?: string } | null;
+  onEnter: () => void;
+  onSignOut: () => void;
+  busca: string;
+  onBuscaChange: (value: string) => void;
+}) {
+  return (
+    <header
+      className={`fixed inset-x-0 top-0 z-40 border-b border-border bg-background/95 backdrop-blur transition-transform duration-300 ${
+        visible ? "translate-y-0" : "-translate-y-full"
+      }`}
+    >
+      <div className="mx-auto flex w-full max-w-[1180px] items-center gap-4 px-5 py-3">
+        <a href="#inicio" className="shrink-0 text-xl font-bold uppercase tracking-[0.22em]">
+          Solatto
+        </a>
+
+        <nav className="hidden items-center gap-5 text-sm lg:flex">
+          {headerLinks.map(([label, href]) => (
+            <a key={label} href={href} className="text-foreground/80 transition-colors hover:text-foreground">
+              {label}
+            </a>
+          ))}
+        </nav>
+
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            document.getElementById("novidades")?.scrollIntoView({ behavior: "smooth" });
+          }}
+          className="ml-auto flex h-11 w-full max-w-[340px] items-center gap-2 rounded-full border border-border bg-background pl-4 pr-1.5"
+        >
+          <input
+            type="search"
+            aria-label="Buscar calçados"
+            placeholder="O que você procura?"
+            value={busca}
+            onChange={(event) => onBuscaChange(event.target.value)}
+            className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+          />
+          <button
+            type="submit"
+            aria-label="Buscar"
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-foreground transition-colors hover:bg-muted"
+          >
+            <Search className="size-4" />
+          </button>
+        </form>
+
+        <div className="flex shrink-0 items-center gap-1">
+          <button
+            type="button"
+            aria-label="Favoritos"
+            className="hidden h-9 w-9 place-items-center rounded-full text-foreground transition-colors hover:bg-muted sm:grid"
+          >
+            <Heart className="size-[18px]" />
+          </button>
+          <button
+            type="button"
+            aria-label="Lojas"
+            className="hidden h-9 w-9 place-items-center rounded-full text-foreground transition-colors hover:bg-muted md:grid"
+          >
+            <MapPin className="size-[18px]" />
+          </button>
+          <button
+            type="button"
+            aria-label={user ? "Minha conta — sair" : "Minha conta"}
+            title={user ? `${user.email} — clique para sair` : "Entrar na sua conta"}
+            onClick={user ? onSignOut : onEnter}
+            className="grid h-9 w-9 place-items-center rounded-full text-foreground transition-colors hover:bg-muted"
+          >
+            <User className="size-[18px]" />
+          </button>
+          <span className="flex items-center gap-1 pl-1 text-sm">
+            <ShoppingBag className="size-[18px]" />
+            <span className="text-muted-foreground">(0)</span>
+          </span>
+        </div>
+      </div>
+
+      <div className="border-t border-border/70">
+        <div className="mx-auto flex w-full max-w-[1180px] items-center gap-6 overflow-x-auto px-5 py-2 text-sm">
+          {headerCategories.map(([label, href]) => (
+            <a
+              key={label}
+              href={href}
+              className="shrink-0 whitespace-nowrap text-foreground/70 transition-colors hover:text-foreground"
+            >
+              {label}
+            </a>
+          ))}
+        </div>
+      </div>
+    </header>
+  );
+}
+
 function CategoryCard({ name, description, images }: { name: string; description: string; images: string[] }) {
   const [index, setIndex] = useState(0);
 
