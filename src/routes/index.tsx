@@ -112,12 +112,12 @@ function StickyHeader({
         visible ? "translate-y-0" : "-translate-y-full"
       }`}
     >
-      <div className="mx-auto flex w-full max-w-[1180px] flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 sm:px-5">
-        <a href="#inicio" className="shrink-0 cursor-pointer text-lg font-bold uppercase tracking-[0.18em] sm:text-xl sm:tracking-[0.22em]">
+      <div className="mx-auto grid w-full max-w-[1180px] grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 px-4 py-3 sm:grid-cols-[auto_minmax(180px,1fr)_auto] sm:gap-x-4 sm:px-5 xl:flex">
+        <a href="#inicio" className="min-w-0 truncate cursor-pointer text-lg font-bold uppercase tracking-[0.18em] sm:shrink-0 sm:text-xl sm:tracking-[0.22em]">
           Solatto
         </a>
 
-        <nav className="hidden items-center gap-5 text-sm lg:flex">
+        <nav className="hidden shrink-0 items-center gap-5 text-sm xl:flex">
           {headerLinks.map(([label, href]) => (
             <a key={label} href={href} className="cursor-pointer text-foreground/80 transition-colors hover:text-foreground">
               {label}
@@ -130,7 +130,7 @@ function StickyHeader({
             event.preventDefault();
             document.getElementById("novidades")?.scrollIntoView({ behavior: "smooth" });
           }}
-          className="order-last flex h-10 w-full min-w-0 basis-full items-center gap-2 rounded-full border border-border bg-background pl-4 pr-1.5 sm:order-none sm:ml-auto sm:h-11 sm:w-auto sm:max-w-[340px] sm:flex-1 sm:basis-auto"
+          className="col-span-2 row-start-2 flex h-10 w-full min-w-0 items-center gap-2 rounded-full border border-border bg-background pl-4 pr-1.5 sm:col-span-1 sm:col-start-2 sm:row-start-1 sm:h-11 xl:ml-auto xl:max-w-[340px] xl:flex-1"
         >
 
           <input
@@ -150,7 +150,7 @@ function StickyHeader({
           </button>
         </form>
 
-        <div className="ml-auto flex shrink-0 items-center gap-1 sm:ml-0">
+        <div className="col-start-2 row-start-1 flex shrink-0 items-center gap-1 sm:col-start-3 xl:ml-0">
           <button
             type="button"
             aria-label="Favoritos"
@@ -182,7 +182,7 @@ function StickyHeader({
       </div>
 
       <div className="border-t border-border/70">
-        <div className="mx-auto flex w-full max-w-[1180px] items-center gap-5 overflow-x-auto px-4 py-2 sm:gap-6 sm:px-5 text-sm">
+        <div className="mx-auto flex w-full max-w-[1180px] items-center gap-5 overflow-x-auto px-4 py-2 text-sm [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-6 sm:px-5">
           {headerCategories.map(([label, href]) => (
             <a
               key={label}
@@ -379,8 +379,8 @@ function Index() {
                   <h1 className="mb-2 text-3xl font-semibold leading-tight sm:text-4xl">Entrar na sua conta</h1>
                   <p className="mb-7 max-w-sm text-sm leading-6 opacity-85">Use seu e-mail e senha para continuar.</p>
                   <form className="grid gap-3" onSubmit={handleSignIn}>
-                    <Input required type="email" aria-label="E-mail" placeholder="E-mail" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} maxLength={255} className="h-12 border-primary-foreground/40 bg-background/75 text-foreground backdrop-blur-sm placeholder:text-muted-foreground hover:border-white/80 focus-visible:border-white focus-visible:ring-white" />
-                    <Input required type="password" aria-label="Senha" placeholder="Senha" value={form.senha} onChange={(e) => setForm({ ...form, senha: e.target.value })} minLength={8} maxLength={72} className="h-12 border-primary-foreground/40 bg-background/75 text-foreground backdrop-blur-sm placeholder:text-muted-foreground hover:border-white/80 focus-visible:border-white focus-visible:ring-white" />
+                    <Input required type="email" aria-label="E-mail" placeholder="E-mail" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} maxLength={255} className="h-12 border-border/70 bg-background/75 text-foreground backdrop-blur-sm placeholder:text-muted-foreground hover:border-border focus-visible:border-border focus-visible:ring-foreground/20" />
+                    <Input required type="password" aria-label="Senha" placeholder="Senha" value={form.senha} onChange={(e) => setForm({ ...form, senha: e.target.value })} minLength={8} maxLength={72} className="h-12 border-border/70 bg-background/75 text-foreground backdrop-blur-sm placeholder:text-muted-foreground hover:border-border focus-visible:border-border focus-visible:ring-foreground/20" />
                     {erro ? <p className="text-sm text-primary-foreground">{erro}</p> : null}
                     <Button type="submit" disabled={busy} className="h-12 rounded-md bg-foreground text-background hover:bg-foreground/90">{busy ? "Entrando…" : "Entrar"}</Button>
                   </form>
@@ -394,11 +394,11 @@ function Index() {
                   <p className="mb-7 max-w-sm text-sm leading-6 opacity-85">{accountType.description}</p>
                   <form className="grid gap-3" onSubmit={handleSignUp}>
                     <div className="grid gap-3 sm:grid-cols-2">
-                      <Input required aria-label="Nome" placeholder="Nome" value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} maxLength={60} className="h-12 border-primary-foreground/40 bg-background/75 text-foreground backdrop-blur-sm placeholder:text-muted-foreground hover:border-white/80 focus-visible:border-white focus-visible:ring-white" />
-                      <Input required aria-label="Sobrenome" placeholder="Sobrenome" value={form.sobrenome} onChange={(e) => setForm({ ...form, sobrenome: e.target.value })} maxLength={60} className="h-12 border-primary-foreground/40 bg-background/75 text-foreground backdrop-blur-sm placeholder:text-muted-foreground hover:border-white/80 focus-visible:border-white focus-visible:ring-white" />
+                      <Input required aria-label="Nome" placeholder="Nome" value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} maxLength={60} className="h-12 border-border/70 bg-background/75 text-foreground backdrop-blur-sm placeholder:text-muted-foreground hover:border-border focus-visible:border-border focus-visible:ring-foreground/20" />
+                      <Input required aria-label="Sobrenome" placeholder="Sobrenome" value={form.sobrenome} onChange={(e) => setForm({ ...form, sobrenome: e.target.value })} maxLength={60} className="h-12 border-border/70 bg-background/75 text-foreground backdrop-blur-sm placeholder:text-muted-foreground hover:border-border focus-visible:border-border focus-visible:ring-foreground/20" />
                     </div>
-                    <Input required type="email" aria-label="E-mail" placeholder="E-mail" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} maxLength={255} className="h-12 border-primary-foreground/40 bg-background/75 text-foreground backdrop-blur-sm placeholder:text-muted-foreground hover:border-white/80 focus-visible:border-white focus-visible:ring-white" />
-                    <Input required type="password" aria-label="Senha" placeholder="Senha" value={form.senha} onChange={(e) => setForm({ ...form, senha: e.target.value })} minLength={8} maxLength={72} className="h-12 border-primary-foreground/40 bg-background/75 text-foreground backdrop-blur-sm placeholder:text-muted-foreground hover:border-white/80 focus-visible:border-white focus-visible:ring-white" />
+                    <Input required type="email" aria-label="E-mail" placeholder="E-mail" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} maxLength={255} className="h-12 border-border/70 bg-background/75 text-foreground backdrop-blur-sm placeholder:text-muted-foreground hover:border-border focus-visible:border-border focus-visible:ring-foreground/20" />
+                    <Input required type="password" aria-label="Senha" placeholder="Senha" value={form.senha} onChange={(e) => setForm({ ...form, senha: e.target.value })} minLength={8} maxLength={72} className="h-12 border-border/70 bg-background/75 text-foreground backdrop-blur-sm placeholder:text-muted-foreground hover:border-border focus-visible:border-border focus-visible:ring-foreground/20" />
                     {erro ? <p className="text-sm text-primary-foreground">{erro}</p> : null}
                     <Button type="submit" disabled={busy} className="h-12 rounded-md bg-background text-foreground shadow-none hover:bg-background/90 hover:text-foreground">{busy ? "Criando…" : "Criar conta"}</Button>
                   </form>
