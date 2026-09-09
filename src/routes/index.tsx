@@ -197,6 +197,21 @@ function Index() {
                 Continuar como visitante
               </Button>
             </div>
+
+            <div className="shoe3d-stage mt-10 hidden place-items-center md:grid">
+              <div className="shoe3d">
+                {[oxford1, oxford2, oxford3].map((img, i) => (
+                  <img
+                    key={img.url}
+                    src={img.url}
+                    alt={i === 0 ? "Sapato Solatto girando em 3D" : ""}
+                    aria-hidden={i !== 0}
+                    className={`shoe3d-frame shoe3d-frame-${i + 1}`}
+                  />
+                ))}
+              </div>
+              <div className="shoe3d-shadow" />
+            </div>
           </div>
         </div>
       )}
