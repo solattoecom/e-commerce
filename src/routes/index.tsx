@@ -61,12 +61,12 @@ const categories = [
   {
     name: "Social",
     description: "Couro marrom com detalhe metálico",
-    images: [social1.url, social2.url, social3.url],
+    images: [social3.url, social1.url, social2.url],
   },
   {
     name: "Oxford",
     description: "Clássico preto com cadarço",
-    images: [infantil1.url, infantil2.url, infantil3.url],
+    images: [infantil3.url, infantil1.url, infantil2.url],
   },
   {
     name: "Infantil",
