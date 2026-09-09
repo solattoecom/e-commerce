@@ -282,7 +282,11 @@ function Index() {
             <Input aria-label="Buscar produtos" placeholder="O que você procura?" className="h-9 border-0 p-0 shadow-none focus-visible:ring-0" />
             <Search className="size-4 text-muted-foreground" />
           </div>
-          <Button variant="ghost" size="icon" aria-label="Minha conta" onClick={() => setShowAccess(true)}><UserRound /></Button>
+          {user ? (
+            <Button variant="ghost" className="text-sm" onClick={() => signOut()}>Sair</Button>
+          ) : (
+            <Button variant="ghost" size="icon" aria-label="Minha conta" onClick={() => setShowAccess(true)}><UserRound /></Button>
+          )}
           <Button variant="ghost" size="icon" aria-label="Sacola de compras"><ShoppingBag /></Button>
         </div>
       </header>
