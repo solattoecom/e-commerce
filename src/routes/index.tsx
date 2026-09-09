@@ -622,7 +622,7 @@ function Index() {
                 {user ? "Preços exclusivos do seu tipo de conta." : "Entre na sua conta para ver os preços do seu perfil."}
               </p>
             </div>
-            <ProductGrid signedIn={Boolean(user)} refreshKey={refreshKey} search={busca} />
+            <ProductGrid signedIn={Boolean(user)} refreshKey={refreshKey} search={busca} onAdd={handleAddToCart} />
           </div>
         </section>
 
