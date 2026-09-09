@@ -5,8 +5,13 @@ import {
   Building2,
   ChevronDown,
   ChevronUp,
+  Heart,
+  MapPin,
+  Search,
+  ShoppingBag,
   Store,
   Truck,
+  User,
 } from "lucide-react";
 
 import social1 from "@/assets/social-1.jpg.asset.json";
@@ -70,6 +75,128 @@ const categories = [
   },
 ];
 
+const headerLinks: [string, string][] = [
+  ["calçados", "#categorias"],
+  ["novidades", "#novidades"],
+  ["coleções", "#categorias"],
+  ["ajuda", "#faq"],
+];
+
+const headerCategories: [string, string][] = [
+  ["Social", "#categorias"],
+  ["Oxford", "#categorias"],
+  ["Infantil", "#categorias"],
+  ["Lançamentos", "#novidades"],
+  ["Mais vendidos", "#novidades"],
+  ["Promoções", "#novidades"],
+];
+
+function StickyHeader({
+  visible,
+  user,
+  onEnter,
+  onSignOut,
+  busca,
+  onBuscaChange,
+}: {
+  visible: boolean;
+  user: { email?: string } | null;
+  onEnter: () => void;
+  onSignOut: () => void;
+  busca: string;
+  onBuscaChange: (value: string) => void;
+}) {
+  return (
+    <header
+      className={`fixed inset-x-0 top-0 z-40 border-b border-border bg-background/95 backdrop-blur transition-transform duration-300 ${
+        visible ? "translate-y-0" : "-translate-y-full"
+      }`}
+    >
+      <div className="mx-auto flex w-full max-w-[1180px] items-center gap-4 px-5 py-3">
+        <a href="#inicio" className="shrink-0 text-xl font-bold uppercase tracking-[0.22em]">
+          Solatto
+        </a>
+
+        <nav className="hidden items-center gap-5 text-sm lg:flex">
+          {headerLinks.map(([label, href]) => (
+            <a key={label} href={href} className="text-foreground/80 transition-colors hover:text-foreground">
+              {label}
+            </a>
+          ))}
+        </nav>
+
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            document.getElementById("novidades")?.scrollIntoView({ behavior: "smooth" });
+          }}
+          className="ml-auto flex h-11 w-full max-w-[340px] items-center gap-2 rounded-full border border-border bg-background pl-4 pr-1.5"
+        >
+          <input
+            type="search"
+            aria-label="Buscar calçados"
+            placeholder="O que você procura?"
+            value={busca}
+            onChange={(event) => onBuscaChange(event.target.value)}
+            className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+          />
+          <button
+            type="submit"
+            aria-label="Buscar"
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-foreground transition-colors hover:bg-muted"
+          >
+            <Search className="size-4" />
+          </button>
+        </form>
+
+        <div className="flex shrink-0 items-center gap-1">
+          <button
+            type="button"
+            aria-label="Favoritos"
+            className="hidden h-9 w-9 place-items-center rounded-full text-foreground transition-colors hover:bg-muted sm:grid"
+          >
+            <Heart className="size-[18px]" />
+          </button>
+          <button
+            type="button"
+            aria-label="Lojas"
+            className="hidden h-9 w-9 place-items-center rounded-full text-foreground transition-colors hover:bg-muted md:grid"
+          >
+            <MapPin className="size-[18px]" />
+          </button>
+          <button
+            type="button"
+            aria-label={user ? "Minha conta — sair" : "Minha conta"}
+            title={user ? `${user.email} — clique para sair` : "Entrar na sua conta"}
+            onClick={user ? onSignOut : onEnter}
+            className="grid h-9 w-9 place-items-center rounded-full text-foreground transition-colors hover:bg-muted"
+          >
+            <User className="size-[18px]" />
+          </button>
+          <span className="flex items-center gap-1 pl-1 text-sm">
+            <ShoppingBag className="size-[18px]" />
+            <span className="text-muted-foreground">(0)</span>
+          </span>
+        </div>
+      </div>
+
+      <div className="border-t border-border/70">
+        <div className="mx-auto flex w-full max-w-[1180px] items-center gap-6 overflow-x-auto px-5 py-2 text-sm">
+          {headerCategories.map(([label, href]) => (
+            <a
+              key={label}
+              href={href}
+              className="shrink-0 whitespace-nowrap text-foreground/70 transition-colors hover:text-foreground"
+            >
+              {label}
+            </a>
+          ))}
+        </div>
+      </div>
+    </header>
+  );
+}
+
 function CategoryCard({ name, description, images }: { name: string; description: string; images: string[] }) {
   const [index, setIndex] = useState(0);
 
@@ -125,6 +252,19 @@ function Index() {
   const [busy, setBusy] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [scrolled, setScrolled] = useState(false);
+  const [busca, setBusca] = useState("");
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > window.innerHeight * 0.7);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, []);
 
   useEffect(() => {
     if (!loading && user) setShowAccess(false);
@@ -181,6 +321,14 @@ function Index() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <StickyHeader
+        visible={scrolled && !showAccess}
+        user={user}
+        onEnter={() => setShowAccess(true)}
+        onSignOut={() => signOut()}
+        busca={busca}
+        onBuscaChange={setBusca}
+      />
       {showAccess && (
         <div className="fixed inset-0 z-50 grid min-h-[100dvh] place-items-center overflow-hidden bg-black px-5 py-8">
           <video
@@ -369,7 +517,7 @@ function Index() {
         </section>
 
 
-        <section id="categorias" className="py-20">
+        <section id="categorias" className="scroll-mt-28 py-20">
           <div className="mx-auto w-full max-w-[1180px] px-5">
             <div className="mb-10 flex items-end justify-between gap-5">
               <div><p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-foreground/60">Escolha o seu estilo</p><h2 className="text-3xl font-semibold sm:text-4xl">Feito para a vida em movimento.</h2></div>
@@ -383,7 +531,7 @@ function Index() {
           </div>
         </section>
 
-        <section id="novidades" className="bg-muted py-16">
+        <section id="novidades" className="scroll-mt-28 bg-muted py-16">
           <div className="mx-auto w-full max-w-[1180px] px-5">
             <div className="mb-10 text-center">
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-foreground/60">Solatto essencial</p>
@@ -392,11 +540,11 @@ function Index() {
                 {user ? "Preços exclusivos do seu tipo de conta." : "Entre na sua conta para ver os preços do seu perfil."}
               </p>
             </div>
-            <ProductGrid signedIn={Boolean(user)} refreshKey={refreshKey} />
+            <ProductGrid signedIn={Boolean(user)} refreshKey={refreshKey} search={busca} />
           </div>
         </section>
 
-        <section id="faq" className="py-20 max-[900px]:py-[60px]">
+        <section id="faq" className="scroll-mt-28 py-20 max-[900px]:py-[60px]">
           <div className="mx-auto grid w-full max-w-[1100px] grid-cols-[1.6fr_1fr] items-stretch gap-[30px] px-5 max-[900px]:grid-cols-1 max-[900px]:gap-[60px]">
             <div className="c5-animated-gradient flex flex-col items-center justify-center rounded-[24px] px-10 py-20 text-center text-primary-foreground shadow-[0_10px_30px_rgba(0,0,0,0.05)]">
               <h2 className="mb-[15px] text-[clamp(2.5rem,6vw,3.5rem)] font-normal leading-[1.1] tracking-normal">Seu próximo par<br />começa aqui.</h2>
