@@ -130,6 +130,7 @@ function Index() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [busy, setBusy] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     if (!loading && user) setShowAccess(false);
@@ -158,6 +159,7 @@ function Index() {
     try {
       await signUpWithType({ ...form, tipo: accountType.id as ClientType });
       setForm({ nome: "", sobrenome: "", email: "", senha: "" });
+      setRefreshKey((value) => value + 1);
       closeAccess();
     } catch (error) {
       setErro(traduzErro(error instanceof Error ? error.message : ""));
@@ -173,6 +175,7 @@ function Index() {
     try {
       await signIn(form.email, form.senha);
       setForm({ nome: "", sobrenome: "", email: "", senha: "" });
+      setRefreshKey((value) => value + 1);
       closeAccess();
     } catch (error) {
       setErro(traduzErro(error instanceof Error ? error.message : ""));
@@ -328,7 +331,7 @@ function Index() {
                 {user ? "Preços exclusivos do seu tipo de conta." : "Entre na sua conta para ver os preços do seu perfil."}
               </p>
             </div>
-            <ProductGrid signedIn={Boolean(user)} />
+            <ProductGrid signedIn={Boolean(user)} refreshKey={refreshKey} />
           </div>
         </section>
 
