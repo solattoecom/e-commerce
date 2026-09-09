@@ -14,6 +14,58 @@ export type Database = {
   }
   public: {
     Tables: {
+      cart_items: {
+        Row: {
+          atualizado_em: string
+          criado_em: string
+          id: string
+          produto_id: string
+          quantidade: number
+          usuario_id: string
+          variacao_id: string | null
+        }
+        Insert: {
+          atualizado_em?: string
+          criado_em?: string
+          id?: string
+          produto_id: string
+          quantidade?: number
+          usuario_id: string
+          variacao_id?: string | null
+        }
+        Update: {
+          atualizado_em?: string
+          criado_em?: string
+          id?: string
+          produto_id?: string
+          quantidade?: number
+          usuario_id?: string
+          variacao_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cart_items_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cart_items_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cart_items_variacao_id_fkey"
+            columns: ["variacao_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           id: string
