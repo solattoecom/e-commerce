@@ -166,13 +166,6 @@ function Index() {
                       );
                     })}
                   </div>
-                  <Button
-                    variant="link"
-                    className="mt-5 h-auto w-full justify-start px-0 text-xs text-primary-foreground hover:text-primary-foreground/80"
-                    onClick={() => setShowLogin(true)}
-                  >
-                    Já tenho uma conta
-                  </Button>
                 </>
               ) : showLogin ? (
                 <>
@@ -218,9 +211,16 @@ function Index() {
                 </>
               ) : null}
 
-              <Button variant="link" className="mt-9 h-auto w-full justify-start px-0 text-xs text-primary-foreground/75 hover:text-primary-foreground" onClick={closeAccess}>
-                Continuar como visitante
-              </Button>
+              <div className="mt-5 flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+                {!showLogin && !accountType ? (
+                  <Button variant="link" className="h-auto px-0 text-xs text-primary-foreground hover:text-primary-foreground/80" onClick={() => setShowLogin(true)}>
+                    Já tenho uma conta
+                  </Button>
+                ) : null}
+                <Button variant="link" className="h-auto px-0 text-xs text-primary-foreground/75 hover:text-primary-foreground" onClick={closeAccess}>
+                  Continuar como visitante
+                </Button>
+              </div>
             </div>
           </div>
         </div>
