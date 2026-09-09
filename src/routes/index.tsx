@@ -134,6 +134,7 @@ function Index() {
     <div className="min-h-screen bg-background text-foreground">
       {showAccess && (
         <div className="c5-animated-gradient fixed inset-0 z-50 grid min-h-[100dvh] place-items-center overflow-hidden px-5 py-8">
+          <div className="absolute inset-0 bg-foreground/35" />
           <div className="relative z-10 grid w-full max-w-[1100px] items-center md:grid-cols-[0.95fr_1.05fr]">
             <div className="access-panel max-w-md text-primary-foreground">
               <p className="mb-8 text-2xl font-bold uppercase tracking-[0.24em]">Solatto</p>
