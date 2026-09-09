@@ -14,15 +14,15 @@ import {
   User,
 } from "lucide-react";
 
-import social1 from "@/assets/social-1.jpg.asset.json";
-import social2 from "@/assets/social-2.jpg.asset.json";
-import social3 from "@/assets/social-3.jpg.asset.json";
-import oxford1 from "@/assets/oxford-areia-1.jpg.asset.json";
-import oxford2 from "@/assets/oxford-areia-2.jpg.asset.json";
-import oxford3 from "@/assets/oxford-areia-3.jpg.asset.json";
-import infantil1 from "@/assets/infantil-1.jpg.asset.json";
-import infantil2 from "@/assets/infantil-2.jpg.asset.json";
-import infantil3 from "@/assets/infantil-3.jpg.asset.json";
+import social1 from "@/assets/social-foto-1.jpeg.asset.json";
+import social2 from "@/assets/social-foto-2.jpeg.asset.json";
+import social3 from "@/assets/social-foto-3.jpeg.asset.json";
+import oxford1 from "@/assets/oxford-foto-1.jpeg.asset.json";
+import oxford2 from "@/assets/oxford-foto-2.jpeg.asset.json";
+import oxford3 from "@/assets/oxford-foto-3.jpeg.asset.json";
+import infantil1 from "@/assets/infantil-foto-1.jpeg.asset.json";
+import infantil2 from "@/assets/infantil-foto-2.jpeg.asset.json";
+import infantil3 from "@/assets/infantil-foto-3.jpeg.asset.json";
 import heroVideo from "@/assets/hero-calcando-sapato.mp4.asset.json";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -209,7 +209,7 @@ function CategoryCard({ name, description, images }: { name: string; description
   return (
     <a
       href="#novidades"
-      className="group relative aspect-square overflow-hidden bg-[#F5EFE6]"
+      className="group relative aspect-square overflow-hidden bg-background"
       onMouseEnter={() => setIndex(1)}
       onMouseLeave={() => setIndex(0)}
       onFocus={() => setIndex(1)}
@@ -223,7 +223,7 @@ function CategoryCard({ name, description, images }: { name: string; description
           width={1200}
           height={1200}
           loading="lazy"
-          className={`absolute inset-0 h-full w-full object-contain object-center transition-opacity duration-300 ${imageIndex === index ? "opacity-100" : "opacity-0"}`}
+          className={`absolute inset-0 h-full w-full scale-[1.12] object-contain object-center transition-opacity duration-300 ${imageIndex === index ? "opacity-100" : "opacity-0"}`}
         />
       ))}
       <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-foreground/85 to-transparent px-6 pb-7 pt-24 text-background">
@@ -518,12 +518,12 @@ function Index() {
 
 
         <section id="categorias" className="scroll-mt-28 py-20">
-          <div className="mx-auto w-full max-w-[1180px] px-5">
+          <div className="mx-auto w-full max-w-[1440px] px-5 md:px-8">
             <div className="mb-10 flex items-end justify-between gap-5">
               <div><p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-foreground/60">Escolha o seu estilo</p><h2 className="text-3xl font-semibold sm:text-4xl">Feito para a vida em movimento.</h2></div>
               <a href="#novidades" className="hidden border-b border-foreground pb-1 text-sm md:block">Ver todos</a>
             </div>
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-5 md:grid-cols-3">
               {categories.map((category) => (
                 <CategoryCard key={category.name} {...category} />
               ))}
