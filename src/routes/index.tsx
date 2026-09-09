@@ -238,13 +238,7 @@ function Index() {
                   </Button>
                   <h1 className="mb-2 text-3xl font-semibold leading-tight sm:text-4xl">Cadastro {accountType.name}</h1>
                   <p className="mb-7 max-w-sm text-sm leading-6 opacity-85">{accountType.description}</p>
-                  <form
-                    className="grid gap-3"
-                    onSubmit={(event) => {
-                      event.preventDefault();
-                      closeAccess();
-                    }}
-                  >
+                  <form className="grid gap-3" onSubmit={handleSignUp}>
                     <div className="grid gap-3 sm:grid-cols-2">
                       <Input required aria-label="Nome" placeholder="Nome" value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} maxLength={60} className="h-12 border-primary-foreground/40 bg-background/75 text-foreground backdrop-blur-sm placeholder:text-muted-foreground" />
                       <Input required aria-label="Sobrenome" placeholder="Sobrenome" value={form.sobrenome} onChange={(e) => setForm({ ...form, sobrenome: e.target.value })} maxLength={60} className="h-12 border-primary-foreground/40 bg-background/75 text-foreground backdrop-blur-sm placeholder:text-muted-foreground" />
