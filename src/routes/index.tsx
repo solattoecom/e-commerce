@@ -113,7 +113,7 @@ function StickyHeader({
       }`}
     >
       <div className="mx-auto flex w-full max-w-[1180px] items-center gap-4 px-5 py-3">
-        <a href="#inicio" className="shrink-0 text-xl font-bold uppercase tracking-[0.22em]">
+        <a href="#inicio" className="shrink-0 cursor-pointer text-xl font-bold uppercase tracking-[0.22em]">
           Solatto
         </a>
 
