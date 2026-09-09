@@ -110,10 +110,25 @@ function CategoryCard({ name, description, images }: { name: string; description
   );
 }
 
+const accountTypes = [
+  { id: "varejo", name: "Varejo", description: "Compre para você, com entrega em todo o Brasil.", Icon: Store },
+  { id: "atacado", name: "Atacado", description: "Compras em volume com condições especiais.", Icon: Building2 },
+  { id: "dropshipping", name: "Dropshipping", description: "Venda sem estoque, nós enviamos por você.", Icon: Truck },
+] as const;
+
+type AccountType = (typeof accountTypes)[number];
+
 function Index() {
   const [showAccess, setShowAccess] = useState(true);
+  const [accountType, setAccountType] = useState<AccountType | null>(null);
+  const [form, setForm] = useState({ nome: "", sobrenome: "", email: "", senha: "" });
   const [mobileMenu, setMobileMenu] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
+
+  const closeAccess = () => {
+    setShowAccess(false);
+    setAccountType(null);
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground">
