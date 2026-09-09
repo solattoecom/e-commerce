@@ -12,9 +12,15 @@ import {
 } from "lucide-react";
 
 import heroImage from "@/assets/solatto-hero.jpg";
-import sneakersImage from "@/assets/category-sneakers.jpg";
-import sociaisImage from "@/assets/category-sociais.jpg";
-import sandaliasImage from "@/assets/category-sandalias.jpg";
+import social1 from "@/assets/social-1.jpg.asset.json";
+import social2 from "@/assets/social-2.jpg.asset.json";
+import social3 from "@/assets/social-3.jpg.asset.json";
+import oxford1 from "@/assets/oxford-1.jpg.asset.json";
+import oxford2 from "@/assets/oxford-2.jpg.asset.json";
+import oxford3 from "@/assets/oxford-3.jpg.asset.json";
+import infantil1 from "@/assets/infantil-1.jpg.asset.json";
+import infantil2 from "@/assets/infantil-2.jpg.asset.json";
+import infantil3 from "@/assets/infantil-3.jpg.asset.json";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
