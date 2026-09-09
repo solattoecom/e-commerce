@@ -98,6 +98,8 @@ function StickyHeader({
   onSignOut,
   busca,
   onBuscaChange,
+  cartCount,
+  onOpenCart,
 }: {
   visible: boolean;
   user: { email?: string } | null;
@@ -105,6 +107,8 @@ function StickyHeader({
   onSignOut: () => void;
   busca: string;
   onBuscaChange: (value: string) => void;
+  cartCount: number;
+  onOpenCart: () => void;
 }) {
   return (
     <header
