@@ -61,7 +61,7 @@ const categories = [
   {
     name: "Social",
     description: "Couro marrom com detalhe metálico",
-    images: [social3.url, social1.url, social2.url],
+    images: [social2.url, social1.url, social3.url],
   },
   {
     name: "Oxford",
@@ -71,7 +71,7 @@ const categories = [
   {
     name: "Infantil",
     description: "Conforto e elegância para os pequenos",
-    images: [oxford1.url, oxford2.url, oxford3.url],
+    images: [oxford3.url, oxford2.url, oxford1.url],
   },
 ];
 
