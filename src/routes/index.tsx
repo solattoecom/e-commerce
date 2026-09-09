@@ -133,15 +133,7 @@ function Index() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       {showAccess && (
-        <div className="fixed inset-0 z-50 grid min-h-[100dvh] place-items-center overflow-hidden bg-primary px-5 py-8">
-          <img
-            src={heroImage}
-            alt="Tênis Solatto em destaque"
-            width={1600}
-            height={900}
-            className="login-shoe absolute inset-0 h-full w-full object-cover object-[68%_center] opacity-70"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-primary via-primary/85 to-primary/10" />
+        <div className="c5-animated-gradient fixed inset-0 z-50 grid min-h-[100dvh] place-items-center overflow-hidden px-5 py-8">
           <div className="relative z-10 grid w-full max-w-[1100px] items-center md:grid-cols-[0.95fr_1.05fr]">
             <div className="access-panel max-w-md text-primary-foreground">
               <p className="mb-8 text-2xl font-bold uppercase tracking-[0.24em]">Solatto</p>
@@ -152,20 +144,24 @@ function Index() {
                   <h1 className="mb-5 text-4xl font-semibold leading-[1.05] tracking-normal sm:text-5xl">Como você quer comprar?</h1>
                   <p className="mb-8 max-w-sm text-sm leading-6 opacity-85">Escolha o tipo de cadastro para continuar.</p>
                   <div className="grid gap-3">
-                    {accountTypes.map(({ id, name, description, Icon }) => (
-                      <button
+                    {accountTypes.map((type) => {
+                      const { id, name, description, Icon } = type;
+                      return (
+                      <Button
                         key={id}
                         type="button"
-                        onClick={() => setAccountType(accountTypes.find((t) => t.id === id)!)}
-                        className="flex items-center gap-4 rounded-md border border-primary-foreground/40 bg-primary-foreground/5 px-5 py-4 text-left transition-colors hover:bg-primary-foreground/15"
+                        variant="ghost"
+                        onClick={() => setAccountType(type)}
+                        className="h-auto justify-start gap-4 rounded-md border border-primary-foreground/40 bg-primary-foreground/10 px-5 py-4 text-left text-primary-foreground transition-colors hover:bg-primary-foreground/20 hover:text-primary-foreground"
                       >
                         <Icon className="size-5 shrink-0" />
                         <span>
                           <span className="block text-sm font-semibold">{name}</span>
                           <span className="block text-xs opacity-80">{description}</span>
                         </span>
-                      </button>
-                    ))}
+                      </Button>
+                      );
+                    })}
                   </div>
                 </>
               ) : (
@@ -183,11 +179,11 @@ function Index() {
                     }}
                   >
                     <div className="grid gap-3 sm:grid-cols-2">
-                      <Input required aria-label="Nome" placeholder="Nome" value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} maxLength={60} className="h-12 border-primary-foreground/40 bg-background text-foreground" />
-                      <Input required aria-label="Sobrenome" placeholder="Sobrenome" value={form.sobrenome} onChange={(e) => setForm({ ...form, sobrenome: e.target.value })} maxLength={60} className="h-12 border-primary-foreground/40 bg-background text-foreground" />
+                      <Input required aria-label="Nome" placeholder="Nome" value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} maxLength={60} className="h-12 border-primary-foreground/40 bg-background/75 text-foreground backdrop-blur-sm placeholder:text-muted-foreground" />
+                      <Input required aria-label="Sobrenome" placeholder="Sobrenome" value={form.sobrenome} onChange={(e) => setForm({ ...form, sobrenome: e.target.value })} maxLength={60} className="h-12 border-primary-foreground/40 bg-background/75 text-foreground backdrop-blur-sm placeholder:text-muted-foreground" />
                     </div>
-                    <Input required type="email" aria-label="E-mail" placeholder="E-mail" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} maxLength={255} className="h-12 border-primary-foreground/40 bg-background text-foreground" />
-                    <Input required type="password" aria-label="Senha" placeholder="Senha" value={form.senha} onChange={(e) => setForm({ ...form, senha: e.target.value })} minLength={8} maxLength={72} className="h-12 border-primary-foreground/40 bg-background text-foreground" />
+                    <Input required type="email" aria-label="E-mail" placeholder="E-mail" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} maxLength={255} className="h-12 border-primary-foreground/40 bg-background/75 text-foreground backdrop-blur-sm placeholder:text-muted-foreground" />
+                    <Input required type="password" aria-label="Senha" placeholder="Senha" value={form.senha} onChange={(e) => setForm({ ...form, senha: e.target.value })} minLength={8} maxLength={72} className="h-12 border-primary-foreground/40 bg-background/75 text-foreground backdrop-blur-sm placeholder:text-muted-foreground" />
                     <Button type="submit" className="h-12 rounded-md bg-foreground text-background hover:bg-foreground/90">Criar conta</Button>
                   </form>
                 </>
