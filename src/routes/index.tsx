@@ -224,16 +224,11 @@ function Index() {
                   </Button>
                   <h1 className="mb-2 text-3xl font-semibold leading-tight sm:text-4xl">Entrar na sua conta</h1>
                   <p className="mb-7 max-w-sm text-sm leading-6 opacity-85">Use seu e-mail e senha para continuar.</p>
-                  <form
-                    className="grid gap-3"
-                    onSubmit={(event) => {
-                      event.preventDefault();
-                      closeAccess();
-                    }}
-                  >
+                  <form className="grid gap-3" onSubmit={handleSignIn}>
                     <Input required type="email" aria-label="E-mail" placeholder="E-mail" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} maxLength={255} className="h-12 border-primary-foreground/40 bg-background/75 text-foreground backdrop-blur-sm placeholder:text-muted-foreground" />
                     <Input required type="password" aria-label="Senha" placeholder="Senha" value={form.senha} onChange={(e) => setForm({ ...form, senha: e.target.value })} minLength={8} maxLength={72} className="h-12 border-primary-foreground/40 bg-background/75 text-foreground backdrop-blur-sm placeholder:text-muted-foreground" />
-                    <Button type="submit" className="h-12 rounded-md bg-foreground text-background hover:bg-foreground/90">Entrar</Button>
+                    {erro ? <p className="text-sm text-primary-foreground">{erro}</p> : null}
+                    <Button type="submit" disabled={busy} className="h-12 rounded-md bg-foreground text-background hover:bg-foreground/90">{busy ? "Entrando…" : "Entrar"}</Button>
                   </form>
                 </>
               ) : accountType ? (
