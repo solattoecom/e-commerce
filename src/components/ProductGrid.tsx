@@ -51,9 +51,26 @@ export function ProductGrid({
     return <p className="text-center text-sm text-muted-foreground">Nenhum produto disponível no momento.</p>;
   }
 
+  const termo = search.trim().toLowerCase();
+  const visiveis = termo
+    ? products.filter((product) =>
+        `${product.nome} ${product.descricao ?? ""} ${product.categories?.nome ?? ""}`
+          .toLowerCase()
+          .includes(termo),
+      )
+    : products;
+
+  if (visiveis.length === 0) {
+    return (
+      <p className="text-center text-sm text-muted-foreground">
+        Nenhum calçado encontrado para “{search.trim()}”.
+      </p>
+    );
+  }
+
   return (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      {products.map((product) => {
+      {visiveis.map((product) => {
         const image = [...product.product_images].sort((a, b) => a.ordem - b.ordem)[0];
         const price = product.product_prices[0];
         return (
