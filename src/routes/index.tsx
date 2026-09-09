@@ -1,12 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
-  Apple,
+  ArrowLeft,
+  Building2,
   ChevronDown,
   ChevronUp,
   Menu,
   Search,
   ShoppingBag,
+  Store,
+  Truck,
   UserRound,
   X,
 } from "lucide-react";
@@ -107,10 +110,25 @@ function CategoryCard({ name, description, images }: { name: string; description
   );
 }
 
+const accountTypes = [
+  { id: "varejo", name: "Varejo", description: "Compre para você, com entrega em todo o Brasil.", Icon: Store },
+  { id: "atacado", name: "Atacado", description: "Compras em volume com condições especiais.", Icon: Building2 },
+  { id: "dropshipping", name: "Dropshipping", description: "Venda sem estoque, nós enviamos por você.", Icon: Truck },
+] as const;
+
+type AccountType = (typeof accountTypes)[number];
+
 function Index() {
   const [showAccess, setShowAccess] = useState(true);
+  const [accountType, setAccountType] = useState<AccountType | null>(null);
+  const [form, setForm] = useState({ nome: "", sobrenome: "", email: "", senha: "" });
   const [mobileMenu, setMobileMenu] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
+
+  const closeAccess = () => {
+    setShowAccess(false);
+    setAccountType(null);
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -127,21 +145,55 @@ function Index() {
           <div className="relative z-10 grid w-full max-w-[1100px] items-center md:grid-cols-[0.95fr_1.05fr]">
             <div className="access-panel max-w-md text-primary-foreground">
               <p className="mb-8 text-2xl font-bold uppercase tracking-[0.24em]">Solatto</p>
-              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] opacity-80">Bem-vindo à sua nova jornada</p>
-              <h1 className="mb-5 text-4xl font-semibold leading-[1.05] tracking-normal sm:text-5xl">Entre para encontrar o seu próximo passo.</h1>
-              <p className="mb-8 max-w-sm text-sm leading-6 opacity-85">Salve favoritos, acompanhe pedidos e receba novidades escolhidas para você.</p>
-              <div className="grid gap-3 sm:grid-cols-3 md:grid-cols-1">
-                <Button variant="secondary" className="h-12 justify-center rounded-md bg-background text-foreground hover:bg-background/90" onClick={() => setShowAccess(false)}>
-                  <span className="text-base font-bold">G</span> Google
-                </Button>
-                <Button variant="secondary" className="h-12 justify-center rounded-md bg-background text-foreground hover:bg-background/90" onClick={() => setShowAccess(false)}>
-                  <Apple /> Apple
-                </Button>
-                <Button variant="outline" className="h-12 justify-center rounded-md border-primary-foreground/50 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground" onClick={() => setShowAccess(false)}>
-                  <UserRound /> E-mail
-                </Button>
-              </div>
-              <Button variant="link" className="mt-5 h-auto px-0 text-xs text-primary-foreground/75 hover:text-primary-foreground" onClick={() => setShowAccess(false)}>
+
+              {!accountType ? (
+                <>
+                  <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] opacity-80">Bem-vindo à sua nova jornada</p>
+                  <h1 className="mb-5 text-4xl font-semibold leading-[1.05] tracking-normal sm:text-5xl">Como você quer comprar?</h1>
+                  <p className="mb-8 max-w-sm text-sm leading-6 opacity-85">Escolha o tipo de cadastro para continuar.</p>
+                  <div className="grid gap-3">
+                    {accountTypes.map(({ id, name, description, Icon }) => (
+                      <button
+                        key={id}
+                        type="button"
+                        onClick={() => setAccountType(accountTypes.find((t) => t.id === id)!)}
+                        className="flex items-center gap-4 rounded-md border border-primary-foreground/40 bg-primary-foreground/5 px-5 py-4 text-left transition-colors hover:bg-primary-foreground/15"
+                      >
+                        <Icon className="size-5 shrink-0" />
+                        <span>
+                          <span className="block text-sm font-semibold">{name}</span>
+                          <span className="block text-xs opacity-80">{description}</span>
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <Button variant="link" className="mb-3 h-auto px-0 text-xs text-primary-foreground/80 hover:text-primary-foreground" onClick={() => setAccountType(null)}>
+                    <ArrowLeft className="size-3" /> Voltar
+                  </Button>
+                  <h1 className="mb-2 text-3xl font-semibold leading-tight sm:text-4xl">Cadastro {accountType.name}</h1>
+                  <p className="mb-7 max-w-sm text-sm leading-6 opacity-85">{accountType.description}</p>
+                  <form
+                    className="grid gap-3"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      closeAccess();
+                    }}
+                  >
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <Input required aria-label="Nome" placeholder="Nome" value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} maxLength={60} className="h-12 border-primary-foreground/40 bg-background text-foreground" />
+                      <Input required aria-label="Sobrenome" placeholder="Sobrenome" value={form.sobrenome} onChange={(e) => setForm({ ...form, sobrenome: e.target.value })} maxLength={60} className="h-12 border-primary-foreground/40 bg-background text-foreground" />
+                    </div>
+                    <Input required type="email" aria-label="E-mail" placeholder="E-mail" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} maxLength={255} className="h-12 border-primary-foreground/40 bg-background text-foreground" />
+                    <Input required type="password" aria-label="Senha" placeholder="Senha" value={form.senha} onChange={(e) => setForm({ ...form, senha: e.target.value })} minLength={8} maxLength={72} className="h-12 border-primary-foreground/40 bg-background text-foreground" />
+                    <Button type="submit" className="h-12 rounded-md bg-foreground text-background hover:bg-foreground/90">Criar conta</Button>
+                  </form>
+                </>
+              )}
+
+              <Button variant="link" className="mt-5 h-auto px-0 text-xs text-primary-foreground/75 hover:text-primary-foreground" onClick={closeAccess}>
                 Continuar como visitante
               </Button>
             </div>
