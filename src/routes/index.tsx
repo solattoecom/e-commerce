@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 
 import heroImage from "@/assets/solatto-hero.jpg";
+import heroBg from "@/assets/hero-bg.jpg.asset.json";
 import social1 from "@/assets/social-1.jpg.asset.json";
 import social2 from "@/assets/social-2.jpg.asset.json";
 import social3 from "@/assets/social-3.jpg.asset.json";
@@ -135,13 +136,12 @@ function Index() {
       {showAccess && (
         <div className="fixed inset-0 z-50 grid min-h-[100dvh] place-items-center overflow-hidden bg-primary px-5 py-8">
           <img
-            src={heroImage}
-            alt="Tênis Solatto em destaque"
-            width={1600}
-            height={900}
-            className="login-shoe absolute inset-0 h-full w-full object-cover object-[68%_center] opacity-70"
+            src={heroBg.url}
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 h-full w-full scale-110 object-cover opacity-45 blur-[6px]"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-primary via-primary/85 to-primary/10" />
+          <div className="absolute inset-0 bg-gradient-to-r from-primary via-primary/85 to-primary/40" />
           <div className="relative z-10 grid w-full max-w-[1100px] items-center md:grid-cols-[0.95fr_1.05fr]">
             <div className="access-panel max-w-md text-primary-foreground">
               <p className="mb-8 text-2xl font-bold uppercase tracking-[0.24em]">Solatto</p>
@@ -196,6 +196,21 @@ function Index() {
               <Button variant="link" className="mt-5 h-auto px-0 text-xs text-primary-foreground/75 hover:text-primary-foreground" onClick={closeAccess}>
                 Continuar como visitante
               </Button>
+            </div>
+
+            <div className="shoe3d-stage mt-10 hidden place-items-center md:grid">
+              <div className="shoe3d">
+                {[oxford1, oxford2, oxford3].map((img, i) => (
+                  <img
+                    key={img.url}
+                    src={img.url}
+                    alt={i === 0 ? "Sapato Solatto girando em 3D" : ""}
+                    aria-hidden={i !== 0}
+                    className={`shoe3d-frame shoe3d-frame-${i + 1}`}
+                  />
+                ))}
+              </div>
+              <div className="shoe3d-shadow" />
             </div>
           </div>
         </div>
