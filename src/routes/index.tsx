@@ -518,7 +518,7 @@ function Index() {
         </section>
 
 
-        <section id="categorias" className="scroll-mt-28 py-20">
+        <section id="categorias" className="scroll-mt-[140px] py-20 sm:scroll-mt-28">
           <div className="mx-auto w-full max-w-[1440px] px-5 md:px-8">
             <div className="mb-10 flex items-end justify-between gap-5">
               <div><p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-foreground/60">Escolha o seu estilo</p><h2 className="text-3xl font-semibold sm:text-4xl">Feito para a vida em movimento.</h2></div>
@@ -532,7 +532,7 @@ function Index() {
           </div>
         </section>
 
-        <section id="novidades" className="scroll-mt-28 bg-muted py-16">
+        <section id="novidades" className="scroll-mt-[140px] bg-muted py-16 sm:scroll-mt-28">
           <div className="mx-auto w-full max-w-[1180px] px-5">
             <div className="mb-10 text-center">
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-foreground/60">Solatto essencial</p>
@@ -545,7 +545,7 @@ function Index() {
           </div>
         </section>
 
-        <section id="faq" className="scroll-mt-28 py-20 max-[900px]:py-[60px]">
+        <section id="faq" className="scroll-mt-[140px] py-20 sm:scroll-mt-28 max-[900px]:py-[60px]">
           <div className="mx-auto grid w-full max-w-[1100px] grid-cols-[1.6fr_1fr] items-stretch gap-[30px] px-5 max-[900px]:grid-cols-1 max-[900px]:gap-[60px]">
             <div className="c5-animated-gradient flex flex-col items-center justify-center rounded-[24px] px-10 py-20 text-center text-primary-foreground shadow-[0_10px_30px_rgba(0,0,0,0.05)]">
               <h2 className="mb-[15px] text-[clamp(2.5rem,6vw,3.5rem)] font-normal leading-[1.1] tracking-normal">Seu próximo par<br />começa aqui.</h2>
