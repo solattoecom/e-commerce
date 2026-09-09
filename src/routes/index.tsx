@@ -5,8 +5,13 @@ import {
   Building2,
   ChevronDown,
   ChevronUp,
+  Heart,
+  MapPin,
+  Search,
+  ShoppingBag,
   Store,
   Truck,
+  User,
 } from "lucide-react";
 
 import social1 from "@/assets/social-1.jpg.asset.json";
