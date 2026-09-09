@@ -18,6 +18,7 @@ import oxford3 from "@/assets/oxford-areia-3.jpg.asset.json";
 import infantil1 from "@/assets/infantil-1.jpg.asset.json";
 import infantil2 from "@/assets/infantil-2.jpg.asset.json";
 import infantil3 from "@/assets/infantil-3.jpg.asset.json";
+import heroVideo from "@/assets/hero-calcando-sapato.mp4.asset.json";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ProductGrid } from "@/components/ProductGrid";
@@ -270,7 +271,7 @@ function Index() {
             loop
             muted
             playsInline
-            src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260418_063509_7d167302-4fd4-480b-8260-18ab572333d4.mp4"
+            src={heroVideo.url}
           />
 
           <div className="absolute left-0 right-0 top-0 z-20 px-6 pt-6 md:px-10">
