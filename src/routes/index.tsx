@@ -112,8 +112,8 @@ function StickyHeader({
         visible ? "translate-y-0" : "-translate-y-full"
       }`}
     >
-      <div className="mx-auto flex w-full max-w-[1180px] items-center gap-4 px-5 py-3">
-        <a href="#inicio" className="shrink-0 cursor-pointer text-xl font-bold uppercase tracking-[0.22em]">
+      <div className="mx-auto flex w-full max-w-[1180px] flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 sm:px-5">
+        <a href="#inicio" className="shrink-0 cursor-pointer text-lg font-bold uppercase tracking-[0.18em] sm:text-xl sm:tracking-[0.22em]">
           Solatto
         </a>
 
@@ -130,8 +130,9 @@ function StickyHeader({
             event.preventDefault();
             document.getElementById("novidades")?.scrollIntoView({ behavior: "smooth" });
           }}
-          className="ml-auto flex h-11 w-full max-w-[340px] items-center gap-2 rounded-full border border-border bg-background pl-4 pr-1.5"
+          className="order-last flex h-10 w-full min-w-0 basis-full items-center gap-2 rounded-full border border-border bg-background pl-4 pr-1.5 sm:order-none sm:ml-auto sm:h-11 sm:w-auto sm:max-w-[340px] sm:flex-1 sm:basis-auto"
         >
+
           <input
             type="search"
             aria-label="Buscar calçados"
@@ -149,7 +150,7 @@ function StickyHeader({
           </button>
         </form>
 
-        <div className="flex shrink-0 items-center gap-1">
+        <div className="ml-auto flex shrink-0 items-center gap-1 sm:ml-0">
           <button
             type="button"
             aria-label="Favoritos"
@@ -181,7 +182,7 @@ function StickyHeader({
       </div>
 
       <div className="border-t border-border/70">
-        <div className="mx-auto flex w-full max-w-[1180px] items-center gap-6 overflow-x-auto px-5 py-2 text-sm">
+        <div className="mx-auto flex w-full max-w-[1180px] items-center gap-5 overflow-x-auto px-4 py-2 sm:gap-6 sm:px-5 text-sm">
           {headerCategories.map(([label, href]) => (
             <a
               key={label}
