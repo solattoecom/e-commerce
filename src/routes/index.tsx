@@ -266,6 +266,17 @@ function Index() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [scrolled, setScrolled] = useState(false);
   const [busca, setBusca] = useState("");
+  const [showCart, setShowCart] = useState(false);
+  const cart = useCart(user?.id ?? null);
+
+  const handleAddToCart = async (produtoId: string) => {
+    if (!user) {
+      setShowAccess(true);
+      return;
+    }
+    await cart.addItem(produtoId);
+    setShowCart(true);
+  };
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > window.innerHeight * 0.7);
