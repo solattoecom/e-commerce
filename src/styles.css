@@ -182,7 +182,7 @@
 @keyframes c5-size5 { 0%,100% { --c5-s5: 50%; } 50% { --c5-s5: 85%; } }
 
 /* Sapato girando em 3D (turntable) */
-.shoe3d-stage { perspective: 1100px; }
+.shoe3d-stage { perspective: 1100px; mix-blend-mode: multiply; }
 .shoe3d {
   position: relative;
   width: min(430px, 40vw);
@@ -196,8 +196,6 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
-  mix-blend-mode: multiply;
-  filter: drop-shadow(0 24px 30px rgba(0, 0, 0, 0.35));
   opacity: 0;
   animation: shoe3d-cycle 6s linear infinite;
 }
