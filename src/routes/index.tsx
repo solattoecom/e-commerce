@@ -297,7 +297,7 @@ function Index() {
       <main id="inicio">
         <section className="relative min-h-[620px] overflow-hidden bg-primary text-primary-foreground">
           <img src={heroImage} alt="Sapato social Solatto em couro preto" width={1600} height={900} className="absolute inset-0 h-full w-full object-cover object-[67%_center]" />
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/80 via-primary/25 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-primary via-primary/70 to-transparent" />
           <div className="relative mx-auto flex min-h-[620px] w-full max-w-[1180px] items-center px-5 py-20">
             <div className="max-w-lg animate-fade-in">
               <p className="mb-4 text-xs font-bold uppercase tracking-[0.2em]">Nova coleção · Movimento 26</p>
