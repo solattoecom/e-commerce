@@ -85,7 +85,7 @@ function CategoryCard({ name, description, images }: { name: string; description
   return (
     <a
       href="#novidades"
-      className="group relative aspect-[3/4] overflow-hidden bg-muted"
+      className="group relative aspect-square overflow-hidden bg-[#F5EFE6]"
       onMouseEnter={() => setIndex(1)}
       onMouseLeave={() => setIndex(0)}
       onFocus={() => setIndex(1)}
@@ -99,7 +99,7 @@ function CategoryCard({ name, description, images }: { name: string; description
           width={1200}
           height={1200}
           loading="lazy"
-          className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-300 ${imageIndex === index ? "opacity-100" : "opacity-0"}`}
+          className={`absolute inset-0 h-full w-full object-contain object-center transition-opacity duration-300 ${imageIndex === index ? "opacity-100" : "opacity-0"}`}
         />
       ))}
       <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-foreground/85 to-transparent px-6 pb-7 pt-24 text-background">
