@@ -12,6 +12,7 @@ import {
   Store,
   Truck,
   User,
+  X,
 } from "lucide-react";
 
 import social1 from "@/assets/social-foto-1.jpeg.asset.json";
@@ -28,6 +29,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ProductGrid } from "@/components/ProductGrid";
 import { signIn, signOut, signUpWithType, useAuth, type ClientType } from "@/hooks/useAuth";
+import { useCart } from "@/hooks/useCart";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -82,13 +84,13 @@ const headerLinks: [string, string][] = [
   ["ajuda", "#faq"],
 ];
 
-const headerCategories: [string, string][] = [
-  ["Social", "#categorias"],
-  ["Oxford", "#categorias"],
-  ["Infantil", "#categorias"],
-  ["Lançamentos", "#novidades"],
-  ["Mais vendidos", "#novidades"],
-  ["Promoções", "#novidades"],
+const headerCategories: { label: string; href: string; desktopOnly?: boolean }[] = [
+  { label: "Social", href: "#categorias" },
+  { label: "Oxford", href: "#categorias" },
+  { label: "Infantil", href: "#categorias" },
+  { label: "Lançamentos", href: "#novidades", desktopOnly: true },
+  { label: "Mais vendidos", href: "#novidades", desktopOnly: true },
+  { label: "Promoções", href: "#novidades", desktopOnly: true },
 ];
 
 function StickyHeader({
@@ -98,6 +100,8 @@ function StickyHeader({
   onSignOut,
   busca,
   onBuscaChange,
+  cartCount,
+  onOpenCart,
 }: {
   visible: boolean;
   user: { email?: string } | null;
@@ -105,6 +109,8 @@ function StickyHeader({
   onSignOut: () => void;
   busca: string;
   onBuscaChange: (value: string) => void;
+  cartCount: number;
+  onOpenCart: () => void;
 }) {
   return (
     <header
@@ -174,20 +180,27 @@ function StickyHeader({
           >
             <User className="size-[18px]" />
           </button>
-          <span className="flex items-center gap-1 pl-1 text-sm">
+          <button
+            type="button"
+            onClick={onOpenCart}
+            aria-label="Abrir sacola"
+            className="flex cursor-pointer items-center gap-1 rounded-full px-2 py-1.5 text-sm transition-colors hover:bg-muted"
+          >
             <ShoppingBag className="size-[18px]" />
-            <span className="text-muted-foreground">(0)</span>
-          </span>
+            <span className="text-muted-foreground">({cartCount})</span>
+          </button>
         </div>
       </div>
 
       <div className="border-t border-border/70">
         <div className="mx-auto flex w-full max-w-[1180px] items-center gap-5 overflow-x-auto px-4 py-2 text-sm [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-6 sm:px-5">
-          {headerCategories.map(([label, href]) => (
+          {headerCategories.map(({ label, href, desktopOnly }) => (
             <a
               key={label}
               href={href}
-              className="shrink-0 cursor-pointer whitespace-nowrap text-foreground/70 transition-colors hover:text-foreground"
+              className={`shrink-0 cursor-pointer whitespace-nowrap text-foreground/70 transition-colors hover:text-foreground ${
+                desktopOnly ? "hidden sm:inline" : ""
+              }`}
             >
               {label}
             </a>
@@ -255,6 +268,17 @@ function Index() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [scrolled, setScrolled] = useState(false);
   const [busca, setBusca] = useState("");
+  const [showCart, setShowCart] = useState(false);
+  const cart = useCart(user?.id ?? null);
+
+  const handleAddToCart = async (produtoId: string) => {
+    if (!user) {
+      setShowAccess(true);
+      return;
+    }
+    await cart.addItem(produtoId);
+    setShowCart(true);
+  };
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > window.innerHeight * 0.7);
@@ -329,7 +353,64 @@ function Index() {
         onSignOut={() => signOut()}
         busca={busca}
         onBuscaChange={setBusca}
+        cartCount={cart.count}
+        onOpenCart={() => (user ? setShowCart(true) : setShowAccess(true))}
       />
+      {showCart && (
+        <div className="fixed inset-0 z-[60] flex justify-end bg-foreground/40" onClick={() => setShowCart(false)}>
+          <aside
+            className="flex h-full w-full max-w-md flex-col bg-background shadow-xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-border px-5 py-4">
+              <h2 className="text-lg font-semibold">Sua sacola</h2>
+              <button type="button" onClick={() => setShowCart(false)} aria-label="Fechar sacola" className="cursor-pointer rounded-full p-2 hover:bg-muted">
+                <X className="size-5" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto px-5 py-4">
+              {cart.items.length === 0 ? (
+                <p className="py-10 text-center text-sm text-muted-foreground">Sua sacola está vazia.</p>
+              ) : (
+                <ul className="grid gap-4">
+                  {cart.items.map((item) => {
+                    const image = [...(item.products?.product_images ?? [])].sort((a, b) => a.ordem - b.ordem)[0];
+                    const preco = item.products?.product_prices?.[0]?.preco ?? 0;
+                    return (
+                      <li key={item.id} className="flex gap-3 border-b border-border pb-4">
+                        <div className="size-20 shrink-0 overflow-hidden rounded-md bg-muted">
+                          {image ? <img src={image.url} alt={item.products?.nome ?? ""} className="h-full w-full object-contain" /> : null}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium">{item.products?.nome}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {Number(preco).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                          </p>
+                          <div className="mt-2 flex items-center gap-2">
+                            <button type="button" aria-label="Diminuir" onClick={() => cart.setQuantity(item.id, item.quantidade - 1)} className="size-7 cursor-pointer rounded-full border border-border hover:bg-muted">−</button>
+                            <span className="w-6 text-center text-sm">{item.quantidade}</span>
+                            <button type="button" aria-label="Aumentar" onClick={() => cart.setQuantity(item.id, item.quantidade + 1)} className="size-7 cursor-pointer rounded-full border border-border hover:bg-muted">+</button>
+                            <button type="button" onClick={() => cart.removeItem(item.id)} className="ml-auto cursor-pointer text-xs text-muted-foreground underline">Remover</button>
+                          </div>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+            <div className="border-t border-border px-5 py-4">
+              <div className="mb-3 flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Total</span>
+                <span className="text-lg font-semibold">
+                  {Number(cart.total).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                </span>
+              </div>
+              <Button className="h-12 w-full rounded-md bg-foreground text-background hover:bg-foreground/90">Finalizar compra</Button>
+            </div>
+          </aside>
+        </div>
+      )}
       {showAccess && (
         <div className="fixed inset-0 z-50 grid min-h-[100dvh] place-items-center overflow-hidden bg-black px-5 py-8">
           <video
@@ -541,7 +622,7 @@ function Index() {
                 {user ? "Preços exclusivos do seu tipo de conta." : "Entre na sua conta para ver os preços do seu perfil."}
               </p>
             </div>
-            <ProductGrid signedIn={Boolean(user)} refreshKey={refreshKey} search={busca} />
+            <ProductGrid signedIn={Boolean(user)} refreshKey={refreshKey} search={busca} onAdd={handleAddToCart} />
           </div>
         </section>
 
