@@ -184,3 +184,13 @@
 @media (prefers-reduced-motion: reduce) {
   .c5-animated-gradient, .login-shoe { animation: none; }
 }
+
+.hero-title {
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+  font-family: "Readex Pro", system-ui, -apple-system, sans-serif;
+}
+
+.hero-readex {
+  font-family: "Readex Pro", system-ui, -apple-system, sans-serif;
+}
