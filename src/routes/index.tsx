@@ -136,13 +136,12 @@ function Index() {
       {showAccess && (
         <div className="fixed inset-0 z-50 grid min-h-[100dvh] place-items-center overflow-hidden bg-primary px-5 py-8">
           <img
-            src={heroImage}
-            alt="Tênis Solatto em destaque"
-            width={1600}
-            height={900}
-            className="login-shoe absolute inset-0 h-full w-full object-cover object-[68%_center] opacity-70"
+            src={heroBg.url}
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 h-full w-full scale-110 object-cover opacity-45 blur-[6px]"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-primary via-primary/85 to-primary/10" />
+          <div className="absolute inset-0 bg-gradient-to-r from-primary via-primary/85 to-primary/40" />
           <div className="relative z-10 grid w-full max-w-[1100px] items-center md:grid-cols-[0.95fr_1.05fr]">
             <div className="access-panel max-w-md text-primary-foreground">
               <p className="mb-8 text-2xl font-bold uppercase tracking-[0.24em]">Solatto</p>
