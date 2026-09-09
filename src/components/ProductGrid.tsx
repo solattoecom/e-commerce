@@ -97,6 +97,13 @@ export function ProductGrid({
                 ) : (
                   <p className="text-sm text-muted-foreground">Entre na sua conta para ver o preço</p>
                 )}
+                <button
+                  type="button"
+                  onClick={() => onAdd?.(product.id)}
+                  className="mt-3 w-full cursor-pointer rounded-full bg-foreground px-4 py-2.5 text-sm font-semibold text-background transition-colors hover:bg-foreground/90"
+                >
+                  {signedIn ? "Adicionar à sacola" : "Entrar para comprar"}
+                </button>
               </div>
             </div>
           </article>
