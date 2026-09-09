@@ -319,9 +319,17 @@ function Index() {
           </div>
         </section>
 
-        <section id="novidades" className="bg-muted py-16 text-center">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-foreground/60">Solatto essencial</p>
-          <h2 className="mx-auto mt-4 max-w-2xl px-5 text-3xl font-medium leading-tight sm:text-5xl">Feito no Brasil, pensado para acompanhar você.</h2>
+        <section id="novidades" className="bg-muted py-16">
+          <div className="mx-auto w-full max-w-[1180px] px-5">
+            <div className="mb-10 text-center">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-foreground/60">Solatto essencial</p>
+              <h2 className="mx-auto mt-4 max-w-2xl text-3xl font-medium leading-tight sm:text-5xl">Feito no Brasil, pensado para acompanhar você.</h2>
+              <p className="mt-4 text-sm text-muted-foreground">
+                {user ? "Preços exclusivos do seu tipo de conta." : "Entre na sua conta para ver os preços do seu perfil."}
+              </p>
+            </div>
+            <ProductGrid signedIn={Boolean(user)} />
+          </div>
         </section>
 
         <section id="faq" className="py-20 max-[900px]:py-[60px]">
