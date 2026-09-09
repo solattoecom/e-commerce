@@ -1,12 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
-  Apple,
+  ArrowLeft,
+  Building2,
   ChevronDown,
   ChevronUp,
   Menu,
   Search,
   ShoppingBag,
+  Store,
+  Truck,
   UserRound,
   X,
 } from "lucide-react";
