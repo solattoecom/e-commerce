@@ -182,12 +182,16 @@
 @keyframes c5-size5 { 0%,100% { --c5-s5: 50%; } 50% { --c5-s5: 85%; } }
 
 /* Sapato girando em 3D (turntable) */
-.shoe3d-stage { perspective: 1100px; mix-blend-mode: multiply; }
+.shoe3d-stage { perspective: 1100px; }
 .shoe3d {
   position: relative;
   width: min(430px, 40vw);
   aspect-ratio: 1 / 1;
   transform-style: preserve-3d;
+  border-radius: 9999px;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 35%, #ffffff 0%, #f2f0ee 62%, #e2ded9 100%);
+  box-shadow: 0 30px 60px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.6);
   animation: shoe3d-turn 6s linear infinite;
 }
 .shoe3d-frame {
@@ -196,6 +200,8 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
+  padding: 8%;
+  mix-blend-mode: multiply;
   opacity: 0;
   animation: shoe3d-cycle 6s linear infinite;
 }
