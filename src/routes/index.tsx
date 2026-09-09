@@ -168,7 +168,7 @@ function Index() {
                   </div>
                   <Button
                     variant="link"
-                    className="mt-5 h-auto px-0 text-sm font-semibold text-primary-foreground hover:text-primary-foreground/80"
+                    className="mt-5 h-auto px-0 text-xs text-primary-foreground hover:text-primary-foreground/80"
                     onClick={() => setShowLogin(true)}
                   >
                     Já tenho uma conta
@@ -218,7 +218,7 @@ function Index() {
                 </>
               ) : null}
 
-              <Button variant="link" className="mt-5 h-auto px-0 text-xs text-primary-foreground/75 hover:text-primary-foreground" onClick={closeAccess}>
+              <Button variant="link" className="mt-9 h-auto px-0 text-xs text-primary-foreground/75 hover:text-primary-foreground" onClick={closeAccess}>
                 Continuar como visitante
               </Button>
             </div>
