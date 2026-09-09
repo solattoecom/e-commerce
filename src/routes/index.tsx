@@ -192,13 +192,7 @@ function Index() {
             </div>
             <div className="grid gap-4 md:grid-cols-3">
               {categories.map((category) => (
-                <a key={category.name} href="#novidades" className="group relative aspect-[3/4] overflow-hidden bg-muted">
-                  <img src={category.image} alt={`Categoria de ${category.name}`} width={768} height={1024} loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" />
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-foreground/85 to-transparent px-6 pb-7 pt-24 text-background">
-                    <h3 className="text-2xl font-semibold">{category.name}</h3>
-                    <p className="mt-1 text-sm text-background/80">{category.description}</p>
-                  </div>
-                </a>
+                <CategoryCard key={category.name} {...category} />
               ))}
             </div>
           </div>
