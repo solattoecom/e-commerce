@@ -14,7 +14,15 @@ type Product = {
 const brl = (value: number) =>
   value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-export function ProductGrid({ signedIn, refreshKey = 0 }: { signedIn: boolean; refreshKey?: number }) {
+export function ProductGrid({
+  signedIn,
+  refreshKey = 0,
+  search = "",
+}: {
+  signedIn: boolean;
+  refreshKey?: number;
+  search?: string;
+}) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
