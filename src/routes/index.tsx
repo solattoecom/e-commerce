@@ -12,6 +12,7 @@ import {
   Store,
   Truck,
   User,
+  X,
 } from "lucide-react";
 
 import social1 from "@/assets/social-foto-1.jpeg.asset.json";
