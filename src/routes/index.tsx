@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 
 import heroImage from "@/assets/solatto-hero.jpg";
+import heroBg from "@/assets/hero-bg.jpg.asset.json";
 import social1 from "@/assets/social-1.jpg.asset.json";
 import social2 from "@/assets/social-2.jpg.asset.json";
 import social3 from "@/assets/social-3.jpg.asset.json";
