@@ -182,7 +182,7 @@ function StickyHeader({
       </div>
 
       <div className="border-t border-border/70">
-        <div className="mx-auto flex w-full max-w-[1180px] items-center gap-5 overflow-x-auto px-4 py-2 text-sm [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-6 sm:px-5">
+        <div className="mx-auto flex w-full max-w-[1180px] items-center gap-4 overflow-x-auto px-4 py-1 text-xs [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-6 sm:px-5 sm:py-2 sm:text-sm">
           {headerCategories.map(([label, href]) => (
             <a
               key={label}
