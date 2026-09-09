@@ -178,10 +178,15 @@ function StickyHeader({
           >
             <User className="size-[18px]" />
           </button>
-          <span className="flex items-center gap-1 pl-1 text-sm">
+          <button
+            type="button"
+            onClick={onOpenCart}
+            aria-label="Abrir sacola"
+            className="flex cursor-pointer items-center gap-1 rounded-full px-2 py-1.5 text-sm transition-colors hover:bg-muted"
+          >
             <ShoppingBag className="size-[18px]" />
-            <span className="text-muted-foreground">(0)</span>
-          </span>
+            <span className="text-muted-foreground">({cartCount})</span>
+          </button>
         </div>
       </div>
 
