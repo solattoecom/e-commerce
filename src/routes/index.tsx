@@ -82,13 +82,13 @@ const headerLinks: [string, string][] = [
   ["ajuda", "#faq"],
 ];
 
-const headerCategories: [string, string][] = [
-  ["Social", "#categorias"],
-  ["Oxford", "#categorias"],
-  ["Infantil", "#categorias"],
-  ["Lançamentos", "#novidades"],
-  ["Mais vendidos", "#novidades"],
-  ["Promoções", "#novidades"],
+const headerCategories: { label: string; href: string; desktopOnly?: boolean }[] = [
+  { label: "Social", href: "#categorias" },
+  { label: "Oxford", href: "#categorias" },
+  { label: "Infantil", href: "#categorias" },
+  { label: "Lançamentos", href: "#novidades", desktopOnly: true },
+  { label: "Mais vendidos", href: "#novidades", desktopOnly: true },
+  { label: "Promoções", href: "#novidades", desktopOnly: true },
 ];
 
 function StickyHeader({
