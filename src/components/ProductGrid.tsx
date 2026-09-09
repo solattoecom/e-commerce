@@ -18,10 +18,12 @@ export function ProductGrid({
   signedIn,
   refreshKey = 0,
   search = "",
+  onAdd,
 }: {
   signedIn: boolean;
   refreshKey?: number;
   search?: string;
+  onAdd?: (produtoId: string) => void;
 }) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
