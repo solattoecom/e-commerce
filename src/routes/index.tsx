@@ -121,18 +121,66 @@ const accountTypes = [
 type AccountType = (typeof accountTypes)[number];
 
 function Index() {
+  const { user, loading } = useAuth();
   const [showAccess, setShowAccess] = useState(true);
   const [accountType, setAccountType] = useState<AccountType | null>(null);
   const [showLogin, setShowLogin] = useState(false);
   const [form, setForm] = useState({ nome: "", sobrenome: "", email: "", senha: "" });
   const [mobileMenu, setMobileMenu] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [busy, setBusy] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!loading && user) setShowAccess(false);
+  }, [loading, user]);
 
   const closeAccess = () => {
     setShowAccess(false);
     setAccountType(null);
     setShowLogin(false);
+    setErro(null);
   };
+
+  const traduzErro = (message: string) => {
+    if (/already registered|already been registered/i.test(message)) return "Este e-mail já possui uma conta. Tente entrar.";
+    if (/Invalid login credentials/i.test(message)) return "E-mail ou senha incorretos.";
+    if (/pwned|compromised/i.test(message)) return "Escolha uma senha mais segura.";
+    if (/at least/i.test(message)) return "A senha precisa ter pelo menos 8 caracteres.";
+    return "Não foi possível concluir. Tente novamente.";
+  };
+
+  const handleSignUp = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!accountType) return;
+    setBusy(true);
+    setErro(null);
+    try {
+      await signUpWithType({ ...form, tipo: accountType.id as ClientType });
+      setForm({ nome: "", sobrenome: "", email: "", senha: "" });
+      closeAccess();
+    } catch (error) {
+      setErro(traduzErro(error instanceof Error ? error.message : ""));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleSignIn = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setBusy(true);
+    setErro(null);
+    try {
+      await signIn(form.email, form.senha);
+      setForm({ nome: "", sobrenome: "", email: "", senha: "" });
+      closeAccess();
+    } catch (error) {
+      setErro(traduzErro(error instanceof Error ? error.message : ""));
+    } finally {
+      setBusy(false);
+    }
+  };
+
 
   return (
     <div className="min-h-screen bg-background text-foreground">
