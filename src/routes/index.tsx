@@ -321,6 +321,14 @@ function Index() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <StickyHeader
+        visible={scrolled && !showAccess}
+        user={user}
+        onEnter={() => setShowAccess(true)}
+        onSignOut={() => signOut()}
+        busca={busca}
+        onBuscaChange={setBusca}
+      />
       {showAccess && (
         <div className="fixed inset-0 z-50 grid min-h-[100dvh] place-items-center overflow-hidden bg-black px-5 py-8">
           <video
