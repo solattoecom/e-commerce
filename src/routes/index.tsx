@@ -121,6 +121,7 @@ type AccountType = (typeof accountTypes)[number];
 function Index() {
   const [showAccess, setShowAccess] = useState(true);
   const [accountType, setAccountType] = useState<AccountType | null>(null);
+  const [showLogin, setShowLogin] = useState(false);
   const [form, setForm] = useState({ nome: "", sobrenome: "", email: "", senha: "" });
   const [mobileMenu, setMobileMenu] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -128,6 +129,7 @@ function Index() {
   const closeAccess = () => {
     setShowAccess(false);
     setAccountType(null);
+    setShowLogin(false);
   };
 
   return (
@@ -139,7 +141,7 @@ function Index() {
             <div className="access-panel max-w-md text-primary-foreground">
               <p className="mb-8 text-2xl font-bold uppercase tracking-[0.24em]">Solatto</p>
 
-              {!accountType ? (
+              {!accountType && !showLogin ? (
                 <>
                   <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] opacity-80">Bem-vindo à sua nova jornada</p>
                   <h1 className="mb-5 text-4xl font-semibold leading-[1.05] tracking-normal sm:text-5xl">Como você quer comprar?</h1>
@@ -164,8 +166,34 @@ function Index() {
                       );
                     })}
                   </div>
+                  <Button
+                    variant="link"
+                    className="mt-5 h-auto px-0 text-sm font-semibold text-primary-foreground hover:text-primary-foreground/80"
+                    onClick={() => setShowLogin(true)}
+                  >
+                    Já tenho uma conta
+                  </Button>
                 </>
-              ) : (
+              ) : showLogin ? (
+                <>
+                  <Button variant="link" className="mb-3 h-auto px-0 text-xs text-primary-foreground/80 hover:text-primary-foreground" onClick={() => setShowLogin(false)}>
+                    <ArrowLeft className="size-3" /> Voltar
+                  </Button>
+                  <h1 className="mb-2 text-3xl font-semibold leading-tight sm:text-4xl">Entrar na sua conta</h1>
+                  <p className="mb-7 max-w-sm text-sm leading-6 opacity-85">Use seu e-mail e senha para continuar.</p>
+                  <form
+                    className="grid gap-3"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      closeAccess();
+                    }}
+                  >
+                    <Input required type="email" aria-label="E-mail" placeholder="E-mail" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} maxLength={255} className="h-12 border-primary-foreground/40 bg-background/75 text-foreground backdrop-blur-sm placeholder:text-muted-foreground" />
+                    <Input required type="password" aria-label="Senha" placeholder="Senha" value={form.senha} onChange={(e) => setForm({ ...form, senha: e.target.value })} minLength={8} maxLength={72} className="h-12 border-primary-foreground/40 bg-background/75 text-foreground backdrop-blur-sm placeholder:text-muted-foreground" />
+                    <Button type="submit" className="h-12 rounded-md bg-foreground text-background hover:bg-foreground/90">Entrar</Button>
+                  </form>
+                </>
+              ) : accountType ? (
                 <>
                   <Button variant="link" className="mb-3 h-auto px-0 text-xs text-primary-foreground/80 hover:text-primary-foreground" onClick={() => setAccountType(null)}>
                     <ArrowLeft className="size-3" /> Voltar
@@ -188,7 +216,7 @@ function Index() {
                     <Button type="submit" className="h-12 rounded-md bg-foreground text-background hover:bg-foreground/90">Criar conta</Button>
                   </form>
                 </>
-              )}
+              ) : null}
 
               <Button variant="link" className="mt-5 h-auto px-0 text-xs text-primary-foreground/75 hover:text-primary-foreground" onClick={closeAccess}>
                 Continuar como visitante
