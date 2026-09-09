@@ -1,0 +1,80 @@
+import { useEffect, useState } from "react";
+
+import { supabase } from "@/integrations/supabase/client";
+
+type Product = {
+  id: string;
+  nome: string;
+  descricao: string | null;
+  categories: { nome: string } | null;
+  product_images: { url: string; ordem: number }[];
+  product_prices: { preco: number; preco_original: number | null }[];
+};
+
+const brl = (value: number) =>
+  value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+export function ProductGrid({ signedIn, refreshKey = 0 }: { signedIn: boolean; refreshKey?: number }) {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    supabase
+      .from("products")
+      .select("id, nome, descricao, categories(nome), product_images(url, ordem), product_prices(preco, preco_original)")
+      .eq("ativo", true)
+      .order("criado_em", { ascending: true })
+      .then(({ data }) => {
+        if (!active) return;
+        setProducts((data as unknown as Product[]) ?? []);
+        setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [signedIn, refreshKey]);
+
+  if (loading) {
+    return <p className="text-center text-sm text-muted-foreground">Carregando produtos…</p>;
+  }
+
+  if (products.length === 0) {
+    return <p className="text-center text-sm text-muted-foreground">Nenhum produto disponível no momento.</p>;
+  }
+
+  return (
+    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      {products.map((product) => {
+        const image = [...product.product_images].sort((a, b) => a.ordem - b.ordem)[0];
+        const price = product.product_prices[0];
+        return (
+          <article key={product.id} className="group flex flex-col overflow-hidden rounded-xl border border-border bg-background">
+            <div className="aspect-square bg-[#F5EFE6]">
+              {image ? (
+                <img src={image.url} alt={product.nome} loading="lazy" className="h-full w-full object-contain object-center" />
+              ) : null}
+            </div>
+            <div className="flex flex-1 flex-col gap-2 p-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{product.categories?.nome}</p>
+              <h3 className="text-lg font-semibold">{product.nome}</h3>
+              <p className="text-sm leading-6 text-muted-foreground">{product.descricao}</p>
+              <div className="mt-auto pt-3">
+                {price ? (
+                  <p className="flex items-baseline gap-2">
+                    <span className="text-xl font-semibold">{brl(Number(price.preco))}</span>
+                    {price.preco_original ? (
+                      <span className="text-sm text-muted-foreground line-through">{brl(Number(price.preco_original))}</span>
+                    ) : null}
+                  </p>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Entre na sua conta para ver o preço</p>
+                )}
+              </div>
+            </div>
+          </article>
+        );
+      })}
+    </div>
+  );
+}

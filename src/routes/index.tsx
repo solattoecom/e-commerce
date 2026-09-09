@@ -26,6 +26,8 @@ import infantil2 from "@/assets/infantil-2.jpg.asset.json";
 import infantil3 from "@/assets/infantil-3.jpg.asset.json";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ProductGrid } from "@/components/ProductGrid";
+import { signIn, signOut, signUpWithType, useAuth, type ClientType } from "@/hooks/useAuth";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -119,18 +121,69 @@ const accountTypes = [
 type AccountType = (typeof accountTypes)[number];
 
 function Index() {
+  const { user, loading } = useAuth();
   const [showAccess, setShowAccess] = useState(true);
   const [accountType, setAccountType] = useState<AccountType | null>(null);
   const [showLogin, setShowLogin] = useState(false);
   const [form, setForm] = useState({ nome: "", sobrenome: "", email: "", senha: "" });
   const [mobileMenu, setMobileMenu] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [busy, setBusy] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  useEffect(() => {
+    if (!loading && user) setShowAccess(false);
+  }, [loading, user]);
 
   const closeAccess = () => {
     setShowAccess(false);
     setAccountType(null);
     setShowLogin(false);
+    setErro(null);
   };
+
+  const traduzErro = (message: string) => {
+    if (/already registered|already been registered/i.test(message)) return "Este e-mail já possui uma conta. Tente entrar.";
+    if (/Invalid login credentials/i.test(message)) return "E-mail ou senha incorretos.";
+    if (/pwned|compromised/i.test(message)) return "Escolha uma senha mais segura.";
+    if (/at least/i.test(message)) return "A senha precisa ter pelo menos 8 caracteres.";
+    return "Não foi possível concluir. Tente novamente.";
+  };
+
+  const handleSignUp = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!accountType) return;
+    setBusy(true);
+    setErro(null);
+    try {
+      await signUpWithType({ ...form, tipo: accountType.id as ClientType });
+      setForm({ nome: "", sobrenome: "", email: "", senha: "" });
+      setRefreshKey((value) => value + 1);
+      closeAccess();
+    } catch (error) {
+      setErro(traduzErro(error instanceof Error ? error.message : ""));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleSignIn = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setBusy(true);
+    setErro(null);
+    try {
+      await signIn(form.email, form.senha);
+      setForm({ nome: "", sobrenome: "", email: "", senha: "" });
+      setRefreshKey((value) => value + 1);
+      closeAccess();
+    } catch (error) {
+      setErro(traduzErro(error instanceof Error ? error.message : ""));
+    } finally {
+      setBusy(false);
+    }
+  };
+
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -174,16 +227,11 @@ function Index() {
                   </Button>
                   <h1 className="mb-2 text-3xl font-semibold leading-tight sm:text-4xl">Entrar na sua conta</h1>
                   <p className="mb-7 max-w-sm text-sm leading-6 opacity-85">Use seu e-mail e senha para continuar.</p>
-                  <form
-                    className="grid gap-3"
-                    onSubmit={(event) => {
-                      event.preventDefault();
-                      closeAccess();
-                    }}
-                  >
+                  <form className="grid gap-3" onSubmit={handleSignIn}>
                     <Input required type="email" aria-label="E-mail" placeholder="E-mail" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} maxLength={255} className="h-12 border-primary-foreground/40 bg-background/75 text-foreground backdrop-blur-sm placeholder:text-muted-foreground" />
                     <Input required type="password" aria-label="Senha" placeholder="Senha" value={form.senha} onChange={(e) => setForm({ ...form, senha: e.target.value })} minLength={8} maxLength={72} className="h-12 border-primary-foreground/40 bg-background/75 text-foreground backdrop-blur-sm placeholder:text-muted-foreground" />
-                    <Button type="submit" className="h-12 rounded-md bg-foreground text-background hover:bg-foreground/90">Entrar</Button>
+                    {erro ? <p className="text-sm text-primary-foreground">{erro}</p> : null}
+                    <Button type="submit" disabled={busy} className="h-12 rounded-md bg-foreground text-background hover:bg-foreground/90">{busy ? "Entrando…" : "Entrar"}</Button>
                   </form>
                 </>
               ) : accountType ? (
@@ -193,20 +241,15 @@ function Index() {
                   </Button>
                   <h1 className="mb-2 text-3xl font-semibold leading-tight sm:text-4xl">Cadastro {accountType.name}</h1>
                   <p className="mb-7 max-w-sm text-sm leading-6 opacity-85">{accountType.description}</p>
-                  <form
-                    className="grid gap-3"
-                    onSubmit={(event) => {
-                      event.preventDefault();
-                      closeAccess();
-                    }}
-                  >
+                  <form className="grid gap-3" onSubmit={handleSignUp}>
                     <div className="grid gap-3 sm:grid-cols-2">
                       <Input required aria-label="Nome" placeholder="Nome" value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} maxLength={60} className="h-12 border-primary-foreground/40 bg-background/75 text-foreground backdrop-blur-sm placeholder:text-muted-foreground" />
                       <Input required aria-label="Sobrenome" placeholder="Sobrenome" value={form.sobrenome} onChange={(e) => setForm({ ...form, sobrenome: e.target.value })} maxLength={60} className="h-12 border-primary-foreground/40 bg-background/75 text-foreground backdrop-blur-sm placeholder:text-muted-foreground" />
                     </div>
                     <Input required type="email" aria-label="E-mail" placeholder="E-mail" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} maxLength={255} className="h-12 border-primary-foreground/40 bg-background/75 text-foreground backdrop-blur-sm placeholder:text-muted-foreground" />
                     <Input required type="password" aria-label="Senha" placeholder="Senha" value={form.senha} onChange={(e) => setForm({ ...form, senha: e.target.value })} minLength={8} maxLength={72} className="h-12 border-primary-foreground/40 bg-background/75 text-foreground backdrop-blur-sm placeholder:text-muted-foreground" />
-                    <Button type="submit" className="h-12 rounded-md bg-foreground text-background hover:bg-foreground/90">Criar conta</Button>
+                    {erro ? <p className="text-sm text-primary-foreground">{erro}</p> : null}
+                    <Button type="submit" disabled={busy} className="h-12 rounded-md bg-foreground text-background hover:bg-foreground/90">{busy ? "Criando…" : "Criar conta"}</Button>
                   </form>
                 </>
               ) : null}
@@ -242,7 +285,11 @@ function Index() {
             <Input aria-label="Buscar produtos" placeholder="O que você procura?" className="h-9 border-0 p-0 shadow-none focus-visible:ring-0" />
             <Search className="size-4 text-muted-foreground" />
           </div>
-          <Button variant="ghost" size="icon" aria-label="Minha conta" onClick={() => setShowAccess(true)}><UserRound /></Button>
+          {user ? (
+            <Button variant="ghost" className="text-sm" onClick={() => signOut()}>Sair</Button>
+          ) : (
+            <Button variant="ghost" size="icon" aria-label="Minha conta" onClick={() => setShowAccess(true)}><UserRound /></Button>
+          )}
           <Button variant="ghost" size="icon" aria-label="Sacola de compras"><ShoppingBag /></Button>
         </div>
       </header>
@@ -275,9 +322,17 @@ function Index() {
           </div>
         </section>
 
-        <section id="novidades" className="bg-muted py-16 text-center">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-foreground/60">Solatto essencial</p>
-          <h2 className="mx-auto mt-4 max-w-2xl px-5 text-3xl font-medium leading-tight sm:text-5xl">Feito no Brasil, pensado para acompanhar você.</h2>
+        <section id="novidades" className="bg-muted py-16">
+          <div className="mx-auto w-full max-w-[1180px] px-5">
+            <div className="mb-10 text-center">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-foreground/60">Solatto essencial</p>
+              <h2 className="mx-auto mt-4 max-w-2xl text-3xl font-medium leading-tight sm:text-5xl">Feito no Brasil, pensado para acompanhar você.</h2>
+              <p className="mt-4 text-sm text-muted-foreground">
+                {user ? "Preços exclusivos do seu tipo de conta." : "Entre na sua conta para ver os preços do seu perfil."}
+              </p>
+            </div>
+            <ProductGrid signedIn={Boolean(user)} refreshKey={refreshKey} />
+          </div>
         </section>
 
         <section id="faq" className="py-20 max-[900px]:py-[60px]">
