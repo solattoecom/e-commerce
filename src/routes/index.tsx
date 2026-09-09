@@ -231,7 +231,7 @@ function Index() {
                   alt=""
                   width={1200}
                   height={1200}
-                  className="relative z-10 w-full max-w-[540px] rotate-[-5deg] object-contain drop-shadow-[0_30px_35px_rgba(0,0,0,0.45)] [mask-image:radial-gradient(ellipse_72%_68%_at_50%_50%,black_58%,transparent_100%)]"
+                  className="relative z-10 w-full max-w-[540px] rotate-[-5deg] object-contain mix-blend-multiply drop-shadow-[0_30px_35px_rgba(0,0,0,0.45)] [mask-image:radial-gradient(ellipse_65%_60%_at_50%_52%,black_48%,transparent_100%)]"
                 />
               </div>
             ) : null}
