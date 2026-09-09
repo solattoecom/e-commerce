@@ -113,13 +113,13 @@ function StickyHeader({
       }`}
     >
       <div className="mx-auto flex w-full max-w-[1180px] items-center gap-4 px-5 py-3">
-        <a href="#inicio" className="shrink-0 text-xl font-bold uppercase tracking-[0.22em]">
+        <a href="#inicio" className="shrink-0 cursor-pointer text-xl font-bold uppercase tracking-[0.22em]">
           Solatto
         </a>
 
         <nav className="hidden items-center gap-5 text-sm lg:flex">
           {headerLinks.map(([label, href]) => (
-            <a key={label} href={href} className="text-foreground/80 transition-colors hover:text-foreground">
+            <a key={label} href={href} className="cursor-pointer text-foreground/80 transition-colors hover:text-foreground">
               {label}
             </a>
           ))}
@@ -143,7 +143,7 @@ function StickyHeader({
           <button
             type="submit"
             aria-label="Buscar"
-            className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-foreground transition-colors hover:bg-muted"
+            className="grid h-8 w-8 shrink-0 cursor-pointer place-items-center rounded-full text-foreground transition-colors hover:bg-muted"
           >
             <Search className="size-4" />
           </button>
@@ -153,14 +153,14 @@ function StickyHeader({
           <button
             type="button"
             aria-label="Favoritos"
-            className="hidden h-9 w-9 place-items-center rounded-full text-foreground transition-colors hover:bg-muted sm:grid"
+            className="hidden h-9 w-9 cursor-pointer place-items-center rounded-full text-foreground transition-colors hover:bg-muted sm:grid"
           >
             <Heart className="size-[18px]" />
           </button>
           <button
             type="button"
             aria-label="Lojas"
-            className="hidden h-9 w-9 place-items-center rounded-full text-foreground transition-colors hover:bg-muted md:grid"
+            className="hidden h-9 w-9 cursor-pointer place-items-center rounded-full text-foreground transition-colors hover:bg-muted md:grid"
           >
             <MapPin className="size-[18px]" />
           </button>
@@ -169,7 +169,7 @@ function StickyHeader({
             aria-label={user ? "Minha conta — sair" : "Minha conta"}
             title={user ? `${user.email} — clique para sair` : "Entrar na sua conta"}
             onClick={user ? onSignOut : onEnter}
-            className="grid h-9 w-9 place-items-center rounded-full text-foreground transition-colors hover:bg-muted"
+            className="grid h-9 w-9 cursor-pointer place-items-center rounded-full text-foreground transition-colors hover:bg-muted"
           >
             <User className="size-[18px]" />
           </button>
@@ -186,7 +186,7 @@ function StickyHeader({
             <a
               key={label}
               href={href}
-              className="shrink-0 whitespace-nowrap text-foreground/70 transition-colors hover:text-foreground"
+              className="shrink-0 cursor-pointer whitespace-nowrap text-foreground/70 transition-colors hover:text-foreground"
             >
               {label}
             </a>
@@ -452,7 +452,7 @@ function Index() {
                   <a
                     key={label}
                     href={href}
-                    className="hero-readex rounded-full px-5 py-2 text-sm text-neutral-300 transition-colors hover:text-white"
+                    className="hero-readex cursor-pointer rounded-full px-5 py-2 text-sm text-neutral-300 transition-colors hover:text-white"
                   >
                     {label}
                   </a>
@@ -463,7 +463,7 @@ function Index() {
                 <button
                   type="button"
                   onClick={() => signOut()}
-                  className="hero-readex rounded-full bg-white px-6 py-3 text-sm font-normal text-black transition-colors hover:bg-neutral-200"
+                  className="hero-readex cursor-pointer rounded-full bg-white px-6 py-3 text-sm font-normal text-black transition-colors hover:bg-neutral-200"
                 >
                   sair
                 </button>
@@ -471,7 +471,7 @@ function Index() {
                 <button
                   type="button"
                   onClick={() => setShowAccess(true)}
-                  className="hero-readex rounded-full bg-white px-6 py-3 text-sm font-normal text-black transition-colors hover:bg-neutral-200"
+                  className="hero-readex cursor-pointer rounded-full bg-white px-6 py-3 text-sm font-normal text-black transition-colors hover:bg-neutral-200"
                 >
                   entrar
                 </button>
