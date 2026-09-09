@@ -352,7 +352,64 @@ function Index() {
         onSignOut={() => signOut()}
         busca={busca}
         onBuscaChange={setBusca}
+        cartCount={cart.count}
+        onOpenCart={() => (user ? setShowCart(true) : setShowAccess(true))}
       />
+      {showCart && (
+        <div className="fixed inset-0 z-[60] flex justify-end bg-foreground/40" onClick={() => setShowCart(false)}>
+          <aside
+            className="flex h-full w-full max-w-md flex-col bg-background shadow-xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-border px-5 py-4">
+              <h2 className="text-lg font-semibold">Sua sacola</h2>
+              <button type="button" onClick={() => setShowCart(false)} aria-label="Fechar sacola" className="cursor-pointer rounded-full p-2 hover:bg-muted">
+                <X className="size-5" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto px-5 py-4">
+              {cart.items.length === 0 ? (
+                <p className="py-10 text-center text-sm text-muted-foreground">Sua sacola está vazia.</p>
+              ) : (
+                <ul className="grid gap-4">
+                  {cart.items.map((item) => {
+                    const image = [...(item.products?.product_images ?? [])].sort((a, b) => a.ordem - b.ordem)[0];
+                    const preco = item.products?.product_prices?.[0]?.preco ?? 0;
+                    return (
+                      <li key={item.id} className="flex gap-3 border-b border-border pb-4">
+                        <div className="size-20 shrink-0 overflow-hidden rounded-md bg-muted">
+                          {image ? <img src={image.url} alt={item.products?.nome ?? ""} className="h-full w-full object-contain" /> : null}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium">{item.products?.nome}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {Number(preco).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                          </p>
+                          <div className="mt-2 flex items-center gap-2">
+                            <button type="button" aria-label="Diminuir" onClick={() => cart.setQuantity(item.id, item.quantidade - 1)} className="size-7 cursor-pointer rounded-full border border-border hover:bg-muted">−</button>
+                            <span className="w-6 text-center text-sm">{item.quantidade}</span>
+                            <button type="button" aria-label="Aumentar" onClick={() => cart.setQuantity(item.id, item.quantidade + 1)} className="size-7 cursor-pointer rounded-full border border-border hover:bg-muted">+</button>
+                            <button type="button" onClick={() => cart.removeItem(item.id)} className="ml-auto cursor-pointer text-xs text-muted-foreground underline">Remover</button>
+                          </div>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+            <div className="border-t border-border px-5 py-4">
+              <div className="mb-3 flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Total</span>
+                <span className="text-lg font-semibold">
+                  {Number(cart.total).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                </span>
+              </div>
+              <Button className="h-12 w-full rounded-md bg-foreground text-background hover:bg-foreground/90">Finalizar compra</Button>
+            </div>
+          </aside>
+        </div>
+      )}
       {showAccess && (
         <div className="fixed inset-0 z-50 grid min-h-[100dvh] place-items-center overflow-hidden bg-black px-5 py-8">
           <video
