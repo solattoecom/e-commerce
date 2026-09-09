@@ -26,6 +26,8 @@ import infantil2 from "@/assets/infantil-2.jpg.asset.json";
 import infantil3 from "@/assets/infantil-3.jpg.asset.json";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ProductGrid } from "@/components/ProductGrid";
+import { signIn, signOut, signUpWithType, useAuth, type ClientType } from "@/hooks/useAuth";
 
 export const Route = createFileRoute("/")({
   head: () => ({
