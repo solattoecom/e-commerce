@@ -53,10 +53,59 @@ const faqs = [
 ];
 
 const categories = [
-  { name: "Sneakers", image: sneakersImage, description: "Leves para acompanhar o seu ritmo" },
-  { name: "Sociais", image: sociaisImage, description: "Elegância que se move com você" },
-  { name: "Sandálias", image: sandaliasImage, description: "Conforto em dias mais leves" },
+  {
+    name: "Social",
+    description: "Couro marrom com detalhe metálico",
+    images: [social1.url, social2.url, social3.url],
+  },
+  {
+    name: "Oxford",
+    description: "Clássico preto com cadarço",
+    images: [oxford1.url, oxford2.url, oxford3.url],
+  },
+  {
+    name: "Infantil",
+    description: "Conforto e elegância para os pequenos",
+    images: [infantil1.url, infantil2.url, infantil3.url],
+  },
 ];
+
+function CategoryCard({ name, description, images }: { name: string; description: string; images: string[] }) {
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    if (index === 0) return;
+    const timer = window.setInterval(() => setIndex((current) => (current % (images.length - 1)) + 1), 1200);
+    return () => window.clearInterval(timer);
+  }, [index === 0, images.length]);
+
+  return (
+    <a
+      href="#novidades"
+      className="group relative aspect-[3/4] overflow-hidden bg-muted"
+      onMouseEnter={() => setIndex(1)}
+      onMouseLeave={() => setIndex(0)}
+      onFocus={() => setIndex(1)}
+      onBlur={() => setIndex(0)}
+    >
+      {images.map((image, imageIndex) => (
+        <img
+          key={image}
+          src={image}
+          alt={`Calçado ${name} Solatto`}
+          width={1200}
+          height={1200}
+          loading="lazy"
+          className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-300 ${imageIndex === index ? "opacity-100" : "opacity-0"}`}
+        />
+      ))}
+      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-foreground/85 to-transparent px-6 pb-7 pt-24 text-background">
+        <h3 className="text-2xl font-semibold">{name}</h3>
+        <p className="mt-1 text-sm text-background/80">{description}</p>
+      </div>
+    </a>
+  );
+}
 
 function Index() {
   const [showAccess, setShowAccess] = useState(true);
