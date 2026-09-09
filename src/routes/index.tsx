@@ -222,6 +222,19 @@ function Index() {
                 </Button>
               </div>
             </div>
+
+            {!accountType && !showLogin ? (
+              <div className="relative hidden min-h-[520px] items-center justify-center md:flex" aria-hidden="true">
+                <div className="absolute left-1/2 top-1/2 h-[72%] w-[78%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary-foreground/20 blur-3xl" />
+                <img
+                  src={social1.url}
+                  alt=""
+                  width={1200}
+                  height={1200}
+                  className="relative z-10 w-full max-w-[540px] rotate-[-5deg] object-contain drop-shadow-[0_30px_35px_rgba(0,0,0,0.45)] [mask-image:radial-gradient(ellipse_72%_68%_at_50%_50%,black_58%,transparent_100%)]"
+                />
+              </div>
+            ) : null}
           </div>
         </div>
       )}
