@@ -277,8 +277,8 @@ function Index() {
 
           <div className="absolute left-0 right-0 top-0 z-20 px-6 pt-6 md:px-10">
             <nav className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-2 rounded-full bg-neutral-900/90 py-3 pl-4 pr-6 backdrop-blur">
-                <img src={logoMark.url} alt="Solatto" className="h-7 w-auto" />
+              <div className="flex items-center">
+                <img src={logoMark.url} alt="Solatto" className="h-16 w-auto md:h-20" />
               </div>
 
               <div className="hidden items-center gap-1 rounded-full bg-neutral-900/90 px-3 py-2 backdrop-blur md:flex">
