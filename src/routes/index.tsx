@@ -5,16 +5,10 @@ import {
   Building2,
   ChevronDown,
   ChevronUp,
-  Menu,
-  Search,
-  ShoppingBag,
   Store,
   Truck,
-  UserRound,
-  X,
 } from "lucide-react";
 
-import heroImage from "@/assets/solatto-hero-social.jpg";
 import social1 from "@/assets/social-1.jpg.asset.json";
 import social2 from "@/assets/social-2.jpg.asset.json";
 import social3 from "@/assets/social-3.jpg.asset.json";
@@ -126,7 +120,6 @@ function Index() {
   const [accountType, setAccountType] = useState<AccountType | null>(null);
   const [showLogin, setShowLogin] = useState(false);
   const [form, setForm] = useState({ nome: "", sobrenome: "", email: "", senha: "" });
-  const [mobileMenu, setMobileMenu] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [busy, setBusy] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
