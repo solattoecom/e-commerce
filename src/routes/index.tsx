@@ -166,13 +166,6 @@ function Index() {
                       );
                     })}
                   </div>
-                  <Button
-                    variant="link"
-                    className="mt-5 h-auto w-full justify-start px-0 text-xs text-primary-foreground hover:text-primary-foreground/80"
-                    onClick={() => setShowLogin(true)}
-                  >
-                    Já tenho uma conta
-                  </Button>
                 </>
               ) : showLogin ? (
                 <>
