@@ -58,6 +58,12 @@ export async function signUpWithType(params: {
     await supabase
       .from("user_client_types")
       .insert({ user_id: userId, tipo: "varejo" });
+
+    if (params.tipo !== "varejo") {
+      await supabase
+        .from("client_type_requests")
+        .insert({ user_id: userId, tipo_solicitado: params.tipo, status: "pendente" });
+    }
   }
   return data;
 }

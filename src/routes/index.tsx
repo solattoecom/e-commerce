@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
@@ -31,6 +31,7 @@ import { ProductGrid } from "@/components/ProductGrid";
 import { ShippingCalculator } from "@/components/ShippingCalculator";
 import type { ShippingOption } from "@/lib/shipping.functions";
 import { supabase } from "@/integrations/supabase/client";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { deleteMyAccount } from "@/lib/account.functions";
 import { signIn, signOut, signUpWithType, useAuth, type ClientType } from "@/hooks/useAuth";
 import { useCart } from "@/hooks/useCart";
@@ -109,7 +110,7 @@ function StickyHeader({
   onOpenCart,
 }: {
   visible: boolean;
-  user: { email?: string } | null;
+  user: { id?: string; email?: string } | null;
   onEnter: () => void;
   onSignOut: () => void;
   onProfile: () => void;
@@ -120,6 +121,7 @@ function StickyHeader({
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
+  const { isAdmin } = useIsAdmin(user?.id);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -229,6 +231,16 @@ function StickyHeader({
                 >
                   Meu perfil
                 </button>
+                {isAdmin ? (
+                  <Link
+                    to="/admin"
+                    role="menuitem"
+                    onClick={() => setMenuOpen(false)}
+                    className="block w-full cursor-pointer px-3 py-2 text-left text-sm transition-colors hover:bg-muted"
+                  >
+                    Painel admin
+                  </Link>
+                ) : null}
                 <button
                   type="button"
                   role="menuitem"
