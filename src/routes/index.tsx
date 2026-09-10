@@ -712,7 +712,9 @@ function Index() {
                   {Number(cart.total + (frete?.valor ?? 0)).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                 </span>
               </div>
-              <Button className="h-12 w-full rounded-md bg-foreground text-background hover:bg-foreground/90">Finalizar compra</Button>
+              <Link to="/checkout" className="block w-full">
+                <Button className="h-12 w-full rounded-md bg-foreground text-background hover:bg-foreground/90">Finalizar compra</Button>
+              </Link>
             </div>
           </aside>
         </div>
