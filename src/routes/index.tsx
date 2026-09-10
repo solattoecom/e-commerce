@@ -860,8 +860,8 @@ function Index() {
           </div>
         </section>
 
-        <section id="novidades" className="scroll-mt-28 bg-muted py-16">
-          <div className="mx-auto w-full max-w-[1180px] px-5">
+        <section id="novidades" className="scroll-mt-28 bg-background py-16">
+          <div className="mx-auto w-full max-w-[1440px] px-5 md:px-8">
             <div className="mb-10 text-center">
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-foreground/60">Solatto essencial</p>
               <h2 className="mx-auto mt-4 max-w-2xl text-3xl font-medium leading-tight sm:text-5xl">Feito no Brasil, pensado para acompanhar você.</h2>
