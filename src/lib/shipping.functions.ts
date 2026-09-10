@@ -53,8 +53,8 @@ export async function quoteShipping(input: { cep: string; itens: number; subtota
   const extra = (itens - 1) * 6.5;
   const gratis = subtotal >= 399;
 
-  const economico = Number((gratis ? 0 : faixa.base + extra).toFixed(2));
-  const expresso = Number((faixa.base * 1.85 + extra).toFixed(2));
+  const economico = 0;
+  const expresso = 0;
 
   return {
     cep: `${cep.slice(0, 5)}-${cep.slice(5)}`,
