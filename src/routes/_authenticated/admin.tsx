@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
+import { useAdminExists } from "@/hooks/useAdminExists";
 import { claimFirstAdmin } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -80,6 +81,7 @@ function Aviso({ titulo, texto }: { titulo: string; texto: string }) {
 function AdminPanel() {
   const { user, loading: carregandoUsuario } = useAuth();
   const { isAdmin, loading: carregandoPapel } = useIsAdmin(user?.id);
+  const { existe: jaTemAdmin } = useAdminExists();
   const [aba, setAba] = useState<"solicitacoes" | "pedidos">("solicitacoes");
   const [solicitacoes, setSolicitacoes] = useState<Solicitacao[]>([]);
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
