@@ -86,7 +86,7 @@ function CheckoutPage() {
     setErro(null);
     setShippingLoading(true);
     try {
-      const quote = await quoteShipping({ data: { cep: selectedAddress.cep, itens: itemCount, subtotal: total } });
+      const quote = await quoteShipping({ data: { cep: selectedAddress.cep, itens: itemCount, subtotal: total, uf: selectedAddress.estado } });
       setShippingOptions(quote.opcoes);
       setSelectedShipping(quote.opcoes[0] ?? null);
       setStep("entrega");

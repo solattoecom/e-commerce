@@ -33,28 +33,38 @@ const tabela: Record<string, { base: number; prazo: number }> = {
 };
 
 export const quoteShipping = createServerFn({ method: "POST" })
-  .inputValidator((input: { cep: string; itens: number; subtotal: number }) => {
+  .inputValidator((input: { cep: string; itens: number; subtotal: number; uf?: string }) => {
     const cep = String(input?.cep ?? "").replace(/\D/g, "");
     if (cep.length !== 8) throw new Error("CEP inválido. Digite os 8 números.");
     return {
       cep,
       itens: Math.max(1, Number(input?.itens) || 1),
       subtotal: Math.max(0, Number(input?.subtotal) || 0),
+      uf: input?.uf ?? null,
     };
   })
   .handler(async ({ data }): Promise<ShippingQuote> => {
-    const response = await fetch(`https://viacep.com.br/ws/${data.cep}/json/`);
-    if (!response.ok) throw new Error("Não foi possível consultar o CEP agora.");
-    const endereco = (await response.json()) as {
-      erro?: boolean | string;
-      localidade?: string;
-      uf?: string;
-      bairro?: string;
-      logradouro?: string;
-    };
-    if (endereco.erro || !endereco.uf) throw new Error("CEP não encontrado.");
+    let uf = data.uf;
+    let cidade = "", bairro = "", logradouro = "";
 
-    const faixa = tabela[regiao[endereco.uf] ?? "SE"]!;
+    if (!uf) {
+      const response = await fetch(`https://viacep.com.br/ws/${data.cep}/json/`);
+      if (!response.ok) throw new Error("Não foi possível consultar o CEP agora.");
+      const endereco = (await response.json()) as {
+        erro?: boolean | string;
+        localidade?: string;
+        uf?: string;
+        bairro?: string;
+        logradouro?: string;
+      };
+      if (endereco.erro || !endereco.uf) throw new Error("CEP não encontrado.");
+      uf = endereco.uf;
+      cidade = endereco.localidade ?? "";
+      bairro = endereco.bairro ?? "";
+      logradouro = endereco.logradouro ?? "";
+    }
+
+    const faixa = tabela[regiao[uf] ?? "SE"]!;
     const extra = (data.itens - 1) * 6.5;
     const gratis = data.subtotal >= 399;
 
@@ -63,10 +73,10 @@ export const quoteShipping = createServerFn({ method: "POST" })
 
     return {
       cep: `${data.cep.slice(0, 5)}-${data.cep.slice(5)}`,
-      cidade: endereco.localidade ?? "",
-      uf: endereco.uf,
-      bairro: endereco.bairro ?? "",
-      logradouro: endereco.logradouro ?? "",
+      cidade,
+      uf,
+      bairro,
+      logradouro,
       opcoes: [
         {
           id: "economico",
