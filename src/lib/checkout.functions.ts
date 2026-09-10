@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/external-auth-middleware";
 
-const ABACATEPAY_URL = "https://api.abacatepay.com/v1";
+const ABACATEPAY_URL = "https://api.abacatepay.com/v2";
 
 type OrderItem = {
   produto_id: string;
