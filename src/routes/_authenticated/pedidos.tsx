@@ -1,6 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ChevronDown, ChevronUp, Package } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronUp, Package } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/external";
 import { useAuth } from "@/hooks/useAuth";
@@ -45,6 +45,7 @@ type Order = {
 
 function PedidosPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -72,6 +73,14 @@ function PedidosPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
+      <button
+        type="button"
+        onClick={() => navigate({ to: "/" })}
+        className="mb-4 flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Voltar
+      </button>
       <h1 className="mb-6 flex items-center gap-2 text-2xl font-semibold"><Package className="h-6 w-6" /> Meus Pedidos</h1>
 
       {orders.length === 0 ? (
