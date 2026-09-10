@@ -24,16 +24,18 @@ export function ProductGrid({
   signedIn: boolean;
   refreshKey?: number;
   search?: string;
-  onAdd?: (produtoId: string) => void;
+  onAdd?: (produtoId: string, variacaoId: string | null) => void;
 }) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sizeByProduct, setSizeByProduct] = useState<Record<string, string>>({});
+  const [sizeError, setSizeError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
     const columns = signedIn
-      ? "id, nome, descricao, categories(nome), product_images(url, ordem), product_prices(preco, preco_original)"
-      : "id, nome, descricao, categories(nome), product_images(url, ordem)";
+      ? "id, nome, descricao, categories(nome), product_images(url, ordem), product_variants(id, tamanho, estoque), product_prices(preco, preco_original)"
+      : "id, nome, descricao, categories(nome), product_images(url, ordem), product_variants(id, tamanho, estoque)";
     supabase
       .from("products")
       .select(columns)
