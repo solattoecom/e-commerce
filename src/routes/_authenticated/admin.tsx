@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 
+import { AdminProdutos } from "@/components/AdminProdutos";
+
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
@@ -82,7 +84,7 @@ function AdminPanel() {
   const { user, loading: carregandoUsuario } = useAuth();
   const { isAdmin, loading: carregandoPapel } = useIsAdmin(user?.id);
   const { existe: jaTemAdmin } = useAdminExists();
-  const [aba, setAba] = useState<"solicitacoes" | "pedidos">("solicitacoes");
+  const [aba, setAba] = useState<"solicitacoes" | "pedidos" | "produtos">("solicitacoes");
   const [solicitacoes, setSolicitacoes] = useState<Solicitacao[]>([]);
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [carregandoDados, setCarregandoDados] = useState(true);
@@ -212,6 +214,7 @@ function AdminPanel() {
           [
             ["solicitacoes", `Solicitações${pendentes.length ? ` (${pendentes.length})` : ""}`],
             ["pedidos", `Pedidos${pedidos.length ? ` (${pedidos.length})` : ""}`],
+            ["produtos", "Produtos"],
           ] as const
         ).map(([chave, rotulo]) => (
           <button
@@ -277,7 +280,7 @@ function AdminPanel() {
             ))}
           </ul>
         </section>
-      ) : (
+      ) : aba === "pedidos" ? (
         <section className="overflow-hidden rounded-2xl border border-border">
           {pedidos.length === 0 && !carregandoDados ? (
             <p className="p-6 text-sm text-muted-foreground">Nenhum pedido ainda.</p>
@@ -312,6 +315,8 @@ function AdminPanel() {
             ))}
           </ul>
         </section>
+      ) : (
+        <AdminProdutos />
       )}
     </main>
   );
