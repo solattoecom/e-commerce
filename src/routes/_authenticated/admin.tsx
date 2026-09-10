@@ -169,17 +169,20 @@ function AdminPanel() {
       <main className="mx-auto flex min-h-screen max-w-lg flex-col items-center justify-center gap-4 px-6 text-center">
         <h1 className="text-2xl font-semibold">Acesso restrito</h1>
         <p className="text-sm text-muted-foreground">
-          Esta área é só para administradores. Se você é o dono da loja e ainda não há nenhum
-          administrador, ative seu acesso abaixo.
+          {jaTemAdmin === false
+            ? "Esta área é só para administradores. Se você é o dono da loja e ainda não há nenhum administrador, ative seu acesso abaixo."
+            : "Esta área é só para administradores. Peça acesso ao responsável pela loja."}
         </p>
-        <button
-          type="button"
-          onClick={virarAdmin}
-          disabled={ocupado === "claim"}
-          className="cursor-pointer rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-colors hover:bg-foreground/85 disabled:opacity-60"
-        >
-          {ocupado === "claim" ? "Ativando..." : "Tornar-me administrador"}
-        </button>
+        {jaTemAdmin === false ? (
+          <button
+            type="button"
+            onClick={virarAdmin}
+            disabled={ocupado === "claim"}
+            className="cursor-pointer rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-colors hover:bg-foreground/85 disabled:opacity-60"
+          >
+            {ocupado === "claim" ? "Ativando..." : "Tornar-me administrador"}
+          </button>
+        ) : null}
         {erro ? <p className="text-sm text-destructive">{erro}</p> : null}
         <Link to="/" className="text-sm underline underline-offset-4">
           Voltar para a loja
