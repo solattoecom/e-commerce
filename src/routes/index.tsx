@@ -122,6 +122,7 @@ function StickyHeader({
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const { isAdmin } = useIsAdmin(user?.id);
+  const { existe: adminExiste } = useAdminExists();
 
   useEffect(() => {
     if (!menuOpen) return;
