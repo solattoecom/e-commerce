@@ -47,6 +47,9 @@ export function ProductGrid({
         const rows = ((data as unknown as Product[]) ?? []).map((p) => ({
           ...p,
           product_images: p.product_images ?? [],
+          product_variants: [...(p.product_variants ?? [])].sort((a, b) =>
+            a.tamanho.localeCompare(b.tamanho, "pt-BR", { numeric: true }),
+          ),
           product_prices: p.product_prices ?? [],
         }));
         setProducts(rows);
