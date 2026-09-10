@@ -27,3 +27,14 @@ export const claimFirstAdmin = createServerFn({ method: "POST" })
 
     return { ok: true };
   });
+
+/** Informa se a loja já tem algum administrador (sem revelar quem). */
+export const adminExists = createServerFn({ method: "GET" }).handler(async () => {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { count, error } = await supabaseAdmin
+    .from("user_roles")
+    .select("id", { count: "exact", head: true })
+    .eq("role", "admin");
+  if (error) throw new Error(error.message);
+  return { exists: (count ?? 0) > 0 };
+});
