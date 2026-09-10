@@ -274,7 +274,7 @@ function CheckoutPage() {
             <Button variant="outline" size="sm" onClick={() => setShowNewAddr(true)}>+ Adicionar endereço</Button>
           )}
 
-          <Button className="w-full" disabled={!selectedAddressId || shippingLoading} onClick={handleGoToShipping}>
+          <Button className="w-full bg-foreground text-background hover:bg-foreground/90" disabled={!selectedAddressId || shippingLoading} onClick={handleGoToShipping}>
             {shippingLoading ? "Calculando frete..." : <><span>Continuar</span><ArrowRight className="ml-2 h-4 w-4" /></>}
           </Button>
         </div>
@@ -299,7 +299,7 @@ function CheckoutPage() {
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setStep("endereco")}><ArrowLeft className="mr-2 h-4 w-4" /> Voltar</Button>
-            <Button className="flex-1" disabled={!selectedShipping} onClick={handleGoToPayment}>Continuar <ArrowRight className="ml-2 h-4 w-4" /></Button>
+            <Button className="flex-1 bg-foreground text-background hover:bg-foreground/90" disabled={!selectedShipping} onClick={handleGoToPayment}>Continuar <ArrowRight className="ml-2 h-4 w-4" /></Button>
           </div>
         </div>
       )}
@@ -358,7 +358,7 @@ function CheckoutPage() {
 
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setStep("entrega")}><ArrowLeft className="mr-2 h-4 w-4" /> Voltar</Button>
-            <Button type="button" className="flex-1" disabled={busy} onClick={handlePay}>
+            <Button type="button" className="flex-1 bg-foreground text-background hover:bg-foreground/90" disabled={busy} onClick={handlePay}>
               {busy ? "Processando..." : `Pagar R$ ${totalFinal.toFixed(2).replace(".", ",")}`}
             </Button>
           </div>
