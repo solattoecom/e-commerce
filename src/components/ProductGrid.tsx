@@ -30,14 +30,23 @@ export function ProductGrid({
 
   useEffect(() => {
     let active = true;
+    const columns = signedIn
+      ? "id, nome, descricao, categories(nome), product_images(url, ordem), product_prices(preco, preco_original)"
+      : "id, nome, descricao, categories(nome), product_images(url, ordem)";
     supabase
       .from("products")
-      .select("id, nome, descricao, categories(nome), product_images(url, ordem), product_prices(preco, preco_original)")
+      .select(columns)
       .eq("ativo", true)
       .order("criado_em", { ascending: true })
-      .then(({ data }) => {
+      .then(({ data, error }) => {
         if (!active) return;
-        setProducts((data as unknown as Product[]) ?? []);
+        if (error) console.error("Falha ao carregar produtos", error);
+        const rows = ((data as unknown as Product[]) ?? []).map((p) => ({
+          ...p,
+          product_images: p.product_images ?? [],
+          product_prices: p.product_prices ?? [],
+        }));
+        setProducts(rows);
         setLoading(false);
       });
     return () => {
