@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
@@ -527,6 +527,7 @@ function Index() {
   const [frete, setFrete] = useState<ShippingOption | null>(null);
   const [showProfile, setShowProfile] = useState(false);
   const cart = useCart(user?.id ?? null);
+  const navigate = useNavigate();
 
   const handleAddToCart = async (produtoId: string, variacaoId: string | null = null) => {
     if (!user) {
@@ -712,9 +713,12 @@ function Index() {
                   {Number(cart.total + (frete?.valor ?? 0)).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                 </span>
               </div>
-              <Link to="/checkout" className="block w-full">
-                <Button className="h-12 w-full rounded-md bg-foreground text-background hover:bg-foreground/90">Finalizar compra</Button>
-              </Link>
+              <Button
+                className="h-12 w-full rounded-md bg-foreground text-background hover:bg-foreground/90"
+                onClick={() => { setShowCart(false); void navigate({ to: "/checkout" }); }}
+              >
+                Finalizar compra
+              </Button>
             </div>
           </aside>
         </div>
