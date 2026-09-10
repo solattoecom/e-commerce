@@ -104,7 +104,10 @@ function CheckoutPage() {
   };
 
   const handlePay = async () => {
-    if (!selectedAddressId || !selectedShipping) return;
+    if (!selectedAddressId || !selectedShipping) {
+      setErro(`Dados faltando: endereço=${selectedAddressId ?? "null"}, frete=${selectedShipping ? "ok" : "null"}`);
+      return;
+    }
     setBusy(true);
     setErro(null);
     try {
@@ -152,7 +155,9 @@ function CheckoutPage() {
         setStep("sucesso");
       }
     } catch (e) {
-      setErro(e instanceof Error ? e.message : "Erro ao processar pagamento.");
+      const msg = e instanceof Error ? e.message : JSON.stringify(e);
+      setErro(msg);
+      console.error("handlePay error:", e);
     } finally {
       setBusy(false);
     }
