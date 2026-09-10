@@ -674,7 +674,7 @@ function Index() {
                           <div className="mt-2 flex items-center gap-2">
                             <button type="button" aria-label="Diminuir" onClick={() => cart.setQuantity(item.id, item.quantidade - 1)} className="size-7 cursor-pointer rounded-full border border-border hover:bg-muted">−</button>
                             <span className="w-6 text-center text-sm">{item.quantidade}</span>
-                            <button type="button" aria-label="Aumentar" onClick={() => cart.setQuantity(item.id, item.quantidade + 1)} className="size-7 cursor-pointer rounded-full border border-border hover:bg-muted">+</button>
+                            <button type="button" aria-label="Aumentar" onClick={() => { const estoque = item.product_variants?.estoque ?? Infinity; if (item.quantidade < estoque) cart.setQuantity(item.id, item.quantidade + 1); }} className="size-7 cursor-pointer rounded-full border border-border hover:bg-muted">+</button>
                             <button type="button" onClick={() => cart.removeItem(item.id)} className="ml-auto cursor-pointer text-xs text-muted-foreground underline">Remover</button>
                           </div>
                         </div>

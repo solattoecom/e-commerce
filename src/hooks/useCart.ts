@@ -7,7 +7,7 @@ export type CartItem = {
   produto_id: string;
   variacao_id: string | null;
   quantidade: number;
-  product_variants: { tamanho: string } | null;
+  product_variants: { tamanho: string; estoque: number } | null;
   products: {
     nome: string;
     product_images: { url: string; ordem: number }[];
@@ -28,7 +28,7 @@ export function useCart(userId: string | null) {
     const { data } = await supabase
       .from("cart_items")
       .select(
-        "id, produto_id, variacao_id, quantidade, product_variants(tamanho), products(nome, product_images(url, ordem), product_prices(preco))",
+        "id, produto_id, variacao_id, quantidade, product_variants(tamanho, estoque), products(nome, product_images(url, ordem), product_prices(preco))",
       )
       .order("criado_em", { ascending: true });
     setItems((data as unknown as CartItem[]) ?? []);
@@ -46,6 +46,8 @@ export function useCart(userId: string | null) {
         (item) => item.produto_id === produtoId && (item.variacao_id ?? null) === variacaoId,
       );
       if (existing) {
+        const estoque = existing.product_variants?.estoque ?? Infinity;
+        if (existing.quantidade >= estoque) return false;
         await supabase
           .from("cart_items")
           .update({ quantidade: existing.quantidade + 1 })
