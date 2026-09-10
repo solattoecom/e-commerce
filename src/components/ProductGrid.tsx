@@ -30,6 +30,7 @@ export function ProductGrid({
   const [loading, setLoading] = useState(true);
   const [sizeByProduct, setSizeByProduct] = useState<Record<string, string>>({});
   const [sizeError, setSizeError] = useState<string | null>(null);
+  const [slideByProduct, setSlideByProduct] = useState<Record<string, number>>({});
 
   useEffect(() => {
     let active = true;
