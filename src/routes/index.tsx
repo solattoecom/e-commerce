@@ -503,12 +503,12 @@ function Index() {
   const [showProfile, setShowProfile] = useState(false);
   const cart = useCart(user?.id ?? null);
 
-  const handleAddToCart = async (produtoId: string) => {
+  const handleAddToCart = async (produtoId: string, variacaoId: string | null = null) => {
     if (!user) {
       setShowAccess(true);
       return;
     }
-    await cart.addItem(produtoId);
+    await cart.addItem(produtoId, variacaoId);
     setShowCart(true);
   };
 
