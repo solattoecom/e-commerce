@@ -266,7 +266,7 @@ function CheckoutPage() {
                 </div>
               </div>
               <div className="flex gap-2">
-                <Button size="sm" onClick={handleSaveAddress}>Salvar endereço</Button>
+                <Button size="sm" className="bg-foreground text-background hover:bg-foreground/90" onClick={handleSaveAddress}>Salvar endereço</Button>
                 <Button size="sm" variant="ghost" onClick={() => { setShowNewAddr(false); setErro(null); }}>Cancelar</Button>
               </div>
             </div>
