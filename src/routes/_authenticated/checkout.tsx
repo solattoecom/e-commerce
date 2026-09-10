@@ -223,7 +223,7 @@ function CheckoutPage() {
                   <button
                     type="button"
                     onClick={() => { if (selectedAddressId === addr.id) setSelectedAddressId(null); void removeAddress(addr.id); }}
-                    className="absolute right-3 top-3 text-xs text-muted-foreground hover:text-destructive"
+                    className="absolute right-3 top-3 text-xs text-foreground"
                   >
                     Remover
                   </button>

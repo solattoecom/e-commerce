@@ -53,8 +53,13 @@ export function useAddresses(userId: string | null) {
 
   const removeAddress = useCallback(async (id: string) => {
     if (!userId) return;
-    const { error } = await supabase.from("addresses").delete().eq("id", id).eq("user_id", userId);
+    const { error, count } = await supabase
+      .from("addresses")
+      .delete({ count: "exact" })
+      .eq("id", id)
+      .eq("user_id", userId);
     if (error) { console.error("Erro ao remover endereço:", error); return; }
+    if (count === 0) { console.warn("Nenhuma linha removida — verifique a política RLS de DELETE na tabela addresses no Supabase"); return; }
     await refresh();
   }, [userId, refresh]);
 
