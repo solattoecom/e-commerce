@@ -245,7 +245,7 @@ function StickyHeader({
                 ) : null}
                 <Link
                   to="/pedidos"
-                  className="block w-full px-4 py-2 text-left text-sm hover:bg-muted"
+                  className="block w-full cursor-pointer px-3 py-2 text-left text-sm transition-colors hover:bg-muted"
                   onClick={() => setMenuOpen(false)}
                 >
                   Meus Pedidos
