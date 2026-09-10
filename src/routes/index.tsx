@@ -196,15 +196,49 @@ function StickyHeader({
           >
             <MapPin className="size-[18px]" />
           </button>
-          <button
-            type="button"
-            aria-label={user ? "Minha conta — sair" : "Minha conta"}
-            title={user ? `${user.email} — clique para sair` : "Entrar na sua conta"}
-            onClick={user ? onSignOut : onEnter}
-            className="grid h-9 w-9 cursor-pointer place-items-center rounded-full text-foreground transition-colors hover:bg-muted"
-          >
-            <User className="size-[18px]" />
-          </button>
+          <div className="relative" ref={menuRef}>
+            <button
+              type="button"
+              aria-label="Minha conta"
+              aria-haspopup={user ? "menu" : undefined}
+              aria-expanded={user ? menuOpen : undefined}
+              title={user ? user.email : "Entrar na sua conta"}
+              onClick={() => (user ? setMenuOpen((open) => !open) : onEnter())}
+              className="grid h-9 w-9 cursor-pointer place-items-center rounded-full text-foreground transition-colors hover:bg-muted"
+            >
+              <User className="size-[18px]" />
+            </button>
+            {user && menuOpen ? (
+              <div
+                role="menu"
+                className="absolute right-0 top-11 z-50 w-52 overflow-hidden rounded-xl border border-border bg-background py-1 shadow-lg"
+              >
+                <p className="truncate px-3 py-2 text-xs text-muted-foreground">{user.email}</p>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onProfile();
+                  }}
+                  className="block w-full cursor-pointer px-3 py-2 text-left text-sm transition-colors hover:bg-muted"
+                >
+                  Meu perfil
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onSignOut();
+                  }}
+                  className="block w-full cursor-pointer px-3 py-2 text-left text-sm transition-colors hover:bg-muted"
+                >
+                  Sair
+                </button>
+              </div>
+            ) : null}
+          </div>
           <button
             type="button"
             onClick={onOpenCart}
