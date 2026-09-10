@@ -98,6 +98,7 @@ function StickyHeader({
   user,
   onEnter,
   onSignOut,
+  onProfile,
   busca,
   onBuscaChange,
   cartCount,
@@ -107,11 +108,35 @@ function StickyHeader({
   user: { email?: string } | null;
   onEnter: () => void;
   onSignOut: () => void;
+  onProfile: () => void;
   busca: string;
   onBuscaChange: (value: string) => void;
   cartCount: number;
   onOpenCart: () => void;
 }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onClick = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) setMenuOpen(false);
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMenuOpen(false);
+    };
+    document.addEventListener("mousedown", onClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onClick);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [menuOpen]);
+
+  useEffect(() => {
+    if (!user) setMenuOpen(false);
+  }, [user]);
+
   return (
     <header
       className={`fixed inset-x-0 top-0 z-40 border-b border-border bg-background/95 backdrop-blur transition-transform duration-300 ${
