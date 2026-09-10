@@ -30,6 +30,7 @@ export function ProductGrid({
   const [loading, setLoading] = useState(true);
   const [sizeByProduct, setSizeByProduct] = useState<Record<string, string>>({});
   const [sizeError, setSizeError] = useState<string | null>(null);
+  const [slideByProduct, setSlideByProduct] = useState<Record<string, number>>({});
 
   useEffect(() => {
     let active = true;
@@ -88,13 +89,58 @@ export function ProductGrid({
   return (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
       {visiveis.map((product) => {
-        const image = [...product.product_images].sort((a, b) => a.ordem - b.ordem)[0];
+        const imagens = [...product.product_images].sort((a, b) => a.ordem - b.ordem);
+        const total = imagens.length;
+        const atual = total > 0 ? ((slideByProduct[product.id] ?? 0) % total + total) % total : 0;
+        const mover = (passo: number) =>
+          setSlideByProduct((prev) => ({ ...prev, [product.id]: (prev[product.id] ?? 0) + passo }));
         const price = product.product_prices[0];
         return (
           <article key={product.id} className="group flex flex-col overflow-hidden rounded-xl border border-border bg-background">
-            <div className="aspect-square bg-[#F5EFE6]">
-              {image ? (
-                <img src={image.url} alt={product.nome} loading="lazy" className="h-full w-full object-contain object-center" />
+            <div className="relative aspect-square bg-background">
+              {imagens.map((img, i) => (
+                <img
+                  key={img.url}
+                  src={img.url}
+                  alt={`${product.nome} — foto ${i + 1}`}
+                  loading="lazy"
+                  className={`absolute inset-0 h-full w-full object-contain object-center transition-opacity duration-300 ${
+                    i === atual ? "opacity-100" : "opacity-0"
+                  }`}
+                />
+              ))}
+              {total > 1 ? (
+                <>
+                  <button
+                    type="button"
+                    aria-label="Foto anterior"
+                    onClick={() => mover(-1)}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 cursor-pointer rounded-full border border-border bg-background/80 px-3 py-2 text-sm backdrop-blur transition-opacity hover:bg-background"
+                  >
+                    ‹
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Próxima foto"
+                    onClick={() => mover(1)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer rounded-full border border-border bg-background/80 px-3 py-2 text-sm backdrop-blur transition-opacity hover:bg-background"
+                  >
+                    ›
+                  </button>
+                  <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
+                    {imagens.map((img, i) => (
+                      <button
+                        key={`dot-${img.url}`}
+                        type="button"
+                        aria-label={`Ver foto ${i + 1}`}
+                        onClick={() => setSlideByProduct((prev) => ({ ...prev, [product.id]: i }))}
+                        className={`h-1.5 cursor-pointer rounded-full transition-all ${
+                          i === atual ? "w-5 bg-foreground" : "w-1.5 bg-foreground/30"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </>
               ) : null}
             </div>
             <div className="flex flex-1 flex-col gap-2 p-5">
