@@ -5,7 +5,9 @@ import { supabase } from "@/integrations/supabase/client";
 export type CartItem = {
   id: string;
   produto_id: string;
+  variacao_id: string | null;
   quantidade: number;
+  product_variants: { tamanho: string } | null;
   products: {
     nome: string;
     product_images: { url: string; ordem: number }[];
@@ -25,7 +27,9 @@ export function useCart(userId: string | null) {
     setLoading(true);
     const { data } = await supabase
       .from("cart_items")
-      .select("id, produto_id, quantidade, products(nome, product_images(url, ordem), product_prices(preco))")
+      .select(
+        "id, produto_id, variacao_id, quantidade, product_variants(tamanho), products(nome, product_images(url, ordem), product_prices(preco))",
+      )
       .order("criado_em", { ascending: true });
     setItems((data as unknown as CartItem[]) ?? []);
     setLoading(false);
@@ -36,16 +40,20 @@ export function useCart(userId: string | null) {
   }, [refresh]);
 
   const addItem = useCallback(
-    async (produtoId: string) => {
+    async (produtoId: string, variacaoId: string | null = null) => {
       if (!userId) return false;
-      const existing = items.find((item) => item.produto_id === produtoId);
+      const existing = items.find(
+        (item) => item.produto_id === produtoId && (item.variacao_id ?? null) === variacaoId,
+      );
       if (existing) {
         await supabase
           .from("cart_items")
           .update({ quantidade: existing.quantidade + 1 })
           .eq("id", existing.id);
       } else {
-        await supabase.from("cart_items").insert({ usuario_id: userId, produto_id: produtoId, quantidade: 1 });
+        await supabase
+          .from("cart_items")
+          .insert({ usuario_id: userId, produto_id: produtoId, variacao_id: variacaoId, quantidade: 1 });
       }
       await refresh();
       return true;
