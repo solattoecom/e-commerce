@@ -104,8 +104,10 @@ function CheckoutPage() {
   };
 
   const handlePay = async () => {
-    setErro(`[debug] addr=${selectedAddressId?.slice(0,8) ?? "NULL"} ship=${selectedShipping?.id ?? "NULL"} items=${items.length} total=${totalFinal}`);
-    if (!selectedAddressId || !selectedShipping) return;
+    if (!selectedAddressId || !selectedShipping) {
+      setErro("Selecione endereço e frete antes de pagar.");
+      return;
+    }
     setBusy(true);
     setErro(null);
     try {
