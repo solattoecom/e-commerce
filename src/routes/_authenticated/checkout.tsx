@@ -222,7 +222,7 @@ function CheckoutPage() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => { if (selectedAddressId === addr.id) setSelectedAddressId(null); void removeAddress(addr.id); }}
+                    onClick={async () => { if (selectedAddressId === addr.id) setSelectedAddressId(null); const msg = await removeAddress(addr.id); if (msg) setErro(msg); }}
                     className="absolute right-3 top-3 text-xs text-foreground"
                   >
                     Remover

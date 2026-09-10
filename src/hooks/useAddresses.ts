@@ -51,16 +51,13 @@ export function useAddresses(userId: string | null) {
     await refresh();
   }, [userId, refresh]);
 
-  const removeAddress = useCallback(async (id: string) => {
-    if (!userId) return;
-    const { error, count } = await supabase
-      .from("addresses")
-      .delete({ count: "exact" })
-      .eq("id", id)
-      .eq("user_id", userId);
-    if (error) { console.error("Erro ao remover endereço:", error); return; }
-    if (count === 0) { console.warn("Nenhuma linha removida — verifique a política RLS de DELETE na tabela addresses no Supabase"); return; }
+  const removeAddress = useCallback(async (id: string): Promise<string | null> => {
+    if (!userId) return null;
+    const { error } = await supabase.from("addresses").delete().eq("id", id).eq("user_id", userId);
+    if (error?.code === "23503") return "Este endereço está vinculado a pedidos e não pode ser removido.";
+    if (error) return "Erro ao remover endereço.";
     await refresh();
+    return null;
   }, [userId, refresh]);
 
   return { addresses, loading, refresh, addAddress, setDefault, removeAddress };
