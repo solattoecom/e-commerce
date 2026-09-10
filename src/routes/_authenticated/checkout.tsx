@@ -21,7 +21,7 @@ function CheckoutPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { items, total, refresh: refreshCart } = useCart(user?.id ?? null);
-  const { addresses, loading: addrLoading, addAddress } = useAddresses(user?.id ?? null);
+  const { addresses, loading: addrLoading, addAddress, removeAddress } = useAddresses(user?.id ?? null);
 
   const [step, setStep] = useState<Step>("endereco");
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
@@ -214,12 +214,20 @@ function CheckoutPage() {
           ) : (
             <div className="space-y-2">
               {addresses.map((addr) => (
-                <button key={addr.id} type="button" onClick={() => setSelectedAddressId(addr.id)}
-                  className={`w-full rounded-lg border p-4 text-left text-sm transition-colors ${selectedAddressId === addr.id ? "border-foreground bg-muted" : "border-border hover:bg-muted/50"}`}>
-                  <p className="font-medium">{addr.rua}, {addr.numero}{addr.complemento ? `, ${addr.complemento}` : ""}</p>
-                  <p className="text-muted-foreground">{addr.bairro} — {addr.cidade}/{addr.estado} — CEP {addr.cep.slice(0, 5)}-{addr.cep.slice(5)}</p>
-                  {addr.padrao && <span className="text-xs text-muted-foreground">Padrão</span>}
-                </button>
+                <div key={addr.id} className={`relative rounded-lg border text-sm transition-colors ${selectedAddressId === addr.id ? "border-foreground bg-muted" : "border-border"}`}>
+                  <button type="button" onClick={() => setSelectedAddressId(addr.id)} className="w-full p-4 text-left">
+                    <p className="font-medium">{addr.rua}, {addr.numero}{addr.complemento ? `, ${addr.complemento}` : ""}</p>
+                    <p className="text-muted-foreground">{addr.bairro} — {addr.cidade}/{addr.estado} — CEP {addr.cep.slice(0, 5)}-{addr.cep.slice(5)}</p>
+                    {addr.padrao && <span className="text-xs text-muted-foreground">Padrão</span>}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { if (selectedAddressId === addr.id) setSelectedAddressId(null); void removeAddress(addr.id); }}
+                    className="absolute right-3 top-3 text-xs text-muted-foreground hover:text-destructive"
+                  >
+                    Remover
+                  </button>
+                </div>
               ))}
             </div>
           )}
