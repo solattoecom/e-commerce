@@ -53,7 +53,11 @@ export async function signUpWithType(params: {
       sobrenome: params.sobrenome,
       email: params.email,
     });
-    await supabase.from("user_client_types").upsert({ user_id: userId, tipo: params.tipo });
+    // O tipo escolhido fica registrado no cadastro (metadata) e a conta começa
+    // como varejo. Atacado e dropshipping precisam de aprovação de um administrador.
+    await supabase
+      .from("user_client_types")
+      .insert({ user_id: userId, tipo: "varejo" });
   }
   return data;
 }
