@@ -5,7 +5,6 @@
 //     React/TanStack dedupe, error logger plugins, and sandbox detection (port/host/strictPort).
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
-import { readFileSync } from "fs";
 import type { Plugin } from "vite";
 
 // On Vercel (VERCEL=1 in their CI) build with the Vercel preset.
@@ -14,14 +13,16 @@ const isVercel = !!process.env["VERCEL"];
 
 // In Vercel builds, rewrite /__l5e/ asset URLs to /assets/{original_filename}
 // so files served from public/assets/ are found correctly.
+// enforce:'pre' runs before builtin:vite-json so we transform raw JSON first.
 function assetJsonPlugin(): Plugin {
   return {
     name: "lovable-asset-json-vercel",
-    load(id) {
+    enforce: "pre",
+    transform(code, id) {
       if (!isVercel || !id.endsWith(".asset.json")) return;
-      const json = JSON.parse(readFileSync(id, "utf-8"));
+      const json = JSON.parse(code);
       json.url = `/assets/${json.original_filename}`;
-      return `export default ${JSON.stringify(json)}`;
+      return JSON.stringify(json);
     },
   };
 }
