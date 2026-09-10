@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Truck } from "lucide-react";
-import { useServerFn } from "@tanstack/react-start";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +15,6 @@ type Props = {
 };
 
 export function ShippingCalculator({ itens, subtotal, onSelect }: Props) {
-  const calcular = useServerFn(quoteShipping);
   const [cep, setCep] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -28,7 +26,7 @@ export function ShippingCalculator({ itens, subtotal, onSelect }: Props) {
     setLoading(true);
     setError(null);
     try {
-      const result = await calcular({ data: { cep, itens, subtotal } });
+      const result = await quoteShipping({ cep, itens, subtotal });
       setQuote(result);
       const first = result.opcoes[0] ?? null;
       setSelected(first?.id ?? null);
