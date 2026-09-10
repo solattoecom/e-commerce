@@ -32,6 +32,7 @@ import { ShippingCalculator } from "@/components/ShippingCalculator";
 import type { ShippingOption } from "@/lib/shipping.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
+import { useAdminExists } from "@/hooks/useAdminExists";
 import { deleteMyAccount } from "@/lib/account.functions";
 import { signIn, signOut, signUpWithType, useAuth, type ClientType } from "@/hooks/useAuth";
 import { useCart } from "@/hooks/useCart";
