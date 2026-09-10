@@ -112,13 +112,53 @@ export function ProductGrid({
                 ) : (
                   <p className="text-sm text-muted-foreground">Entre na sua conta para ver o preço</p>
                 )}
+                {product.product_variants.length > 0 ? (
+                  <div className="mt-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Numeração</p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {product.product_variants.map((variant) => {
+                        const selecionado = sizeByProduct[product.id] === variant.id;
+                        const semEstoque = variant.estoque <= 0;
+                        return (
+                          <button
+                            key={variant.id}
+                            type="button"
+                            disabled={semEstoque}
+                            onClick={() => {
+                              setSizeError(null);
+                              setSizeByProduct((prev) => ({ ...prev, [product.id]: variant.id }));
+                            }}
+                            className={`min-w-11 cursor-pointer rounded-full border px-3 py-1.5 text-sm transition-colors ${
+                              selecionado
+                                ? "border-foreground bg-foreground text-background"
+                                : "border-border hover:border-foreground"
+                            } ${semEstoque ? "cursor-not-allowed opacity-40 line-through" : ""}`}
+                          >
+                            {variant.tamanho}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : null}
                 <button
                   type="button"
-                  onClick={() => onAdd?.(product.id)}
+                  onClick={() => {
+                    const escolhido = sizeByProduct[product.id] ?? null;
+                    if (signedIn && product.product_variants.length > 0 && !escolhido) {
+                      setSizeError(product.id);
+                      return;
+                    }
+                    setSizeError(null);
+                    onAdd?.(product.id, escolhido);
+                  }}
                   className="mt-3 w-full cursor-pointer rounded-full bg-foreground px-4 py-2.5 text-sm font-semibold text-background transition-colors hover:bg-foreground/90"
                 >
                   {signedIn ? "Adicionar à sacola" : "Entrar para comprar"}
                 </button>
+                {sizeError === product.id ? (
+                  <p className="mt-2 text-xs text-destructive">Escolha a numeração antes de adicionar.</p>
+                ) : null}
               </div>
             </div>
           </article>
