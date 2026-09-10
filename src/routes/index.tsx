@@ -28,6 +28,7 @@ import heroVideo from "@/assets/hero-calcando-sapato.mp4.asset.json";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ProductGrid } from "@/components/ProductGrid";
+import { supabase } from "@/integrations/supabase/client";
 import { signIn, signOut, signUpWithType, useAuth, type ClientType } from "@/hooks/useAuth";
 import { useCart } from "@/hooks/useCart";
 
