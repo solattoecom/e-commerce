@@ -437,7 +437,7 @@ function ProfileDialog({
           {erro ? <p className="text-sm text-destructive">{erro}</p> : null}
           {msg ? <p className="text-sm text-muted-foreground">{msg}</p> : null}
 
-          <Button type="submit" disabled={salvando || !dados} className="w-full">
+          <Button type="submit" disabled={salvando || !dados} className="w-full bg-foreground text-background hover:bg-foreground/85">
             {salvando ? "Salvando…" : "Salvar alterações"}
           </Button>
         </form>
@@ -458,7 +458,7 @@ function ProfileDialog({
                 <button
                   type="button"
                   onClick={() => setConfirmar(false)}
-                  className="flex-1 cursor-pointer rounded-md border border-border px-4 py-2 text-sm font-semibold transition-colors hover:bg-muted"
+                  className="flex-1 cursor-pointer rounded-md bg-muted px-4 py-2 text-sm font-semibold transition-colors hover:bg-muted/70"
                 >
                   Cancelar
                 </button>
