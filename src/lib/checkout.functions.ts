@@ -17,6 +17,7 @@ type CreateOrderInput = {
   shipping_valor: number;
   shipping_nome: string;
   payment_method: "pix" | "cartao";
+  telefone: string;
   items: OrderItem[];
   subtotal: number;
   total: number;
@@ -115,6 +116,8 @@ export const createOrder = createServerFn({ method: "POST" })
       customer: {
         name: `${profile.nome} ${profile.sobrenome}`.trim(),
         email: profile.email,
+        cellphone: data.telefone || "00000000000",
+        taxId: "",
       },
       metadata: { order_id: order.id },
     };

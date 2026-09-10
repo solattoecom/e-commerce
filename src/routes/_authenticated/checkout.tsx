@@ -34,6 +34,7 @@ function CheckoutPage() {
   const [shippingLoading, setShippingLoading] = useState(false);
 
   const [paymentMethod, setPaymentMethod] = useState<"pix" | "cartao">("pix");
+  const [telefone, setTelefone] = useState("");
   const [card, setCard] = useState({ number: "", holder: "", expiry: "", cvv: "" });
   const [busy, setBusy] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
@@ -114,6 +115,7 @@ function CheckoutPage() {
           shipping_valor: selectedShipping.valor,
           shipping_nome: selectedShipping.nome,
           payment_method: paymentMethod,
+          telefone: telefone.replace(/\D/g, ""),
           items: items.map((item) => ({
             produto_id: item.produto_id,
             variacao_id: item.variacao_id,
@@ -292,6 +294,10 @@ function CheckoutPage() {
       {step === "pagamento" && (
         <div className="space-y-4">
           <h2 className="flex items-center gap-2 text-lg font-semibold"><CreditCard className="h-5 w-5" /> Pagamento</h2>
+          <div className="grid gap-2">
+            <Label htmlFor="telefone">Celular (WhatsApp)</Label>
+            <Input id="telefone" placeholder="(11) 99999-9999" value={telefone} onChange={(e) => setTelefone(e.target.value)} maxLength={15} />
+          </div>
           <div className="flex gap-2">
             {(["pix", "cartao"] as const).map((m) => (
               <button key={m} type="button" onClick={() => setPaymentMethod(m)}
