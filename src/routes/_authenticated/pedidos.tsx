@@ -37,6 +37,7 @@ type Order = {
   total: number;
   payment_method: string | null;
   nota_fiscal: string | null;
+  codigo_rastreio: string | null;
   criado_em: string;
   endereco: Record<string, string>;
   order_items: OrderItem[];
@@ -54,7 +55,7 @@ function PedidosPage() {
       const { data } = await supabase
         .from("orders")
         .select(`
-          id, status, subtotal, frete, total, payment_method, nota_fiscal, criado_em, endereco,
+          id, status, subtotal, frete, total, payment_method, nota_fiscal, codigo_rastreio, criado_em, endereco,
           order_items(id, quantidade, preco_unitario, subtotal,
             products(nome, product_images(url)),
             product_variants(tamanho)
@@ -120,6 +121,19 @@ function PedidosPage() {
 
                     {order.nota_fiscal && (
                       <p className="text-muted-foreground">NF-e: <span className="font-mono font-medium">{order.nota_fiscal}</span></p>
+                    )}
+                    {order.codigo_rastreio && (
+                      <div className="flex items-center gap-3">
+                        <p className="text-muted-foreground">Rastreio: <span className="font-mono font-medium">{order.codigo_rastreio}</span></p>
+                        <a
+                          href={`https://www.linketrack.com/trace/${order.codigo_rastreio}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="rounded-full bg-foreground px-3 py-1 text-xs font-medium text-background hover:bg-foreground/85"
+                        >
+                          Rastrear
+                        </a>
+                      </div>
                     )}
                   </div>
                 )}

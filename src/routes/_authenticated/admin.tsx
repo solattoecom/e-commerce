@@ -91,6 +91,7 @@ function AdminPanel() {
   const [erro, setErro] = useState<string | null>(null);
   const [ocupado, setOcupado] = useState<string | null>(null);
   const [nfePorPedido, setNfePorPedido] = useState<Record<string, string>>({});
+  const [rastreioPorPedido, setRastreioPorPedido] = useState<Record<string, string>>({});
 
   const carregar = useCallback(async () => {
     setCarregandoDados(true);
@@ -142,11 +143,12 @@ function AdminPanel() {
     }
   }
 
-  async function mudarStatus(pedido: Pedido, status: string, nfe?: string) {
+  async function mudarStatus(pedido: Pedido, status: string, nfe?: string, rastreio?: string) {
     setOcupado(pedido.id);
     const payload: Record<string, unknown> = { status: status as (typeof STATUS_PEDIDO)[number] };
-    if (status === "enviado" && nfe && nfe.trim()) {
-      payload.nota_fiscal = nfe.trim();
+    if (status === "enviado") {
+      if (nfe?.trim()) payload.nota_fiscal = nfe.trim();
+      if (rastreio?.trim()) payload.codigo_rastreio = rastreio.trim();
     }
     const { error } = await supabase
       .from("orders")
@@ -297,6 +299,7 @@ function AdminPanel() {
             {pedidos.map((p) => {
               const statusSelecionado = p.status;
               const nfeAtual = nfePorPedido[p.id] ?? "";
+              const rastreioAtual = rastreioPorPedido[p.id] ?? "";
               return (
                 <li key={p.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
                   <div className="min-w-0">
@@ -345,10 +348,19 @@ function AdminPanel() {
                           }
                           className="rounded-full border border-border bg-background px-3 py-2 text-xs"
                         />
+                        <input
+                          type="text"
+                          placeholder="Código de rastreio"
+                          value={rastreioAtual}
+                          onChange={(event) =>
+                            setRastreioPorPedido((prev) => ({ ...prev, [p.id]: event.target.value }))
+                          }
+                          className="rounded-full border border-border bg-background px-3 py-2 text-xs"
+                        />
                         <button
                           type="button"
                           disabled={ocupado === p.id}
-                          onClick={() => mudarStatus(p, "enviado", nfeAtual)}
+                          onClick={() => mudarStatus(p, "enviado", nfeAtual, rastreioAtual)}
                           className="cursor-pointer rounded-full bg-foreground px-3 py-2 text-xs font-medium text-background transition-colors hover:bg-foreground/85 disabled:opacity-60"
                         >
                           Salvar
