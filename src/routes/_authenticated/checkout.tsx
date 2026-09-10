@@ -104,10 +104,8 @@ function CheckoutPage() {
   };
 
   const handlePay = async () => {
-    if (!selectedAddressId || !selectedShipping) {
-      setErro(`Dados faltando: endereço=${selectedAddressId ?? "null"}, frete=${selectedShipping ? "ok" : "null"}`);
-      return;
-    }
+    setErro(`[debug] addr=${selectedAddressId?.slice(0,8) ?? "NULL"} ship=${selectedShipping?.id ?? "NULL"} items=${items.length} total=${totalFinal}`);
+    if (!selectedAddressId || !selectedShipping) return;
     setBusy(true);
     setErro(null);
     try {
@@ -350,7 +348,7 @@ function CheckoutPage() {
 
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setStep("entrega")}><ArrowLeft className="mr-2 h-4 w-4" /> Voltar</Button>
-            <Button className="flex-1" disabled={busy} onClick={handlePay}>
+            <Button type="button" className="flex-1" disabled={busy} onClick={handlePay}>
               {busy ? "Processando..." : `Pagar R$ ${totalFinal.toFixed(2).replace(".", ",")}`}
             </Button>
           </div>
