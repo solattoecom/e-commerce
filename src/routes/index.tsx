@@ -243,6 +243,13 @@ function StickyHeader({
                     Painel admin
                   </Link>
                 ) : null}
+                <Link
+                  to="/pedidos"
+                  className="block w-full px-4 py-2 text-left text-sm hover:bg-muted"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Meus Pedidos
+                </Link>
                 <button
                   type="button"
                   role="menuitem"
@@ -566,7 +573,7 @@ function Index() {
     if (/at least/i.test(message)) return "A senha precisa ter pelo menos 8 caracteres.";
     if (/not confirmed|confirmation/i.test(message))
       return "Conta criada. Confirme o e-mail que enviamos para entrar.";
-    return `Erro: ${message || "desconhecido"}`;
+    return "Não foi possível concluir. Tente novamente.";
 
   };
 

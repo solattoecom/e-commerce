@@ -90,6 +90,7 @@ function AdminPanel() {
   const [carregandoDados, setCarregandoDados] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const [ocupado, setOcupado] = useState<string | null>(null);
+  const [nfePorPedido, setNfePorPedido] = useState<Record<string, string>>({});
 
   const carregar = useCallback(async () => {
     setCarregandoDados(true);
@@ -141,14 +142,21 @@ function AdminPanel() {
     }
   }
 
-  async function mudarStatus(pedido: Pedido, status: string) {
+  async function mudarStatus(pedido: Pedido, status: string, nfe?: string) {
     setOcupado(pedido.id);
+    const payload: Record<string, unknown> = { status: status as (typeof STATUS_PEDIDO)[number] };
+    if (status === "enviado" && nfe && nfe.trim()) {
+      payload.nota_fiscal = nfe.trim();
+    }
     const { error } = await supabase
       .from("orders")
-      .update({ status: status as (typeof STATUS_PEDIDO)[number] })
+      .update(payload)
       .eq("id", pedido.id);
     if (error) setErro(error.message);
-    else await carregar();
+    else {
+      setNfePorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; return next; });
+      await carregar();
+    }
     setOcupado(null);
   }
 
@@ -286,33 +294,71 @@ function AdminPanel() {
             <p className="p-6 text-sm text-muted-foreground">Nenhum pedido ainda.</p>
           ) : null}
           <ul className="divide-y divide-border">
-            {pedidos.map((p) => (
-              <li key={p.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">
-                    {p.profiles ? `${p.profiles.nome} ${p.profiles.sobrenome}` : "Cliente"} ·{" "}
-                    {brl(Number(p.total))}
-                  </p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {dataCurta(p.criado_em)} ·{" "}
-                    {p.order_items?.reduce((soma, item) => soma + item.quantidade, 0) ?? 0} item(ns)
-                    · #{p.id.slice(0, 8)}
-                  </p>
-                </div>
-                <select
-                  value={p.status}
-                  disabled={ocupado === p.id}
-                  onChange={(event) => mudarStatus(p, event.target.value)}
-                  className="cursor-pointer rounded-full border border-border bg-background px-3 py-2 text-xs capitalize"
-                >
-                  {STATUS_PEDIDO.map((status) => (
-                    <option key={status} value={status}>
-                      {status}
-                    </option>
-                  ))}
-                </select>
-              </li>
-            ))}
+            {pedidos.map((p) => {
+              const statusSelecionado = p.status;
+              const nfeAtual = nfePorPedido[p.id] ?? "";
+              return (
+                <li key={p.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">
+                      {p.profiles ? `${p.profiles.nome} ${p.profiles.sobrenome}` : "Cliente"} ·{" "}
+                      {brl(Number(p.total))}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {dataCurta(p.criado_em)} ·{" "}
+                      {p.order_items?.reduce((soma, item) => soma + item.quantidade, 0) ?? 0} item(ns)
+                      · #{p.id.slice(0, 8)}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <select
+                      value={statusSelecionado}
+                      disabled={ocupado === p.id}
+                      onChange={(event) => {
+                        const novoStatus = event.target.value;
+                        if (novoStatus !== "enviado") {
+                          void mudarStatus(p, novoStatus);
+                        } else {
+                          setPedidos((prev) =>
+                            prev.map((item) =>
+                              item.id === p.id ? { ...item, status: novoStatus } : item,
+                            ),
+                          );
+                        }
+                      }}
+                      className="cursor-pointer rounded-full border border-border bg-background px-3 py-2 text-xs capitalize"
+                    >
+                      {STATUS_PEDIDO.map((status) => (
+                        <option key={status} value={status}>
+                          {status}
+                        </option>
+                      ))}
+                    </select>
+                    {statusSelecionado === "enviado" && (
+                      <>
+                        <input
+                          type="text"
+                          placeholder="Número NF-e"
+                          value={nfeAtual}
+                          onChange={(event) =>
+                            setNfePorPedido((prev) => ({ ...prev, [p.id]: event.target.value }))
+                          }
+                          className="rounded-full border border-border bg-background px-3 py-2 text-xs"
+                        />
+                        <button
+                          type="button"
+                          disabled={ocupado === p.id}
+                          onClick={() => mudarStatus(p, "enviado", nfeAtual)}
+                          className="cursor-pointer rounded-full bg-foreground px-3 py-2 text-xs font-medium text-background transition-colors hover:bg-foreground/85 disabled:opacity-60"
+                        >
+                          Salvar
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         </section>
       ) : (
