@@ -5,9 +5,14 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
   beforeLoad: async () => {
-    const { data, error } = await supabase.auth.getUser();
-    if (error || !data.user) throw redirect({ to: "/" });
-    return { user: data.user };
+    // A sessão pode ainda estar sendo restaurada do armazenamento local
+    // logo após um recarregamento: tentamos algumas vezes antes de desistir.
+    for (let tentativa = 0; tentativa < 5; tentativa += 1) {
+      const { data } = await supabase.auth.getSession();
+      if (data.session?.user) return { user: data.session.user };
+      await new Promise((resolve) => setTimeout(resolve, 200));
+    }
+    throw redirect({ to: "/" });
   },
   component: () => <Outlet />,
 });

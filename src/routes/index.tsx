@@ -231,16 +231,14 @@ function StickyHeader({
                 >
                   Meu perfil
                 </button>
-                {isAdmin ? (
-                  <Link
-                    to="/admin"
-                    role="menuitem"
-                    onClick={() => setMenuOpen(false)}
-                    className="block w-full cursor-pointer px-3 py-2 text-left text-sm transition-colors hover:bg-muted"
-                  >
-                    Painel admin
-                  </Link>
-                ) : null}
+                <Link
+                  to="/admin"
+                  role="menuitem"
+                  onClick={() => setMenuOpen(false)}
+                  className="block w-full cursor-pointer px-3 py-2 text-left text-sm transition-colors hover:bg-muted"
+                >
+                  {isAdmin ? "Painel admin" : "Painel admin (ativar)"}
+                </Link>
                 <button
                   type="button"
                   role="menuitem"
