@@ -307,6 +307,55 @@ function CategoryCard({ name, description, images }: { name: string; description
   );
 }
 
+function ProfileDialog({ userId, email, onClose }: { userId: string; email: string; onClose: () => void }) {
+  const [dados, setDados] = useState<{ nome: string; sobrenome: string; tipo: string | null } | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const [{ data: perfil }, { data: tipo }] = await Promise.all([
+        supabase.from("profiles").select("nome, sobrenome").eq("id", userId).maybeSingle(),
+        supabase.from("user_client_types").select("tipo").eq("user_id", userId).maybeSingle(),
+      ]);
+      if (!active) return;
+      setDados({ nome: perfil?.nome ?? "", sobrenome: perfil?.sobrenome ?? "", tipo: tipo?.tipo ?? null });
+    })();
+    return () => {
+      active = false;
+    };
+  }, [userId]);
+
+  return (
+    <div className="fixed inset-0 z-[70] grid place-items-center bg-foreground/40 px-4" onClick={onClose}>
+      <div
+        className="w-full max-w-sm rounded-2xl border border-border bg-background p-6 shadow-xl"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Meu perfil</h2>
+          <button type="button" onClick={onClose} aria-label="Fechar perfil" className="cursor-pointer rounded-full p-2 hover:bg-muted">
+            <X className="size-5" />
+          </button>
+        </div>
+        <dl className="space-y-3 text-sm">
+          <div>
+            <dt className="text-muted-foreground">Nome</dt>
+            <dd className="font-medium">{dados ? `${dados.nome} ${dados.sobrenome}`.trim() || "—" : "…"}</dd>
+          </div>
+          <div>
+            <dt className="text-muted-foreground">E-mail</dt>
+            <dd className="font-medium break-all">{email}</dd>
+          </div>
+          <div>
+            <dt className="text-muted-foreground">Tipo de conta</dt>
+            <dd className="font-medium capitalize">{dados?.tipo ?? "—"}</dd>
+          </div>
+        </dl>
+      </div>
+    </div>
+  );
+}
+
 const accountTypes = [
   { id: "varejo", name: "Varejo", description: "Compre para você, com entrega em todo o Brasil.", Icon: Store },
   { id: "atacado", name: "Atacado", description: "Compras em volume com condições especiais.", Icon: Building2 },
