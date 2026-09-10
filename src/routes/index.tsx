@@ -410,6 +410,7 @@ function Index() {
         user={user}
         onEnter={() => setShowAccess(true)}
         onSignOut={() => signOut()}
+        onProfile={() => setShowProfile(true)}
         busca={busca}
         onBuscaChange={setBusca}
         cartCount={cart.count}
