@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/external-auth-middleware";
 
-const ABACATEPAY_URL = "https://api.abacatepay.com/v2";
+const ABACATEPAY_URL = "https://api.abacatepay.com/v2/transparents/create";
 
 type OrderItem = {
   produto_id: string;
@@ -99,39 +99,23 @@ export const createOrder = createServerFn({ method: "POST" })
       }))
     );
 
-    const methods = data.payment_method === "pix" ? ["PIX"] : ["CREDIT_CARD"];
-
-    const abacateBody: Record<string, unknown> = {
-      frequency: "ONE_TIME",
-      methods,
-      returnUrl: "https://e-commerce-rnfpag7k6-solattoecom-1856.vercel.app/pedidos",
-      completionUrl: "https://e-commerce-rnfpag7k6-solattoecom-1856.vercel.app/pedidos",
-      products: data.items.map((item) => ({
-        externalId: item.produto_id,
-        name: item.nome,
-        description: item.nome,
-        quantity: item.quantidade,
-        price: Math.round(item.preco_unitario * 100),
-      })),
-      customer: {
-        name: `${profile.nome} ${profile.sobrenome}`.trim(),
-        email: profile.email,
-        cellphone: data.telefone || "00000000000",
-        taxId: "",
+    const abacateBody = {
+      method: data.payment_method === "pix" ? "PIX" : "CREDIT_CARD",
+      data: {
+        amount: Math.round(data.total * 100),
+        description: `Pedido ${order.id.slice(0, 8).toUpperCase()}`,
+        expiresIn: 3600,
+        externalId: order.id,
+        customer: {
+          name: `${profile.nome} ${profile.sobrenome}`.trim(),
+          email: profile.email,
+          cellphone: data.telefone || "00000000000",
+          taxId: "",
+        },
       },
-      metadata: { order_id: order.id },
     };
 
-    if (data.payment_method === "cartao") {
-      abacateBody["card"] = {
-        number: data.card_number,
-        holderName: data.card_holder,
-        expiry: data.card_expiry,
-        cvv: data.card_cvv,
-      };
-    }
-
-    const abacateRes = await fetch(`${ABACATEPAY_URL}/billing/create`, {
+    const abacateRes = await fetch(ABACATEPAY_URL, {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${apiKey}`,
