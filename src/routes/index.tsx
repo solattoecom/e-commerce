@@ -627,6 +627,9 @@ function Index() {
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-medium">{item.products?.nome}</p>
+                          {item.product_variants?.tamanho ? (
+                            <p className="text-xs text-muted-foreground">Numeração {item.product_variants.tamanho}</p>
+                          ) : null}
                           <p className="text-sm text-muted-foreground">
                             {Number(preco).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                           </p>
