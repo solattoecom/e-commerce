@@ -40,16 +40,20 @@ export function useCart(userId: string | null) {
   }, [refresh]);
 
   const addItem = useCallback(
-    async (produtoId: string) => {
+    async (produtoId: string, variacaoId: string | null = null) => {
       if (!userId) return false;
-      const existing = items.find((item) => item.produto_id === produtoId);
+      const existing = items.find(
+        (item) => item.produto_id === produtoId && (item.variacao_id ?? null) === variacaoId,
+      );
       if (existing) {
         await supabase
           .from("cart_items")
           .update({ quantidade: existing.quantidade + 1 })
           .eq("id", existing.id);
       } else {
-        await supabase.from("cart_items").insert({ usuario_id: userId, produto_id: produtoId, quantidade: 1 });
+        await supabase
+          .from("cart_items")
+          .insert({ usuario_id: userId, produto_id: produtoId, variacao_id: variacaoId, quantidade: 1 });
       }
       await refresh();
       return true;
