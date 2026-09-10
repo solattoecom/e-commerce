@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
   Building2,
@@ -28,6 +28,7 @@ import heroVideo from "@/assets/hero-calcando-sapato.mp4.asset.json";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ProductGrid } from "@/components/ProductGrid";
+import { supabase } from "@/integrations/supabase/client";
 import { signIn, signOut, signUpWithType, useAuth, type ClientType } from "@/hooks/useAuth";
 import { useCart } from "@/hooks/useCart";
 
@@ -98,6 +99,7 @@ function StickyHeader({
   user,
   onEnter,
   onSignOut,
+  onProfile,
   busca,
   onBuscaChange,
   cartCount,
@@ -107,11 +109,35 @@ function StickyHeader({
   user: { email?: string } | null;
   onEnter: () => void;
   onSignOut: () => void;
+  onProfile: () => void;
   busca: string;
   onBuscaChange: (value: string) => void;
   cartCount: number;
   onOpenCart: () => void;
 }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onClick = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) setMenuOpen(false);
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMenuOpen(false);
+    };
+    document.addEventListener("mousedown", onClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onClick);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [menuOpen]);
+
+  useEffect(() => {
+    if (!user) setMenuOpen(false);
+  }, [user]);
+
   return (
     <header
       className={`fixed inset-x-0 top-0 z-40 border-b border-border bg-background/95 backdrop-blur transition-transform duration-300 ${
@@ -171,15 +197,49 @@ function StickyHeader({
           >
             <MapPin className="size-[18px]" />
           </button>
-          <button
-            type="button"
-            aria-label={user ? "Minha conta — sair" : "Minha conta"}
-            title={user ? `${user.email} — clique para sair` : "Entrar na sua conta"}
-            onClick={user ? onSignOut : onEnter}
-            className="grid h-9 w-9 cursor-pointer place-items-center rounded-full text-foreground transition-colors hover:bg-muted"
-          >
-            <User className="size-[18px]" />
-          </button>
+          <div className="relative" ref={menuRef}>
+            <button
+              type="button"
+              aria-label="Minha conta"
+              aria-haspopup={user ? "menu" : undefined}
+              aria-expanded={user ? menuOpen : undefined}
+              title={user ? user.email : "Entrar na sua conta"}
+              onClick={() => (user ? setMenuOpen((open) => !open) : onEnter())}
+              className="grid h-9 w-9 cursor-pointer place-items-center rounded-full text-foreground transition-colors hover:bg-muted"
+            >
+              <User className="size-[18px]" />
+            </button>
+            {user && menuOpen ? (
+              <div
+                role="menu"
+                className="absolute right-0 top-11 z-50 w-52 overflow-hidden rounded-xl border border-border bg-background py-1 shadow-lg"
+              >
+                <p className="truncate px-3 py-2 text-xs text-muted-foreground">{user.email}</p>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onProfile();
+                  }}
+                  className="block w-full cursor-pointer px-3 py-2 text-left text-sm transition-colors hover:bg-muted"
+                >
+                  Meu perfil
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onSignOut();
+                  }}
+                  className="block w-full cursor-pointer px-3 py-2 text-left text-sm transition-colors hover:bg-muted"
+                >
+                  Sair
+                </button>
+              </div>
+            ) : null}
+          </div>
           <button
             type="button"
             onClick={onOpenCart}
@@ -248,6 +308,55 @@ function CategoryCard({ name, description, images }: { name: string; description
   );
 }
 
+function ProfileDialog({ userId, email, onClose }: { userId: string; email: string; onClose: () => void }) {
+  const [dados, setDados] = useState<{ nome: string; sobrenome: string; tipo: string | null } | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const [{ data: perfil }, { data: tipo }] = await Promise.all([
+        supabase.from("profiles").select("nome, sobrenome").eq("id", userId).maybeSingle(),
+        supabase.from("user_client_types").select("tipo").eq("user_id", userId).maybeSingle(),
+      ]);
+      if (!active) return;
+      setDados({ nome: perfil?.nome ?? "", sobrenome: perfil?.sobrenome ?? "", tipo: tipo?.tipo ?? null });
+    })();
+    return () => {
+      active = false;
+    };
+  }, [userId]);
+
+  return (
+    <div className="fixed inset-0 z-[70] grid place-items-center bg-foreground/40 px-4" onClick={onClose}>
+      <div
+        className="w-full max-w-sm rounded-2xl border border-border bg-background p-6 shadow-xl"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Meu perfil</h2>
+          <button type="button" onClick={onClose} aria-label="Fechar perfil" className="cursor-pointer rounded-full p-2 hover:bg-muted">
+            <X className="size-5" />
+          </button>
+        </div>
+        <dl className="space-y-3 text-sm">
+          <div>
+            <dt className="text-muted-foreground">Nome</dt>
+            <dd className="font-medium">{dados ? `${dados.nome} ${dados.sobrenome}`.trim() || "—" : "…"}</dd>
+          </div>
+          <div>
+            <dt className="text-muted-foreground">E-mail</dt>
+            <dd className="font-medium break-all">{email}</dd>
+          </div>
+          <div>
+            <dt className="text-muted-foreground">Tipo de conta</dt>
+            <dd className="font-medium capitalize">{dados?.tipo ?? "—"}</dd>
+          </div>
+        </dl>
+      </div>
+    </div>
+  );
+}
+
 const accountTypes = [
   { id: "varejo", name: "Varejo", description: "Compre para você, com entrega em todo o Brasil.", Icon: Store },
   { id: "atacado", name: "Atacado", description: "Compras em volume com condições especiais.", Icon: Building2 },
@@ -269,6 +378,7 @@ function Index() {
   const [scrolled, setScrolled] = useState(false);
   const [busca, setBusca] = useState("");
   const [showCart, setShowCart] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
   const cart = useCart(user?.id ?? null);
 
   const handleAddToCart = async (produtoId: string) => {
@@ -351,11 +461,15 @@ function Index() {
         user={user}
         onEnter={() => setShowAccess(true)}
         onSignOut={() => signOut()}
+        onProfile={() => setShowProfile(true)}
         busca={busca}
         onBuscaChange={setBusca}
         cartCount={cart.count}
         onOpenCart={() => (user ? setShowCart(true) : setShowAccess(true))}
       />
+      {showProfile && user ? (
+        <ProfileDialog userId={user.id} email={user.email ?? ""} onClose={() => setShowProfile(false)} />
+      ) : null}
       {showCart && (
         <div className="fixed inset-0 z-[60] flex justify-end bg-foreground/40" onClick={() => setShowCart(false)}>
           <aside
