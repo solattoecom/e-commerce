@@ -90,6 +90,41 @@ export type Database = {
         }
         Relationships: []
       }
+      client_type_requests: {
+        Row: {
+          criado_em: string
+          decidido_em: string | null
+          id: string
+          status: string
+          tipo_solicitado: Database["public"]["Enums"]["app_client_type"]
+          user_id: string
+        }
+        Insert: {
+          criado_em?: string
+          decidido_em?: string | null
+          id?: string
+          status?: string
+          tipo_solicitado: Database["public"]["Enums"]["app_client_type"]
+          user_id: string
+        }
+        Update: {
+          criado_em?: string
+          decidido_em?: string | null
+          id?: string
+          status?: string
+          tipo_solicitado?: Database["public"]["Enums"]["app_client_type"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_type_requests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_items: {
         Row: {
           id: string
