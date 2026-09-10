@@ -308,8 +308,23 @@ function CategoryCard({ name, description, images }: { name: string; description
   );
 }
 
-function ProfileDialog({ userId, email, onClose }: { userId: string; email: string; onClose: () => void }) {
-  const [dados, setDados] = useState<{ nome: string; sobrenome: string; tipo: string | null } | null>(null);
+function ProfileDialog({
+  userId,
+  email,
+  onClose,
+  onDeleted,
+}: {
+  userId: string;
+  email: string;
+  onClose: () => void;
+  onDeleted: () => void;
+}) {
+  const [dados, setDados] = useState<{ nome: string; sobrenome: string; email: string; tipo: string | null } | null>(null);
+  const [salvando, setSalvando] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  const [erro, setErro] = useState<string | null>(null);
+  const [confirmar, setConfirmar] = useState(false);
+  const [excluindo, setExcluindo] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -319,12 +334,57 @@ function ProfileDialog({ userId, email, onClose }: { userId: string; email: stri
         supabase.from("user_client_types").select("tipo").eq("user_id", userId).maybeSingle(),
       ]);
       if (!active) return;
-      setDados({ nome: perfil?.nome ?? "", sobrenome: perfil?.sobrenome ?? "", tipo: tipo?.tipo ?? null });
+      setDados({
+        nome: perfil?.nome ?? "",
+        sobrenome: perfil?.sobrenome ?? "",
+        email,
+        tipo: tipo?.tipo ?? null,
+      });
     })();
     return () => {
       active = false;
     };
-  }, [userId]);
+  }, [userId, email]);
+
+  const salvar = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!dados) return;
+    setSalvando(true);
+    setErro(null);
+    setMsg(null);
+    try {
+      const { error: perfilErro } = await supabase
+        .from("profiles")
+        .update({ nome: dados.nome.trim(), sobrenome: dados.sobrenome.trim() })
+        .eq("id", userId);
+      if (perfilErro) throw new Error(perfilErro.message);
+
+      if (dados.email.trim() && dados.email.trim() !== email) {
+        const { error: emailErro } = await supabase.auth.updateUser({ email: dados.email.trim() });
+        if (emailErro) throw new Error(emailErro.message);
+        setMsg("Dados salvos. Confirme o novo e-mail pelo link enviado.");
+      } else {
+        setMsg("Dados salvos.");
+      }
+    } catch (error) {
+      setErro(error instanceof Error ? error.message : "Não foi possível salvar.");
+    } finally {
+      setSalvando(false);
+    }
+  };
+
+  const excluir = async () => {
+    setExcluindo(true);
+    setErro(null);
+    try {
+      await deleteMyAccount();
+      await supabase.auth.signOut();
+      onDeleted();
+    } catch (error) {
+      setErro(error instanceof Error ? error.message : "Não foi possível excluir a conta.");
+      setExcluindo(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-[70] grid place-items-center bg-foreground/40 px-4" onClick={onClose}>
@@ -338,20 +398,81 @@ function ProfileDialog({ userId, email, onClose }: { userId: string; email: stri
             <X className="size-5" />
           </button>
         </div>
-        <dl className="space-y-3 text-sm">
-          <div>
-            <dt className="text-muted-foreground">Nome</dt>
-            <dd className="font-medium">{dados ? `${dados.nome} ${dados.sobrenome}`.trim() || "—" : "…"}</dd>
+
+        <form onSubmit={salvar} className="space-y-3 text-sm">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="space-y-1">
+              <span className="text-muted-foreground">Nome</span>
+              <Input
+                value={dados?.nome ?? ""}
+                onChange={(event) => setDados((atual) => (atual ? { ...atual, nome: event.target.value } : atual))}
+                required
+              />
+            </label>
+            <label className="space-y-1">
+              <span className="text-muted-foreground">Sobrenome</span>
+              <Input
+                value={dados?.sobrenome ?? ""}
+                onChange={(event) => setDados((atual) => (atual ? { ...atual, sobrenome: event.target.value } : atual))}
+              />
+            </label>
           </div>
-          <div>
-            <dt className="text-muted-foreground">E-mail</dt>
-            <dd className="font-medium break-all">{email}</dd>
+          <label className="block space-y-1">
+            <span className="text-muted-foreground">E-mail</span>
+            <Input
+              type="email"
+              value={dados?.email ?? ""}
+              onChange={(event) => setDados((atual) => (atual ? { ...atual, email: event.target.value } : atual))}
+              required
+            />
+          </label>
+          <div className="space-y-1">
+            <span className="text-muted-foreground">Tipo de conta</span>
+            <p className="rounded-md border border-border bg-muted/50 px-3 py-2 capitalize text-muted-foreground">
+              {dados?.tipo ?? "—"}
+            </p>
           </div>
-          <div>
-            <dt className="text-muted-foreground">Tipo de conta</dt>
-            <dd className="font-medium capitalize">{dados?.tipo ?? "—"}</dd>
-          </div>
-        </dl>
+
+          {erro ? <p className="text-sm text-destructive">{erro}</p> : null}
+          {msg ? <p className="text-sm text-muted-foreground">{msg}</p> : null}
+
+          <Button type="submit" disabled={salvando || !dados} className="w-full">
+            {salvando ? "Salvando…" : "Salvar alterações"}
+          </Button>
+        </form>
+
+        <div className="mt-5 border-t border-border pt-4">
+          {confirmar ? (
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">Excluir a conta apaga seus dados definitivamente.</p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={excluir}
+                  disabled={excluindo}
+                  className="flex-1 cursor-pointer rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-70"
+                >
+                  {excluindo ? "Excluindo…" : "Confirmar exclusão"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmar(false)}
+                  className="flex-1 cursor-pointer rounded-md border border-border px-4 py-2 text-sm font-semibold transition-colors hover:bg-muted"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setConfirmar(true)}
+              className="w-full cursor-pointer rounded-md border border-red-600 px-4 py-2 text-sm font-semibold text-red-600 transition-colors hover:bg-red-600 hover:text-white"
+            >
+              Excluir conta
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
