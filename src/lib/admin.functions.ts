@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireSupabaseAuth } from "@/integrations/supabase/external-auth-middleware";
 
 /**
  * Bootstrap: a primeira pessoa autenticada que chamar esta função vira
@@ -9,7 +9,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 export const claimFirstAdmin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { supabaseAdmin } = await import("@/integrations/supabase/external.server");
 
     const { count, error: countError } = await supabaseAdmin
       .from("user_roles")
@@ -30,7 +30,7 @@ export const claimFirstAdmin = createServerFn({ method: "POST" })
 
 /** Informa se a loja já tem algum administrador (sem revelar quem). */
 export const adminExists = createServerFn({ method: "GET" }).handler(async () => {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { supabaseAdmin } = await import("@/integrations/supabase/external.server");
   const { count, error } = await supabaseAdmin
     .from("user_roles")
     .select("id", { count: "exact", head: true })

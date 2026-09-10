@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react"
-import { supabase } from "@/integrations/supabase/client"
+import { supabase } from "@/integrations/supabase/external"
 
 type Categoria = { id: string; nome: string }
 type Imagem = { id: string; url: string; ordem: number }
@@ -50,6 +50,8 @@ export function AdminProdutos() {
   const [categoriaId, setCategoriaId] = useState("")
   const [ativo, setAtivo] = useState(true)
   const [salvando, setSalvando] = useState(false)
+  const [excluindo, setExcluindo] = useState(false)
+
   const [erroForm, setErroForm] = useState<string | null>(null)
 
   const [imagens, setImagens] = useState<Imagem[]>([])
@@ -188,6 +190,31 @@ export function AdminProdutos() {
     }
     setSalvando(false)
   }
+
+  async function excluirProduto() {
+    if (!produtoAtual) return
+    const confirmado = window.confirm(
+      `Excluir "${produtoAtual.nome}"? Esta ação não pode ser desfeita.`,
+    )
+    if (!confirmado) return
+    setExcluindo(true)
+    setErroForm(null)
+    await supabase.from("product_images").delete().eq("produto_id", produtoAtual.id)
+    await supabase.from("product_variants").delete().eq("produto_id", produtoAtual.id)
+    await supabase.from("product_prices").delete().eq("produto_id", produtoAtual.id)
+    const { error } = await supabase.from("products").delete().eq("id", produtoAtual.id)
+    setExcluindo(false)
+    if (error) {
+      setErroForm(
+        error.message.includes("foreign key")
+          ? "Este produto já aparece em pedidos, por isso não pode ser apagado. Marque como inativo."
+          : error.message,
+      )
+      return
+    }
+    voltarLista()
+  }
+
 
   async function uploadImagem(file: File) {
     if (!produtoAtual) return
@@ -409,14 +436,27 @@ export function AdminProdutos() {
             </label>
           </div>
           {erroForm ? <p className="mt-3 text-xs text-destructive">{erroForm}</p> : null}
-          <button
-            type="button"
-            onClick={salvarBasico}
-            disabled={salvando}
-            className="mt-4 cursor-pointer rounded-full bg-foreground px-5 py-2 text-sm font-medium text-background transition-colors hover:bg-foreground/85 disabled:opacity-60"
-          >
-            {salvando ? "Salvando..." : produtoAtual ? "Salvar" : "Criar produto"}
-          </button>
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={salvarBasico}
+              disabled={salvando || excluindo}
+              className="cursor-pointer rounded-full bg-foreground px-5 py-2 text-sm font-medium text-background transition-colors hover:bg-foreground/85 disabled:opacity-60"
+            >
+              {salvando ? "Salvando..." : produtoAtual ? "Salvar" : "Criar produto"}
+            </button>
+            {produtoAtual ? (
+              <button
+                type="button"
+                onClick={excluirProduto}
+                disabled={excluindo || salvando}
+                className="cursor-pointer rounded-full border border-destructive px-5 py-2 text-sm font-medium text-destructive transition-colors hover:bg-destructive hover:text-white disabled:opacity-60"
+              >
+                {excluindo ? "Excluindo..." : "Excluir produto"}
+              </button>
+            ) : null}
+          </div>
+
         </section>
 
         {produtoAtual ? (

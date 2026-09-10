@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { AdminProdutos } from "@/components/AdminProdutos";
 
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/external";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useAdminExists } from "@/hooks/useAdminExists";

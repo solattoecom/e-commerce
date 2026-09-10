@@ -30,7 +30,7 @@ import { Input } from "@/components/ui/input";
 import { ProductGrid } from "@/components/ProductGrid";
 import { ShippingCalculator } from "@/components/ShippingCalculator";
 import type { ShippingOption } from "@/lib/shipping.functions";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/external";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 
 import { deleteMyAccount } from "@/lib/account.functions";
@@ -512,6 +512,7 @@ function Index() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [busy, setBusy] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [aviso, setAviso] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [scrolled, setScrolled] = useState(false);
   const [busca, setBusca] = useState("");
@@ -549,6 +550,13 @@ function Index() {
     setAccountType(null);
     setShowLogin(false);
     setErro(null);
+    setAviso(null);
+  };
+
+  const mascararEmail = (email: string) => {
+    const [nome = "", dominio = ""] = email.split("@");
+    const visivel = nome.slice(0, 2);
+    return `${visivel}${"*".repeat(Math.max(nome.length - visivel.length, 3))}@${dominio}`;
   };
 
   const traduzErro = (message: string) => {
@@ -556,7 +564,10 @@ function Index() {
     if (/Invalid login credentials/i.test(message)) return "E-mail ou senha incorretos.";
     if (/pwned|compromised/i.test(message)) return "Escolha uma senha mais segura.";
     if (/at least/i.test(message)) return "A senha precisa ter pelo menos 8 caracteres.";
+    if (/not confirmed|confirmation/i.test(message))
+      return "Conta criada. Confirme o e-mail que enviamos para entrar.";
     return `Erro: ${message || "desconhecido"}`;
+
   };
 
   const handleSignUp = async (event: React.FormEvent) => {
@@ -564,11 +575,14 @@ function Index() {
     if (!accountType) return;
     setBusy(true);
     setErro(null);
+    setAviso(null);
     try {
       await signUpWithType({ ...form, tipo: accountType.id as ClientType });
-      setForm({ nome: "", sobrenome: "", email: "", senha: "" });
-      setRefreshKey((value) => value + 1);
-      closeAccess();
+      const email = form.email.trim();
+      setAviso(`Confirme o e-mail enviado para ${mascararEmail(email)}.`);
+      setForm({ nome: "", sobrenome: "", email, senha: "" });
+      setAccountType(null);
+      setShowLogin(true);
     } catch (error) {
       setErro(traduzErro(error instanceof Error ? error.message : ""));
     } finally {
@@ -747,6 +761,7 @@ function Index() {
                   <form className="grid gap-3" onSubmit={handleSignIn}>
                     <Input required type="email" aria-label="E-mail" placeholder="E-mail" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} maxLength={255} className="h-12 border-border/70 bg-background/75 text-foreground backdrop-blur-sm placeholder:text-muted-foreground hover:border-border focus-visible:border-border focus-visible:ring-foreground/20" />
                     <Input required type="password" aria-label="Senha" placeholder="Senha" value={form.senha} onChange={(e) => setForm({ ...form, senha: e.target.value })} minLength={8} maxLength={72} className="h-12 border-border/70 bg-background/75 text-foreground backdrop-blur-sm placeholder:text-muted-foreground hover:border-border focus-visible:border-border focus-visible:ring-foreground/20" />
+                    {aviso ? <p className="text-sm font-medium text-primary-foreground">{aviso}</p> : null}
                     {erro ? <p className="text-sm text-primary-foreground">{erro}</p> : null}
                     <Button type="submit" disabled={busy} className="h-12 rounded-md bg-background text-foreground shadow-none hover:bg-background/90 hover:text-foreground">{busy ? "Entrando…" : "Entrar"}</Button>
                   </form>

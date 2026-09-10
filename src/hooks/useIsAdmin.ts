@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/external";
 
 export function useIsAdmin(userId: string | undefined) {
   const [isAdmin, setIsAdmin] = useState(false);
