@@ -710,7 +710,7 @@ function Index() {
                     <Input required type="email" aria-label="E-mail" placeholder="E-mail" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} maxLength={255} className="h-12 border-border/70 bg-background/75 text-foreground backdrop-blur-sm placeholder:text-muted-foreground hover:border-border focus-visible:border-border focus-visible:ring-foreground/20" />
                     <Input required type="password" aria-label="Senha" placeholder="Senha" value={form.senha} onChange={(e) => setForm({ ...form, senha: e.target.value })} minLength={8} maxLength={72} className="h-12 border-border/70 bg-background/75 text-foreground backdrop-blur-sm placeholder:text-muted-foreground hover:border-border focus-visible:border-border focus-visible:ring-foreground/20" />
                     {erro ? <p className="text-sm text-primary-foreground">{erro}</p> : null}
-                    <Button type="submit" disabled={busy} className="h-12 rounded-md bg-foreground text-background hover:bg-foreground/90">{busy ? "Entrando…" : "Entrar"}</Button>
+                    <Button type="submit" disabled={busy} className="h-12 rounded-md bg-background text-foreground shadow-none hover:bg-background/90 hover:text-foreground">{busy ? "Entrando…" : "Entrar"}</Button>
                   </form>
                 </>
               ) : accountType ? (
