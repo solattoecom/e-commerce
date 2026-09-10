@@ -417,6 +417,9 @@ function Index() {
         cartCount={cart.count}
         onOpenCart={() => (user ? setShowCart(true) : setShowAccess(true))}
       />
+      {showProfile && user ? (
+        <ProfileDialog userId={user.id} email={user.email ?? ""} onClose={() => setShowProfile(false)} />
+      ) : null}
       {showCart && (
         <div className="fixed inset-0 z-[60] flex justify-end bg-foreground/40" onClick={() => setShowCart(false)}>
           <aside
