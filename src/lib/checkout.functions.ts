@@ -130,28 +130,23 @@ export const createOrder = createServerFn({ method: "POST" })
       throw new Error(`AbacatePay: ${err}`);
     }
 
-    const abacateData = await abacateRes.json() as {
-      data: {
-        id: string;
-        status: string;
-        pixQr?: string;
-        pixQrCode?: string;
-        expiresAt?: string;
-      };
-    };
+    const abacateData = await abacateRes.json() as Record<string, unknown>;
+
+    // debug: throw so we can see the real field names
+    throw new Error(`AbacatePay response: ${JSON.stringify(abacateData)}`);
 
     await supabaseAdmin
       .from("orders")
-      .update({ payment_id: abacateData.data.id })
+      .update({ payment_id: (abacateData as any).data?.id })
       .eq("id", order.id);
 
     return {
       order_id: order.id,
       payment_method: data.payment_method,
-      pix_qr: abacateData.data.pixQr,
-      pix_qr_code: abacateData.data.pixQrCode,
-      pix_expiration: abacateData.data.expiresAt,
-      status: abacateData.data.status,
+      pix_qr: undefined,
+      pix_qr_code: undefined,
+      pix_expiration: undefined,
+      status: "pendente",
     };
   });
 
