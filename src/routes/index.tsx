@@ -328,6 +328,7 @@ function Index() {
   const [scrolled, setScrolled] = useState(false);
   const [busca, setBusca] = useState("");
   const [showCart, setShowCart] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
   const cart = useCart(user?.id ?? null);
 
   const handleAddToCart = async (produtoId: string) => {
