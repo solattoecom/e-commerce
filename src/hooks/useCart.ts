@@ -27,7 +27,9 @@ export function useCart(userId: string | null) {
     setLoading(true);
     const { data } = await supabase
       .from("cart_items")
-      .select("id, produto_id, quantidade, products(nome, product_images(url, ordem), product_prices(preco))")
+      .select(
+        "id, produto_id, variacao_id, quantidade, product_variants(tamanho), products(nome, product_images(url, ordem), product_prices(preco))",
+      )
       .order("criado_em", { ascending: true });
     setItems((data as unknown as CartItem[]) ?? []);
     setLoading(false);
