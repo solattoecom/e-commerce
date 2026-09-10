@@ -8,6 +8,7 @@ type Product = {
   descricao: string | null;
   categories: { nome: string } | null;
   product_images: { url: string; ordem: number }[];
+  product_variants: { id: string; tamanho: string; estoque: number }[];
   product_prices: { preco: number; preco_original: number | null }[];
 };
 
