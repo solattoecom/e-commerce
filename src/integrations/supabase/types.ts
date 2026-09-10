@@ -285,6 +285,7 @@ export type Database = {
       product_reviews: {
         Row: {
           atualizado_em: string
+          autor_nome: string
           comentario: string | null
           criado_em: string
           id: string
@@ -294,6 +295,7 @@ export type Database = {
         }
         Insert: {
           atualizado_em?: string
+          autor_nome?: string
           comentario?: string | null
           criado_em?: string
           id?: string
@@ -303,6 +305,7 @@ export type Database = {
         }
         Update: {
           atualizado_em?: string
+          autor_nome?: string
           comentario?: string | null
           criado_em?: string
           id?: string

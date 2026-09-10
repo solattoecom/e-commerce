@@ -1,0 +1,1 @@
+ALTER TABLE public.product_reviews ADD COLUMN autor_nome text NOT NULL DEFAULT 'Cliente';
