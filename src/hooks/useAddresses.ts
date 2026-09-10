@@ -52,9 +52,11 @@ export function useAddresses(userId: string | null) {
   }, [userId, refresh]);
 
   const removeAddress = useCallback(async (id: string) => {
-    await supabase.from("addresses").delete().eq("id", id);
+    if (!userId) return;
+    const { error } = await supabase.from("addresses").delete().eq("id", id).eq("user_id", userId);
+    if (error) { console.error("Erro ao remover endereço:", error); return; }
     await refresh();
-  }, [refresh]);
+  }, [userId, refresh]);
 
   return { addresses, loading, refresh, addAddress, setDefault, removeAddress };
 }
