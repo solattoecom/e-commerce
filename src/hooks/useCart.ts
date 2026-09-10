@@ -5,7 +5,9 @@ import { supabase } from "@/integrations/supabase/client";
 export type CartItem = {
   id: string;
   produto_id: string;
+  variacao_id: string | null;
   quantidade: number;
+  product_variants: { tamanho: string } | null;
   products: {
     nome: string;
     product_images: { url: string; ordem: number }[];
