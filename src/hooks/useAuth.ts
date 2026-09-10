@@ -44,27 +44,6 @@ export async function signUpWithType(params: {
     },
   });
   if (error) throw error;
-
-  const userId = data.user?.id;
-  if (userId && data.session) {
-    await supabase.from("profiles").upsert({
-      id: userId,
-      nome: params.nome,
-      sobrenome: params.sobrenome,
-      email: params.email,
-    });
-    // O tipo escolhido fica registrado no cadastro (metadata) e a conta começa
-    // como varejo. Atacado e dropshipping precisam de aprovação de um administrador.
-    await supabase
-      .from("user_client_types")
-      .insert({ user_id: userId, tipo: "varejo" });
-
-    if (params.tipo !== "varejo") {
-      await supabase
-        .from("client_type_requests")
-        .insert({ user_id: userId, tipo_solicitado: params.tipo, status: "pendente" });
-    }
-  }
   return data;
 }
 

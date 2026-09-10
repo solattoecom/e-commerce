@@ -556,7 +556,7 @@ function Index() {
     if (/Invalid login credentials/i.test(message)) return "E-mail ou senha incorretos.";
     if (/pwned|compromised/i.test(message)) return "Escolha uma senha mais segura.";
     if (/at least/i.test(message)) return "A senha precisa ter pelo menos 8 caracteres.";
-    return "Não foi possível concluir. Tente novamente.";
+    return `Erro: ${message || "desconhecido"}`;
   };
 
   const handleSignUp = async (event: React.FormEvent) => {
