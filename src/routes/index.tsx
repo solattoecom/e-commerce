@@ -28,6 +28,8 @@ import heroVideo from "@/assets/hero-calcando-sapato.mp4.asset.json";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ProductGrid } from "@/components/ProductGrid";
+import { ShippingCalculator } from "@/components/ShippingCalculator";
+import type { ShippingOption } from "@/lib/shipping.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { deleteMyAccount } from "@/lib/account.functions";
 import { signIn, signOut, signUpWithType, useAuth, type ClientType } from "@/hooks/useAuth";
@@ -500,6 +502,7 @@ function Index() {
   const [scrolled, setScrolled] = useState(false);
   const [busca, setBusca] = useState("");
   const [showCart, setShowCart] = useState(false);
+  const [frete, setFrete] = useState<ShippingOption | null>(null);
   const [showProfile, setShowProfile] = useState(false);
   const cart = useCart(user?.id ?? null);
 
@@ -647,10 +650,31 @@ function Index() {
               )}
             </div>
             <div className="border-t border-border px-5 py-4">
-              <div className="mb-3 flex items-center justify-between text-sm">
+              {cart.items.length > 0 ? (
+                <ShippingCalculator
+                  itens={cart.items.reduce((sum, item) => sum + item.quantidade, 0)}
+                  subtotal={cart.total}
+                  onSelect={setFrete}
+                />
+              ) : null}
+              <div className="mb-1 flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Subtotal</span>
+                <span>{Number(cart.total).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
+              </div>
+              {frete ? (
+                <div className="mb-1 flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Frete ({frete.nome})</span>
+                  <span>
+                    {frete.valor === 0
+                      ? "Grátis"
+                      : Number(frete.valor).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                  </span>
+                </div>
+              ) : null}
+              <div className="mb-3 mt-2 flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Total</span>
                 <span className="text-lg font-semibold">
-                  {Number(cart.total).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                  {Number(cart.total + (frete?.valor ?? 0)).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                 </span>
               </div>
               <Button className="h-12 w-full rounded-md bg-foreground text-background hover:bg-foreground/90">Finalizar compra</Button>
