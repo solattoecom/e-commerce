@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
+import { ChevronDown, ChevronUp, MapPin, CreditCard } from "lucide-react";
 
 import { AdminProdutos } from "@/components/AdminProdutos";
 
@@ -43,14 +44,29 @@ type Solicitacao = {
   profiles: { nome: string; sobrenome: string; email: string } | null;
 };
 
+type PedidoItem = {
+  id: string;
+  quantidade: number;
+  preco_unitario: number;
+  subtotal: number;
+  products: { nome: string; product_images: { url: string }[] } | null;
+  product_variants: { tamanho: string } | null;
+};
+
 type Pedido = {
   id: string;
   status: string;
+  subtotal: number;
+  frete: number;
   total: number;
+  payment_method: string | null;
+  nota_fiscal: string | null;
+  codigo_rastreio: string | null;
   criado_em: string;
   usuario_id: string;
+  endereco: Record<string, string>;
   profiles: { nome: string; sobrenome: string; email: string } | null;
-  order_items: { id: string; quantidade: number }[];
+  order_items: PedidoItem[];
 };
 
 const STATUS_PEDIDO = [
@@ -92,6 +108,7 @@ function AdminPanel() {
   const [ocupado, setOcupado] = useState<string | null>(null);
   const [nfePorPedido, setNfePorPedido] = useState<Record<string, string>>({});
   const [rastreioPorPedido, setRastreioPorPedido] = useState<Record<string, string>>({});
+  const [expandido, setExpandido] = useState<string | null>(null);
 
   const carregar = useCallback(async () => {
     setCarregandoDados(true);
@@ -103,7 +120,7 @@ function AdminPanel() {
       supabase
         .from("orders")
         .select(
-          "id, status, total, criado_em, usuario_id, profiles(nome, sobrenome, email), order_items(id, quantidade)",
+          "id, status, subtotal, frete, total, payment_method, nota_fiscal, codigo_rastreio, criado_em, usuario_id, endereco, profiles(nome, sobrenome, email), order_items(id, quantidade, preco_unitario, subtotal, products(nome, product_images(url)), product_variants(tamanho))",
         )
         .order("criado_em", { ascending: false }),
     ]);
@@ -300,74 +317,158 @@ function AdminPanel() {
               const statusSelecionado = p.status;
               const nfeAtual = nfePorPedido[p.id] ?? "";
               const rastreioAtual = rastreioPorPedido[p.id] ?? "";
+              const isOpen = expandido === p.id;
+              const end = p.endereco ?? {};
               return (
-                <li key={p.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">
-                      {p.profiles ? `${p.profiles.nome} ${p.profiles.sobrenome}` : "Cliente"} ·{" "}
-                      {brl(Number(p.total))}
-                    </p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {dataCurta(p.criado_em)} ·{" "}
-                      {p.order_items?.reduce((soma, item) => soma + item.quantidade, 0) ?? 0} item(ns)
-                      · #{p.id.slice(0, 8)}
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <select
-                      value={statusSelecionado}
-                      disabled={ocupado === p.id}
-                      onChange={(event) => {
-                        const novoStatus = event.target.value;
-                        if (novoStatus !== "enviado") {
-                          void mudarStatus(p, novoStatus);
-                        } else {
-                          setPedidos((prev) =>
-                            prev.map((item) =>
-                              item.id === p.id ? { ...item, status: novoStatus } : item,
-                            ),
-                          );
-                        }
-                      }}
-                      className="cursor-pointer rounded-full border border-border bg-background px-3 py-2 text-xs capitalize"
-                    >
-                      {STATUS_PEDIDO.map((status) => (
-                        <option key={status} value={status}>
-                          {status}
-                        </option>
-                      ))}
-                    </select>
-                    {statusSelecionado === "enviado" && (
-                      <>
-                        <input
-                          type="text"
-                          placeholder="Número NF-e"
-                          value={nfeAtual}
-                          onChange={(event) =>
-                            setNfePorPedido((prev) => ({ ...prev, [p.id]: event.target.value }))
-                          }
-                          className="rounded-full border border-border bg-background px-3 py-2 text-xs"
-                        />
-                        <input
-                          type="text"
-                          placeholder="Código de rastreio"
-                          value={rastreioAtual}
-                          onChange={(event) =>
-                            setRastreioPorPedido((prev) => ({ ...prev, [p.id]: event.target.value }))
-                          }
-                          className="rounded-full border border-border bg-background px-3 py-2 text-xs"
-                        />
-                        <button
-                          type="button"
-                          disabled={ocupado === p.id}
-                          onClick={() => mudarStatus(p, "enviado", nfeAtual, rastreioAtual)}
-                          className="cursor-pointer rounded-full bg-foreground px-3 py-2 text-xs font-medium text-background transition-colors hover:bg-foreground/85 disabled:opacity-60"
-                        >
-                          Salvar
-                        </button>
-                      </>
-                    )}
-                  </div>
+                <li key={p.id} className="divide-y divide-border">
+                  {/* Linha clicável */}
+                  <button
+                    type="button"
+                    onClick={() => setExpandido(isOpen ? null : p.id)}
+                    className="flex w-full flex-wrap items-center justify-between gap-3 p-4 text-left hover:bg-muted/30 transition-colors"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">
+                        {p.profiles ? `${p.profiles.nome} ${p.profiles.sobrenome}` : "Cliente"} ·{" "}
+                        {brl(Number(p.total))}
+                      </p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {dataCurta(p.criado_em)} ·{" "}
+                        {p.order_items?.reduce((soma, item) => soma + item.quantidade, 0) ?? 0} item(ns)
+                        · #{p.id.slice(0, 8)}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs capitalize text-muted-foreground">{p.status}</span>
+                      {isOpen ? <ChevronUp className="size-4 text-muted-foreground" /> : <ChevronDown className="size-4 text-muted-foreground" />}
+                    </div>
+                  </button>
+
+                  {/* Detalhes expandidos */}
+                  {isOpen && (
+                    <div className="space-y-4 bg-muted/10 px-4 pb-5 pt-4 text-sm">
+
+                      {/* Cliente */}
+                      <div>
+                        <p className="font-semibold mb-1">Cliente</p>
+                        <p className="text-muted-foreground">{p.profiles ? `${p.profiles.nome} ${p.profiles.sobrenome}` : "—"}</p>
+                        <p className="text-muted-foreground">{p.profiles?.email}</p>
+                      </div>
+
+                      {/* Data e pagamento */}
+                      <div className="flex flex-wrap gap-4 text-muted-foreground">
+                        <span className="flex items-center gap-1.5">
+                          <CreditCard className="size-4 shrink-0" />
+                          {p.payment_method === "pix" ? "Pix" : "Cartão de crédito"}
+                        </span>
+                        <span className="font-mono text-xs">{p.id}</span>
+                      </div>
+
+                      {/* Produtos */}
+                      <div>
+                        <p className="font-semibold mb-2">Produtos</p>
+                        <div className="space-y-2">
+                          {p.order_items.map((item) => (
+                            <div key={item.id} className="flex items-center gap-3">
+                              <div className="size-12 shrink-0 overflow-hidden rounded-lg border border-border bg-muted">
+                                {item.products?.product_images?.[0]?.url ? (
+                                  <img src={item.products.product_images[0].url} alt="" className="h-full w-full object-contain" />
+                                ) : null}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate font-medium">{item.products?.nome}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {item.product_variants?.tamanho ? `Nº ${item.product_variants.tamanho} · ` : ""}
+                                  Qtd: {item.quantidade}
+                                </p>
+                              </div>
+                              <p className="shrink-0 font-semibold">{brl(Number(item.subtotal))}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Totais */}
+                      <div className="rounded-xl border border-border p-3 space-y-1 text-xs">
+                        <div className="flex justify-between text-muted-foreground"><span>Subtotal</span><span>{brl(Number(p.subtotal))}</span></div>
+                        <div className="flex justify-between text-muted-foreground"><span>Frete</span><span>{Number(p.frete) === 0 ? "Grátis" : brl(Number(p.frete))}</span></div>
+                        <div className="flex justify-between border-t border-border pt-1 font-semibold text-sm"><span>Total</span><span>{brl(Number(p.total))}</span></div>
+                      </div>
+
+                      {/* Endereço */}
+                      {end["rua"] ? (
+                        <div>
+                          <p className="mb-1 flex items-center gap-1.5 font-semibold">
+                            <MapPin className="size-4" /> Endereço de entrega
+                          </p>
+                          <div className="rounded-xl bg-muted/40 p-3 text-muted-foreground text-xs space-y-0.5">
+                            <p>{end["rua"]}, {end["numero"]}{end["complemento"] ? `, ${end["complemento"]}` : ""}</p>
+                            <p>{end["bairro"]}</p>
+                            <p>{end["cidade"]} — {end["estado"]}</p>
+                            <p>CEP {end["cep"]?.slice(0, 5)}-{end["cep"]?.slice(5)}</p>
+                          </div>
+                        </div>
+                      ) : null}
+
+                      {/* Alterar status */}
+                      <div>
+                        <p className="font-semibold mb-2">Alterar status</p>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <select
+                            value={statusSelecionado}
+                            disabled={ocupado === p.id}
+                            onChange={(event) => {
+                              const novoStatus = event.target.value;
+                              if (novoStatus !== "enviado") {
+                                void mudarStatus(p, novoStatus);
+                              } else {
+                                setPedidos((prev) =>
+                                  prev.map((item) =>
+                                    item.id === p.id ? { ...item, status: novoStatus } : item,
+                                  ),
+                                );
+                              }
+                            }}
+                            className="cursor-pointer rounded-full border border-border bg-background px-3 py-2 text-xs capitalize"
+                          >
+                            {STATUS_PEDIDO.map((status) => (
+                              <option key={status} value={status}>{status}</option>
+                            ))}
+                          </select>
+                          {statusSelecionado === "enviado" && (
+                            <>
+                              <input
+                                type="text"
+                                placeholder="Número NF-e"
+                                value={nfeAtual}
+                                onChange={(event) =>
+                                  setNfePorPedido((prev) => ({ ...prev, [p.id]: event.target.value }))
+                                }
+                                className="rounded-full border border-border bg-background px-3 py-2 text-xs"
+                              />
+                              <input
+                                type="text"
+                                placeholder="Código de rastreio"
+                                value={rastreioAtual}
+                                onChange={(event) =>
+                                  setRastreioPorPedido((prev) => ({ ...prev, [p.id]: event.target.value }))
+                                }
+                                className="rounded-full border border-border bg-background px-3 py-2 text-xs"
+                              />
+                              <button
+                                type="button"
+                                disabled={ocupado === p.id}
+                                onClick={() => mudarStatus(p, "enviado", nfeAtual, rastreioAtual)}
+                                className="cursor-pointer rounded-full bg-foreground px-3 py-2 text-xs font-medium text-background transition-colors hover:bg-foreground/85 disabled:opacity-60"
+                              >
+                                Salvar
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </li>
               );
             })}
