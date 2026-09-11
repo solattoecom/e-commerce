@@ -36,6 +36,7 @@ import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { deleteMyAccount } from "@/lib/account.functions";
 import { signIn, signOut, signUpWithType, useAuth, type ClientType } from "@/hooks/useAuth";
 import { useCart } from "@/hooks/useCart";
+import { useWishlist } from "@/hooks/useWishlist";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -109,6 +110,8 @@ function StickyHeader({
   onBuscaChange,
   cartCount,
   onOpenCart,
+  wishlistCount,
+  onOpenWishlist,
 }: {
   visible: boolean;
   user: { id?: string; email?: string } | null;
@@ -119,6 +122,8 @@ function StickyHeader({
   onBuscaChange: (value: string) => void;
   cartCount: number;
   onOpenCart: () => void;
+  wishlistCount: number;
+  onOpenWishlist: () => void;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -192,15 +197,22 @@ function StickyHeader({
         <div className="col-start-2 row-start-1 flex shrink-0 items-center gap-1 sm:col-start-3 xl:ml-0">
           <button
             type="button"
-            aria-label="Favoritos"
-            className="hidden h-9 w-9 cursor-pointer place-items-center rounded-full text-foreground transition-colors hover:bg-muted sm:grid"
+            aria-label="Lista de desejos"
+            onClick={onOpenWishlist}
+            className="relative grid h-9 w-9 cursor-pointer place-items-center rounded-full text-foreground transition-colors hover:bg-muted"
           >
             <Heart className="size-[18px]" />
+            {wishlistCount > 0 ? (
+              <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-foreground text-[10px] font-semibold text-background">
+                {wishlistCount}
+              </span>
+            ) : null}
           </button>
           <button
             type="button"
-            aria-label="Lojas"
-            className="hidden h-9 w-9 cursor-pointer place-items-center rounded-full text-foreground transition-colors hover:bg-muted md:grid"
+            aria-label="Nossa localização"
+            onClick={() => document.getElementById("localizacao")?.scrollIntoView({ behavior: "smooth" })}
+            className="grid h-9 w-9 cursor-pointer place-items-center rounded-full text-foreground transition-colors hover:bg-muted"
           >
             <MapPin className="size-[18px]" />
           </button>
@@ -524,9 +536,11 @@ function Index() {
   const [scrolled, setScrolled] = useState(false);
   const [busca, setBusca] = useState("");
   const [showCart, setShowCart] = useState(false);
+  const [showWishlist, setShowWishlist] = useState(false);
   const [frete, setFrete] = useState<ShippingOption | null>(null);
   const [showProfile, setShowProfile] = useState(false);
   const cart = useCart(user?.id ?? null);
+  const wishlist = useWishlist(user?.id ?? null);
   const navigate = useNavigate();
 
   const handleAddToCart = async (produtoId: string, variacaoId: string | null = null) => {
@@ -627,6 +641,8 @@ function Index() {
         onBuscaChange={setBusca}
         cartCount={cart.count}
         onOpenCart={() => (user ? setShowCart(true) : setShowAccess(true))}
+        wishlistCount={wishlist.count}
+        onOpenWishlist={() => (user ? setShowWishlist(true) : setShowAccess(true))}
       />
       {showProfile && user ? (
         <ProfileDialog
@@ -719,6 +735,59 @@ function Index() {
               >
                 Finalizar compra
               </Button>
+            </div>
+          </aside>
+        </div>
+      )}
+      {showWishlist && (
+        <div className="fixed inset-0 z-[60] flex justify-end bg-foreground/40" onClick={() => setShowWishlist(false)}>
+          <aside
+            className="flex h-full w-full max-w-md flex-col bg-background shadow-xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-border px-5 py-4">
+              <h2 className="text-lg font-semibold">Lista de desejos</h2>
+              <button type="button" onClick={() => setShowWishlist(false)} aria-label="Fechar lista de desejos" className="cursor-pointer rounded-full p-2 hover:bg-muted">
+                <X className="size-5" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto px-5 py-4">
+              {wishlist.items.length === 0 ? (
+                <p className="py-10 text-center text-sm text-muted-foreground">Sua lista de desejos está vazia.</p>
+              ) : (
+                <ul className="grid gap-4">
+                  {wishlist.items.map((item) => {
+                    const image = [...(item.products?.product_images ?? [])].sort((a, b) => a.ordem - b.ordem)[0];
+                    const preco = item.products?.product_prices?.[0]?.preco ?? 0;
+                    const precoOriginal = item.products?.product_prices?.[0]?.preco_original;
+                    return (
+                      <li key={item.id} className="flex gap-3 border-b border-border pb-4">
+                        <div className="size-20 shrink-0 overflow-hidden rounded-md bg-muted">
+                          {image ? <img src={image.url} alt={item.products?.nome ?? ""} className="h-full w-full object-contain" /> : null}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium">{item.products?.nome}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {Number(preco).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                            {precoOriginal ? (
+                              <span className="ml-2 text-xs line-through">
+                                {Number(precoOriginal).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                              </span>
+                            ) : null}
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => wishlist.removeItem(item.id)}
+                            className="mt-2 cursor-pointer text-xs text-muted-foreground underline"
+                          >
+                            Remover
+                          </button>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
             </div>
           </aside>
         </div>
@@ -935,7 +1004,14 @@ function Index() {
                 {user ? "Preços exclusivos do seu tipo de conta." : "Entre na sua conta para ver os preços do seu perfil."}
               </p>
             </div>
-            <ProductGrid signedIn={Boolean(user)} refreshKey={refreshKey} search={busca} onAdd={handleAddToCart} />
+            <ProductGrid
+              signedIn={Boolean(user)}
+              refreshKey={refreshKey}
+              search={busca}
+              onAdd={handleAddToCart}
+              wishlistIds={wishlist.ids}
+              onToggleWishlist={user ? (id) => wishlist.toggle(id) : undefined}
+            />
           </div>
         </section>
 
@@ -961,7 +1037,7 @@ function Index() {
         </section>
       </main>
 
-      <section className="bg-background">
+      <section id="localizacao" className="bg-background">
         <div className="mx-auto w-full max-w-[1440px] px-5 md:px-8">
           <div className="h-[320px] w-full overflow-hidden rounded-2xl md:h-[440px]">
             <iframe

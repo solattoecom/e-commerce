@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Heart } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/external";
 
@@ -20,11 +21,15 @@ export function ProductGrid({
   refreshKey = 0,
   search = "",
   onAdd,
+  wishlistIds = new Set(),
+  onToggleWishlist,
 }: {
   signedIn: boolean;
   refreshKey?: number;
   search?: string;
   onAdd?: (produtoId: string, variacaoId: string | null) => void;
+  wishlistIds?: Set<string>;
+  onToggleWishlist?: (produtoId: string) => void;
 }) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -145,7 +150,22 @@ export function ProductGrid({
             </div>
             <div className="flex flex-1 flex-col gap-2 p-5">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{product.categories?.nome}</p>
-              <h3 className="text-lg font-semibold">{product.nome}</h3>
+              <div className="flex items-start justify-between gap-2">
+                <h3 className="text-lg font-semibold">{product.nome}</h3>
+                {onToggleWishlist ? (
+                  <button
+                    type="button"
+                    aria-label={wishlistIds.has(product.id) ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+                    onClick={() => onToggleWishlist(product.id)}
+                    className="mt-0.5 shrink-0 cursor-pointer rounded-full p-1 text-foreground transition-colors hover:bg-muted"
+                  >
+                    <Heart
+                      className="size-5"
+                      fill={wishlistIds.has(product.id) ? "currentColor" : "none"}
+                    />
+                  </button>
+                ) : null}
+              </div>
               <p className="text-sm leading-6 text-muted-foreground">{product.descricao}</p>
               <div className="mt-auto pt-3">
                 {price ? (
