@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowLeft, ArrowRight, Check, CreditCard, MapPin, QrCode, Truck } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,13 @@ type Step = "endereco" | "entrega" | "pagamento" | "sucesso";
 function CheckoutPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { items, total, refresh: refreshCart } = useCart(user?.id ?? null);
+  const { items, total, loading: cartLoading, refresh: refreshCart } = useCart(user?.id ?? null);
+
+  useEffect(() => {
+    if (!cartLoading && items.length === 0) {
+      void navigate({ to: "/" });
+    }
+  }, [cartLoading, items.length, navigate]);
   const { addresses, loading: addrLoading, addAddress, removeAddress } = useAddresses(user?.id ?? null);
 
   const [step, setStep] = useState<Step>("endereco");
