@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { ArrowLeft } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 import { supabase } from "@/integrations/supabase/external";
@@ -224,6 +225,14 @@ function ProductPage() {
 
   return (
     <main className="mx-auto w-full max-w-[1200px] px-4 py-8 sm:px-6">
+      <Link
+        to="/"
+        className="mb-6 inline-flex cursor-pointer items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <ArrowLeft className="size-4" />
+        Voltar
+      </Link>
+
       <nav className="mb-6 text-xs text-muted-foreground">
         <Link to="/" className="cursor-pointer hover:text-foreground">
           Início
