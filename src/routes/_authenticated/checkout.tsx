@@ -193,6 +193,14 @@ function CheckoutPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
+      <button
+        type="button"
+        onClick={() => step === "endereco" ? navigate({ to: "/" }) : setStep(step === "pagamento" ? "entrega" : "endereco")}
+        className="mb-6 flex cursor-pointer items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <ArrowLeft className="size-4" />
+        Voltar
+      </button>
       <div className="mb-8 flex items-center gap-2">
         {steps.map((s, i) => (
           <div key={s.id} className="flex flex-1 items-center gap-2">
