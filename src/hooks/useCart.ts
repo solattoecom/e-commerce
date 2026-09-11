@@ -17,7 +17,7 @@ export type CartItem = {
 
 export function useCart(userId: string | null) {
   const [items, setItems] = useState<CartItem[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
     if (!userId) {
