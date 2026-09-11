@@ -28,6 +28,7 @@ import heroVideo from "@/assets/hero-calcando-sapato.mp4.asset.json";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ProductGrid } from "@/components/ProductGrid";
+import { ProductModal, type Product } from "@/components/ProductModal";
 import { ShippingCalculator } from "@/components/ShippingCalculator";
 import type { ShippingOption } from "@/lib/shipping.functions";
 import { supabase } from "@/integrations/supabase/external";
@@ -539,6 +540,7 @@ function Index() {
   const [showWishlist, setShowWishlist] = useState(false);
   const [frete, setFrete] = useState<ShippingOption | null>(null);
   const [showProfile, setShowProfile] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const cart = useCart(user?.id ?? null);
   const wishlist = useWishlist(user?.id ?? null);
   const navigate = useNavigate();
@@ -884,6 +886,19 @@ function Index() {
         </div>
       )}
 
+      {selectedProduct ? (
+        <ProductModal
+          product={selectedProduct}
+          onClose={() => setSelectedProduct(null)}
+          onAdd={(produtoId, variacaoId) => {
+            handleAddToCart(produtoId, variacaoId);
+            setSelectedProduct(null);
+            setShowCart(true);
+          }}
+          signedIn={Boolean(user)}
+        />
+      ) : null}
+
       <main id="inicio">
         <section className="relative h-screen w-full overflow-hidden bg-black">
           <video
@@ -1012,6 +1027,7 @@ function Index() {
               onAdd={handleAddToCart}
               wishlistIds={wishlist.ids}
               onToggleWishlist={user ? (id) => wishlist.toggle(id) : undefined}
+              onProductClick={(p) => setSelectedProduct(p)}
             />
           </div>
         </section>

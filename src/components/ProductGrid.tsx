@@ -2,16 +2,7 @@ import { useEffect, useState } from "react";
 import { Heart } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/external";
-
-type Product = {
-  id: string;
-  nome: string;
-  descricao: string | null;
-  categories: { nome: string } | null;
-  product_images: { url: string; ordem: number }[];
-  product_variants: { id: string; tamanho: string; estoque: number }[];
-  product_prices: { preco: number; preco_original: number | null }[];
-};
+import type { Product } from "@/components/ProductModal";
 
 const brl = (value: number) =>
   value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -23,6 +14,7 @@ export function ProductGrid({
   onAdd,
   wishlistIds = new Set(),
   onToggleWishlist,
+  onProductClick,
 }: {
   signedIn: boolean;
   refreshKey?: number;
@@ -30,6 +22,7 @@ export function ProductGrid({
   onAdd?: (produtoId: string, variacaoId: string | null) => void;
   wishlistIds?: Set<string>;
   onToggleWishlist?: (produtoId: string) => void;
+  onProductClick?: (product: Product) => void;
 }) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,8 +33,8 @@ export function ProductGrid({
   useEffect(() => {
     let active = true;
     const columns = signedIn
-      ? "id, nome, descricao, categories(nome), product_images(url, ordem), product_variants(id, tamanho, estoque), product_prices(preco, preco_original)"
-      : "id, nome, descricao, categories(nome), product_images(url, ordem), product_variants(id, tamanho, estoque)";
+      ? "id, nome, slug, descricao, categories(nome), product_images(url, ordem), product_variants(id, tamanho, estoque), product_prices(preco, preco_original)"
+      : "id, nome, slug, descricao, categories(nome), product_images(url, ordem), product_variants(id, tamanho, estoque)";
     supabase
       .from("products")
       .select(columns)
@@ -102,7 +95,14 @@ export function ProductGrid({
         const price = product.product_prices[0];
         return (
           <article key={product.id} className="group flex flex-col overflow-hidden rounded-xl border border-border bg-background">
-            <div className="relative aspect-square bg-background">
+            <div
+              role={onProductClick ? "button" : undefined}
+              tabIndex={onProductClick ? 0 : undefined}
+              aria-label={onProductClick ? `Ver detalhes de ${product.nome}` : undefined}
+              onClick={() => onProductClick?.(product)}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onProductClick?.(product); }}
+              className={`relative aspect-square bg-background ${onProductClick ? "cursor-pointer" : ""}`}
+            >
               {imagens.map((img, i) => (
                 <img
                   key={img.url}
@@ -119,7 +119,7 @@ export function ProductGrid({
                   <button
                     type="button"
                     aria-label="Foto anterior"
-                    onClick={() => mover(-1)}
+                    onClick={(e) => { e.stopPropagation(); mover(-1); }}
                     className="absolute left-3 top-1/2 -translate-y-1/2 cursor-pointer rounded-full border border-border bg-background/80 px-3 py-2 text-sm backdrop-blur transition-opacity hover:bg-background"
                   >
                     ‹
@@ -127,7 +127,7 @@ export function ProductGrid({
                   <button
                     type="button"
                     aria-label="Próxima foto"
-                    onClick={() => mover(1)}
+                    onClick={(e) => { e.stopPropagation(); mover(1); }}
                     className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer rounded-full border border-border bg-background/80 px-3 py-2 text-sm backdrop-blur transition-opacity hover:bg-background"
                   >
                     ›
@@ -138,7 +138,7 @@ export function ProductGrid({
                         key={`dot-${img.url}`}
                         type="button"
                         aria-label={`Ver foto ${i + 1}`}
-                        onClick={() => setSlideByProduct((prev) => ({ ...prev, [product.id]: i }))}
+                        onClick={(e) => { e.stopPropagation(); setSlideByProduct((prev) => ({ ...prev, [product.id]: i })); }}
                         className={`h-1.5 cursor-pointer rounded-full transition-all ${
                           i === atual ? "w-5 bg-foreground" : "w-1.5 bg-foreground/30"
                         }`}
