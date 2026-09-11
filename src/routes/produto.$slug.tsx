@@ -115,6 +115,7 @@ function ProductPage() {
   const [avaliacoes, setAvaliacoes] = useState<Avaliacao[]>([]);
   const [minhaNota, setMinhaNota] = useState(0);
   const [salvando, setSalvando] = useState(false);
+  const [podeAvaliar, setPodeAvaliar] = useState(false);
 
   const signedIn = Boolean(user);
 
@@ -155,11 +156,26 @@ function ProductPage() {
 
   useEffect(() => {
     const minha = avaliacoes.find((a) => a.user_id === user?.id);
-    if (minha) {
-      setMinhaNota(minha.nota);
-      setMeuComentario(minha.comentario ?? "");
-    }
+    if (minha) setMinhaNota(minha.nota);
   }, [avaliacoes, user?.id]);
+
+  useEffect(() => {
+    if (!user || !produto) return;
+    supabase
+      .from("order_items")
+      .select("pedido_id, orders!inner(usuario_id, status)")
+      .eq("produto_id", produto.id)
+      .then(({ data }) => {
+        const comprou = (data ?? []).some((item: unknown) => {
+          const d = item as { orders: { usuario_id: string; status: string } };
+          return (
+            d.orders.usuario_id === user.id &&
+            ["pago", "separando", "enviado", "entregue"].includes(d.orders.status)
+          );
+        });
+        setPodeAvaliar(comprou);
+      });
+  }, [user, produto]);
 
   if (carregando) {
     return <Aviso titulo="Carregando calçado..." />;
@@ -404,7 +420,7 @@ function ProductPage() {
       <section className="mt-14 border-t border-border pt-10">
         <h2 className="text-xl font-semibold">Avaliações</h2>
 
-        {signedIn ? (
+        {podeAvaliar ? (
           <div className="mt-5 flex items-center gap-4">
             <Estrelas nota={minhaNota} onSelect={setMinhaNota} />
             <button
@@ -416,6 +432,10 @@ function ProductPage() {
               {salvando ? "Enviando..." : "Avaliar"}
             </button>
           </div>
+        ) : signedIn ? (
+          <p className="mt-4 text-sm text-muted-foreground">
+            Apenas clientes que compraram este calçado podem avaliá-lo.
+          </p>
         ) : (
           <p className="mt-4 text-sm text-muted-foreground">
             <Link to="/" className="cursor-pointer underline underline-offset-4">
