@@ -257,7 +257,18 @@ function ProductPage() {
               </button>
             ))}
           </div>
-          <div className="relative flex-1 overflow-hidden rounded-2xl border border-border bg-background">
+          <div
+            className="relative flex-1 overflow-hidden rounded-2xl border border-border bg-background"
+            onTouchStart={(e) => {
+              const t = e.touches[0];
+              (e.currentTarget as HTMLDivElement).dataset.touchX = String(t.clientX);
+            }}
+            onTouchEnd={(e) => {
+              const startX = Number((e.currentTarget as HTMLDivElement).dataset.touchX ?? 0);
+              const diff = startX - e.changedTouches[0].clientX;
+              if (Math.abs(diff) > 40) setFoto((f) => (f + (diff > 0 ? 1 : -1) + imagens.length) % imagens.length);
+            }}
+          >
             <div className="aspect-square">
               {imagens.map((img, i) => (
                 <img
