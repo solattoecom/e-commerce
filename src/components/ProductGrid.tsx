@@ -104,7 +104,17 @@ export function ProductGrid({
         const price = product.product_prices[0];
         return (
           <article key={product.id} className="group flex flex-col overflow-hidden rounded-xl border border-border bg-background">
-            <div className="relative aspect-square bg-background">
+            <div
+              className="relative aspect-square bg-background"
+              onTouchStart={(e) => {
+                (e.currentTarget as HTMLDivElement).dataset.touchX = String(e.touches[0].clientX);
+              }}
+              onTouchEnd={(e) => {
+                const startX = Number((e.currentTarget as HTMLDivElement).dataset.touchX ?? 0);
+                const diff = startX - e.changedTouches[0].clientX;
+                if (Math.abs(diff) > 40) mover(diff > 0 ? 1 : -1);
+              }}
+            >
               <Link to="/produto/$slug" params={{ slug: product.slug }} className="absolute inset-0 z-0" aria-label={`Ver detalhes de ${product.nome}`} />
               {imagens.map((img, i) => (
                 <img
