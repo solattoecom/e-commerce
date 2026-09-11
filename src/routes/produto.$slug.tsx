@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Truck, RefreshCw, Tag } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 import { supabase } from "@/integrations/supabase/external";
@@ -367,9 +367,9 @@ function ProductPage() {
           {aviso ? <p className="mt-2 text-xs text-destructive">{aviso}</p> : null}
 
           <ul className="mt-6 space-y-2 text-sm text-muted-foreground">
-            <li>🚚 Envio para todo o Brasil.</li>
-            <li>🔄 Troca fácil em até 7 dias úteis.</li>
-            <li>🏷️ Frete grátis em compras acima de R$ 399.</li>
+            <li className="flex items-center gap-2"><Truck className="size-4 shrink-0 text-foreground" /> Envio para todo o Brasil.</li>
+            <li className="flex items-center gap-2"><RefreshCw className="size-4 shrink-0 text-foreground" /> Troca fácil em até 7 dias úteis.</li>
+            <li className="flex items-center gap-2"><Tag className="size-4 shrink-0 text-foreground" /> Frete grátis em compras acima de R$ 399.</li>
           </ul>
 
           {produto.descricao ? (
