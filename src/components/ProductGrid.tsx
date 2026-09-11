@@ -1,8 +1,19 @@
 import { useEffect, useState } from "react";
 import { Heart } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 
 import { supabase } from "@/integrations/supabase/external";
-import type { Product } from "@/components/ProductModal";
+
+type Product = {
+  id: string;
+  nome: string;
+  slug: string;
+  descricao: string | null;
+  categories: { nome: string } | null;
+  product_images: { url: string; ordem: number }[];
+  product_variants: { id: string; tamanho: string; estoque: number }[];
+  product_prices: { preco: number; preco_original: number | null }[];
+};
 
 const brl = (value: number) =>
   value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -14,7 +25,6 @@ export function ProductGrid({
   onAdd,
   wishlistIds = new Set(),
   onToggleWishlist,
-  onProductClick,
 }: {
   signedIn: boolean;
   refreshKey?: number;
@@ -22,7 +32,6 @@ export function ProductGrid({
   onAdd?: (produtoId: string, variacaoId: string | null) => void;
   wishlistIds?: Set<string>;
   onToggleWishlist?: (produtoId: string) => void;
-  onProductClick?: (product: Product) => void;
 }) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -79,7 +88,7 @@ export function ProductGrid({
   if (visiveis.length === 0) {
     return (
       <p className="text-center text-sm text-muted-foreground">
-        Nenhum calçado encontrado para “{search.trim()}”.
+        Nenhum calçado encontrado para "{search.trim()}".
       </p>
     );
   }
@@ -95,21 +104,15 @@ export function ProductGrid({
         const price = product.product_prices[0];
         return (
           <article key={product.id} className="group flex flex-col overflow-hidden rounded-xl border border-border bg-background">
-            <div
-              role={onProductClick ? "button" : undefined}
-              tabIndex={onProductClick ? 0 : undefined}
-              aria-label={onProductClick ? `Ver detalhes de ${product.nome}` : undefined}
-              onClick={() => onProductClick?.(product)}
-              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onProductClick?.(product); }}
-              className={`relative aspect-square bg-background ${onProductClick ? "cursor-pointer" : ""}`}
-            >
+            <div className="relative aspect-square bg-background">
+              <Link to="/produto/$slug" params={{ slug: product.slug }} className="absolute inset-0 z-0" aria-label={`Ver detalhes de ${product.nome}`} />
               {imagens.map((img, i) => (
                 <img
                   key={img.url}
                   src={img.url}
                   alt={`${product.nome} — foto ${i + 1}`}
                   loading="lazy"
-                  className={`absolute inset-0 h-full w-full object-contain object-center transition-opacity duration-300 ${
+                  className={`pointer-events-none absolute inset-0 h-full w-full object-contain object-center transition-opacity duration-300 ${
                     i === atual ? "opacity-100" : "opacity-0"
                   }`}
                 />
@@ -119,26 +122,26 @@ export function ProductGrid({
                   <button
                     type="button"
                     aria-label="Foto anterior"
-                    onClick={(e) => { e.stopPropagation(); mover(-1); }}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 cursor-pointer rounded-full border border-border bg-background/80 px-3 py-2 text-sm backdrop-blur transition-opacity hover:bg-background"
+                    onClick={() => mover(-1)}
+                    className="absolute left-3 top-1/2 z-10 -translate-y-1/2 cursor-pointer rounded-full border border-border bg-background/80 px-3 py-2 text-sm backdrop-blur transition-opacity hover:bg-background"
                   >
                     ‹
                   </button>
                   <button
                     type="button"
                     aria-label="Próxima foto"
-                    onClick={(e) => { e.stopPropagation(); mover(1); }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer rounded-full border border-border bg-background/80 px-3 py-2 text-sm backdrop-blur transition-opacity hover:bg-background"
+                    onClick={() => mover(1)}
+                    className="absolute right-3 top-1/2 z-10 -translate-y-1/2 cursor-pointer rounded-full border border-border bg-background/80 px-3 py-2 text-sm backdrop-blur transition-opacity hover:bg-background"
                   >
                     ›
                   </button>
-                  <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
+                  <div className="absolute bottom-3 left-0 right-0 z-10 flex justify-center gap-1.5">
                     {imagens.map((img, i) => (
                       <button
                         key={`dot-${img.url}`}
                         type="button"
                         aria-label={`Ver foto ${i + 1}`}
-                        onClick={(e) => { e.stopPropagation(); setSlideByProduct((prev) => ({ ...prev, [product.id]: i })); }}
+                        onClick={() => setSlideByProduct((prev) => ({ ...prev, [product.id]: i }))}
                         className={`h-1.5 cursor-pointer rounded-full transition-all ${
                           i === atual ? "w-5 bg-foreground" : "w-1.5 bg-foreground/30"
                         }`}
