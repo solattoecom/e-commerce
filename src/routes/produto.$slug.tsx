@@ -110,7 +110,6 @@ function ProductPage() {
   const [foto, setFoto] = useState(0);
   const [tamanho, setTamanho] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
-  const [adicionado, setAdicionado] = useState(false);
 
   const [avaliacoes, setAvaliacoes] = useState<Avaliacao[]>([]);
   const [minhaNota, setMinhaNota] = useState(0);
@@ -194,19 +193,18 @@ function ProductPage() {
       ? avaliacoes.reduce((soma, a) => soma + a.nota, 0) / avaliacoes.length
       : 0;
 
-  async function adicionar() {
+  async function comprar() {
     if (!signedIn) {
       void navigate({ to: "/" });
       return;
     }
     if (variantes.length > 0 && !tamanho) {
-      setAviso("Escolha a numeração antes de adicionar.");
+      setAviso("Escolha a numeração antes de continuar.");
       return;
     }
     setAviso(null);
     await addItem(produto!.id, tamanho);
-    setAdicionado(true);
-    setTimeout(() => setAdicionado(false), 2500);
+    void navigate({ to: "/checkout" });
   }
 
   async function enviarAvaliacao() {
@@ -383,10 +381,10 @@ function ProductPage() {
 
           <button
             type="button"
-            onClick={adicionar}
+            onClick={comprar}
             className="mt-6 w-full cursor-pointer rounded-full bg-foreground px-6 py-3.5 text-sm font-semibold uppercase tracking-wide text-background transition-colors hover:bg-foreground/90"
           >
-            {signedIn ? (adicionado ? "Adicionado à sacola" : "Comprar agora") : "Entrar para comprar"}
+            {signedIn ? "Comprar agora" : "Entrar para comprar"}
           </button>
           {aviso ? <p className="mt-2 text-xs text-destructive">{aviso}</p> : null}
 
