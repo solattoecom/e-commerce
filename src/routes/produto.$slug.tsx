@@ -114,7 +114,6 @@ function ProductPage() {
 
   const [avaliacoes, setAvaliacoes] = useState<Avaliacao[]>([]);
   const [minhaNota, setMinhaNota] = useState(0);
-  const [meuComentario, setMeuComentario] = useState("");
   const [salvando, setSalvando] = useState(false);
 
   const signedIn = Boolean(user);
@@ -207,7 +206,6 @@ function ProductPage() {
         produto_id: produto!.id,
         user_id: user.id,
         nota: minhaNota,
-        comentario: meuComentario.trim() || null,
         autor_nome: perfil?.nome ?? "Cliente",
       },
       { onConflict: "produto_id,user_id" },
@@ -219,7 +217,6 @@ function ProductPage() {
   async function apagarAvaliacao(id: string) {
     await supabase.from("product_reviews").delete().eq("id", id);
     setMinhaNota(0);
-    setMeuComentario("");
     await carregarAvaliacoes(produto!.id);
   }
 
@@ -397,26 +394,15 @@ function ProductPage() {
         <h2 className="text-xl font-semibold">Avaliações</h2>
 
         {signedIn ? (
-          <div className="mt-5 rounded-2xl border border-border p-5">
-            <p className="text-sm font-medium">Sua avaliação</p>
-            <div className="mt-2">
-              <Estrelas nota={minhaNota} onSelect={setMinhaNota} />
-            </div>
-            <textarea
-              value={meuComentario}
-              onChange={(e) => setMeuComentario(e.target.value)}
-              rows={3}
-              maxLength={800}
-              placeholder="Conte como foi o conforto, o caimento e a numeração."
-              className="mt-3 w-full resize-none rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-foreground/20"
-            />
+          <div className="mt-5 flex items-center gap-4">
+            <Estrelas nota={minhaNota} onSelect={setMinhaNota} />
             <button
               type="button"
               disabled={minhaNota < 1 || salvando}
               onClick={enviarAvaliacao}
-              className="mt-3 cursor-pointer rounded-full bg-foreground px-5 py-2.5 text-sm font-semibold text-background transition-colors hover:bg-foreground/90 disabled:opacity-50"
+              className="cursor-pointer rounded-full bg-foreground px-5 py-2 text-sm font-semibold text-background transition-colors hover:bg-foreground/90 disabled:opacity-50"
             >
-              {salvando ? "Enviando..." : "Enviar avaliação"}
+              {salvando ? "Enviando..." : "Avaliar"}
             </button>
           </div>
         ) : (
@@ -435,25 +421,20 @@ function ProductPage() {
             </li>
           ) : null}
           {avaliacoes.map((a) => (
-            <li key={a.id} className="border-b border-border pb-5 last:border-0">
-              <div className="flex flex-wrap items-center gap-3">
-                <Estrelas nota={a.nota} tamanho="text-sm" />
-                <span className="text-sm font-medium">{a.autor_nome}</span>
-                <span className="text-xs text-muted-foreground">
-                  {new Date(a.criado_em).toLocaleDateString("pt-BR")}
-                </span>
-                {a.user_id === user?.id ? (
-                  <button
-                    type="button"
-                    onClick={() => apagarAvaliacao(a.id)}
-                    className="cursor-pointer text-xs text-destructive underline underline-offset-4"
-                  >
-                    apagar
-                  </button>
-                ) : null}
-              </div>
-              {a.comentario ? (
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">{a.comentario}</p>
+            <li key={a.id} className="flex flex-wrap items-center gap-3 border-b border-border pb-4 last:border-0">
+              <Estrelas nota={a.nota} tamanho="text-sm" />
+              <span className="text-sm font-medium">{a.autor_nome}</span>
+              <span className="text-xs text-muted-foreground">
+                {new Date(a.criado_em).toLocaleDateString("pt-BR")}
+              </span>
+              {a.user_id === user?.id ? (
+                <button
+                  type="button"
+                  onClick={() => apagarAvaliacao(a.id)}
+                  className="cursor-pointer text-xs text-destructive underline underline-offset-4"
+                >
+                  apagar
+                </button>
               ) : null}
             </li>
           ))}
