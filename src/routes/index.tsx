@@ -197,13 +197,13 @@ function StickyHeader({
           >
             <Heart className="size-[18px]" />
           </button>
-          <button
-            type="button"
-            aria-label="Lojas"
-            className="hidden h-9 w-9 cursor-pointer place-items-center rounded-full text-foreground transition-colors hover:bg-muted md:grid"
+          <Link
+            to="/sobre"
+            aria-label="Nossa loja"
+            className="grid h-9 w-9 cursor-pointer place-items-center rounded-full text-foreground transition-colors hover:bg-muted"
           >
             <MapPin className="size-[18px]" />
-          </button>
+          </Link>
           <div className="relative" ref={menuRef}>
             <button
               type="button"
