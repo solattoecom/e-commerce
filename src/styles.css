@@ -164,7 +164,7 @@
 
 .c5-animated-gradient {
   background-color: #141820;
-  background-image: radial-gradient(circle at var(--c5-x1) var(--c5-y1), #c8cdd4 0, transparent var(--c5-s1)), radial-gradient(circle at var(--c5-x2) var(--c5-y2), #0a0d14 0, transparent var(--c5-s2)), radial-gradient(circle at var(--c5-x3) var(--c5-y3), #c4876a 0, transparent var(--c5-s3)), radial-gradient(circle at var(--c5-x4) var(--c5-y4), #1e2a40 0, transparent var(--c5-s4)), radial-gradient(circle at var(--c5-x5) var(--c5-y5), #3d5068 0, transparent var(--c5-s5));
+  background-image: radial-gradient(circle at var(--c5-x1) var(--c5-y1), #c8cdd4 0, transparent var(--c5-s1)), radial-gradient(circle at var(--c5-x2) var(--c5-y2), #0a0d14 0, transparent var(--c5-s2)), radial-gradient(circle at var(--c5-x3) var(--c5-y3), #141820 0, transparent var(--c5-s3)), radial-gradient(circle at var(--c5-x4) var(--c5-y4), #1e2a40 0, transparent var(--c5-s4)), radial-gradient(circle at var(--c5-x5) var(--c5-y5), #3d5068 0, transparent var(--c5-s5));
   animation: c5-blob1 5s ease-in-out infinite, c5-blob2 6s ease-in-out infinite, c5-blob3 5.5s ease-in-out infinite, c5-blob4 6.5s ease-in-out infinite, c5-blob5 4s ease-in-out infinite, c5-size1 3.5s ease-in-out infinite, c5-size2 4.2s ease-in-out infinite, c5-size3 3.8s ease-in-out infinite, c5-size4 4.6s ease-in-out infinite, c5-size5 3s ease-in-out infinite;
 }
 
