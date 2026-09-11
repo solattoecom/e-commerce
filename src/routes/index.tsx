@@ -588,8 +588,7 @@ function Index() {
     if (/at least/i.test(message)) return "A senha precisa ter pelo menos 8 caracteres.";
     if (/not confirmed|confirmation/i.test(message))
       return "Conta criada. Confirme o e-mail que enviamos para entrar.";
-    return "Não foi possível concluir. Tente novamente.";
-
+    return message || "Não foi possível concluir. Tente novamente.";
   };
 
   const handleSignUp = async (event: React.FormEvent) => {
