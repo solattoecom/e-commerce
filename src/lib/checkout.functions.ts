@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/external-auth-middleware";
+import { enviarConfirmacaoPedido } from "@/lib/email.functions";
 
 const ABACATEPAY_URL = "https://api.abacatepay.com/v2/transparents/create";
 
@@ -144,6 +145,19 @@ export const createOrder = createServerFn({ method: "POST" })
       .from("orders")
       .update({ payment_id: abacateData.data.id })
       .eq("id", order.id);
+
+    void enviarConfirmacaoPedido({
+      email: profile.email,
+      nome: profile.nome,
+      pedido_id: order.id,
+      total: data.total,
+      itens: data.items.map((item) => ({
+        nome: item.nome,
+        tamanho: null,
+        quantidade: item.quantidade,
+        preco: item.preco_unitario,
+      })),
+    }).catch(() => {});
 
     return {
       order_id: order.id,

@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useAdminExists } from "@/hooks/useAdminExists";
 import { claimFirstAdmin } from "@/lib/admin.functions";
+import { enviarEmailStatusPedido } from "@/lib/email.functions";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminPanel,
@@ -174,6 +175,15 @@ function AdminPanel() {
     if (error) setErro(error.message);
     else {
       setNfePorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; return next; });
+      if (pedido.profiles?.email) {
+        void enviarEmailStatusPedido({
+          email: pedido.profiles.email,
+          nome: pedido.profiles.nome,
+          pedido_id: pedido.id,
+          status,
+          codigo_rastreio: rastreio?.trim() || null,
+        }).catch(() => {});
+      }
       await carregar();
     }
     setOcupado(null);
