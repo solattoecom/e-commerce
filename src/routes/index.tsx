@@ -197,13 +197,13 @@ function StickyHeader({
           >
             <Heart className="size-[18px]" />
           </button>
-          <Link
-            to="/sobre"
-            aria-label="Nossa loja"
-            className="grid h-9 w-9 cursor-pointer place-items-center rounded-full text-foreground transition-colors hover:bg-muted"
+          <button
+            type="button"
+            aria-label="Lojas"
+            className="hidden h-9 w-9 cursor-pointer place-items-center rounded-full text-foreground transition-colors hover:bg-muted md:grid"
           >
             <MapPin className="size-[18px]" />
-          </Link>
+          </button>
           <div className="relative" ref={menuRef}>
             <button
               type="button"
@@ -960,6 +960,23 @@ function Index() {
           </div>
         </section>
       </main>
+
+      <section className="bg-background">
+        <div className="mx-auto w-full max-w-[1440px] px-5 md:px-8">
+          <div className="h-[320px] w-full overflow-hidden rounded-2xl md:h-[440px]">
+            <iframe
+              title="Localização Solatto"
+              src="https://maps.google.com/maps?q=R+Romualdo+Magalhaes+Pirro+1050,+Jd+do+Eden,+Franca,+SP,+14402-130&output=embed&hl=pt"
+              width="100%"
+              height="100%"
+              style={{ border: 0 }}
+              allowFullScreen
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
+          </div>
+        </div>
+      </section>
 
       <footer className="border-t border-border bg-background pt-16">
         <div className="mx-auto w-full max-w-[1100px] px-5">
