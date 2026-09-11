@@ -730,7 +730,8 @@ function Index() {
                 </span>
               </div>
               <Button
-                className="h-12 w-full rounded-md bg-foreground text-background hover:bg-foreground/90"
+                disabled={cart.items.length === 0}
+                className="h-12 w-full rounded-md bg-foreground text-background hover:bg-foreground/90 disabled:opacity-40 disabled:cursor-not-allowed"
                 onClick={() => { setShowCart(false); void navigate({ to: "/checkout" }); }}
               >
                 Finalizar compra
