@@ -486,7 +486,7 @@ function ProfileDialog({
                   type="button"
                   onClick={excluir}
                   disabled={excluindo}
-                  className="flex-1 cursor-pointer rounded-md border border-red-600 bg-white px-4 py-2 text-sm font-semibold text-black transition-colors hover:bg-red-600 hover:text-white disabled:opacity-70"
+                  className="flex-1 cursor-pointer rounded-md border border-black bg-white px-4 py-2 text-sm font-semibold text-black transition-colors hover:bg-red-600 hover:border-red-600 hover:text-white disabled:opacity-70"
                 >
                   {excluindo ? "Excluindo…" : "Confirmar exclusão"}
                 </button>
@@ -503,7 +503,7 @@ function ProfileDialog({
             <button
               type="button"
               onClick={() => setConfirmar(true)}
-              className="w-full cursor-pointer rounded-md border border-red-600 bg-white px-4 py-2 text-sm font-semibold text-black transition-colors hover:bg-red-600 hover:text-white"
+              className="w-full cursor-pointer rounded-md border border-black bg-white px-4 py-2 text-sm font-semibold text-black transition-colors hover:bg-red-600 hover:border-red-600 hover:text-white"
             >
               Excluir conta
             </button>
