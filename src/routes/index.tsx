@@ -211,7 +211,7 @@ function StickyHeader({
           <button
             type="button"
             aria-label="Nossa localização"
-            onClick={() => document.getElementById("localizacao")?.scrollIntoView({ behavior: "smooth" })}
+            onClick={() => {}}
             className="grid h-9 w-9 cursor-pointer place-items-center rounded-full text-foreground transition-colors hover:bg-muted"
           >
             <MapPin className="size-[18px]" />
@@ -486,7 +486,7 @@ function ProfileDialog({
                   type="button"
                   onClick={excluir}
                   disabled={excluindo}
-                  className="flex-1 cursor-pointer rounded-md bg-black px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-black/80 disabled:opacity-70"
+                  className="flex-1 cursor-pointer rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-70"
                 >
                   {excluindo ? "Excluindo…" : "Confirmar exclusão"}
                 </button>
@@ -503,7 +503,7 @@ function ProfileDialog({
             <button
               type="button"
               onClick={() => setConfirmar(true)}
-              className="w-full cursor-pointer rounded-md border border-black px-4 py-2 text-sm font-semibold text-black transition-colors hover:bg-black hover:text-white"
+              className="w-full cursor-pointer rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700"
             >
               Excluir conta
             </button>
@@ -1036,23 +1036,6 @@ function Index() {
           </div>
         </section>
       </main>
-
-      <section id="localizacao" className="bg-background">
-        <div className="mx-auto w-full max-w-[1440px] px-5 md:px-8">
-          <div className="h-[320px] w-full overflow-hidden rounded-2xl md:h-[440px]">
-            <iframe
-              title="Localização Solatto"
-              src="https://maps.google.com/maps?q=R+Romualdo+Magalhaes+Pirro+1050,+Jd+do+Eden,+Franca,+SP,+14402-130&output=embed&hl=pt"
-              width="100%"
-              height="100%"
-              style={{ border: 0 }}
-              allowFullScreen
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-            />
-          </div>
-        </div>
-      </section>
 
       <footer className="border-t border-border bg-background pt-16">
         <div className="mx-auto w-full max-w-[1100px] px-5">
