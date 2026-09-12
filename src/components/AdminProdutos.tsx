@@ -282,14 +282,21 @@ export function AdminProdutos() {
 
   async function dispararAlertasEstoque(tamanho: string, estoque: number) {
     if (!produtoAtual || estoque <= 0) return
-    await enviarEmailEstoqueDisponivel({
-      data: {
-        produto_id: produtoAtual.id,
-        produto_nome: produtoAtual.nome,
-        produto_slug: produtoAtual.slug,
-        tamanho,
-      },
-    }).catch(console.error)
+    console.log("[alerta] disparando para", produtoAtual.id, tamanho, estoque)
+    try {
+      await enviarEmailEstoqueDisponivel({
+        data: {
+          produto_id: produtoAtual.id,
+          produto_nome: produtoAtual.nome,
+          produto_slug: produtoAtual.slug,
+          tamanho,
+        },
+      })
+      console.log("[alerta] server function concluída sem erro")
+    } catch (err) {
+      console.error("[alerta] erro na server function:", err)
+      setErroForm("Erro ao disparar alerta de estoque: " + String(err))
+    }
   }
 
   async function salvarVariante(v: Variante) {
