@@ -595,7 +595,6 @@ function Index() {
     if (sessionStorage.getItem("openLogin") && !user && !loading) {
       sessionStorage.removeItem("openLogin");
       setShowAccess(true);
-      setShowLogin(true);
     }
   }, [user, loading]);
 
