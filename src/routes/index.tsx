@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
@@ -40,6 +40,9 @@ import { useCart } from "@/hooks/useCart";
 import { useWishlist } from "@/hooks/useWishlist";
 
 export const Route = createFileRoute("/")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    login: search.login === "true" || search.login === true,
+  }),
   head: () => ({
     meta: [
       { title: "Solatto | Calçados para todos os caminhos" },
@@ -590,6 +593,15 @@ function Index() {
   const cart = useCart(user?.id ?? null);
   const wishlist = useWishlist(user?.id ?? null);
   const navigate = useNavigate();
+  const { login: loginParam } = useSearch({ from: "/" });
+
+  useEffect(() => {
+    if (loginParam && !user && !loading) {
+      setShowAccess(true);
+      setShowLogin(true);
+      void navigate({ to: "/", search: {}, replace: true });
+    }
+  }, [loginParam, user, loading]);
 
   const handleAddToCart = async (produtoId: string, variacaoId: string | null = null) => {
     if (!user) {

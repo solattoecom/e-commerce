@@ -232,7 +232,7 @@ function ProductPage() {
 
   async function comprar() {
     if (!signedIn) {
-      void navigate({ to: "/" });
+      void navigate({ to: "/", search: { login: "true" } });
       return;
     }
     if (!tamanho || tamanhoSelecionadoIndisponivel) {
