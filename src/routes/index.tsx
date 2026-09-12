@@ -658,7 +658,14 @@ function Index() {
       setAccountType(null);
       setShowLogin(true);
     } catch (error) {
-      setErro(traduzErro(error instanceof Error ? error.message : ""));
+      const msg = error instanceof Error ? error.message : "";
+      if (/already registered/i.test(msg)) {
+        setAviso("Este e-mail já possui uma conta.");
+        setAccountType(null);
+        setShowLogin(true);
+      } else {
+        setErro(traduzErro(msg));
+      }
     } finally {
       setBusy(false);
     }

@@ -44,6 +44,7 @@ export async function signUpWithType(params: {
     },
   });
   if (error) throw error;
+  if (data.user && data.user.identities?.length === 0) throw new Error("already registered");
   return data;
 }
 
