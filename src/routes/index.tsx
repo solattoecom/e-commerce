@@ -30,6 +30,7 @@ import { Input } from "@/components/ui/input";
 import { ProductGrid } from "@/components/ProductGrid";
 import { ShippingCalculator } from "@/components/ShippingCalculator";
 import type { ShippingOption } from "@/lib/shipping.functions";
+import { assinarNewsletter } from "@/lib/newsletter.functions";
 import { supabase } from "@/integrations/supabase/external";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 
@@ -521,6 +522,52 @@ const accountTypes = [
 ] as const;
 
 type AccountType = (typeof accountTypes)[number];
+
+function NewsletterForm() {
+  const [email, setEmail] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  const [erro, setErro] = useState<string | null>(null);
+
+  const assinar = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+    setBusy(true);
+    setMsg(null);
+    setErro(null);
+    try {
+      await assinarNewsletter({ data: { email } });
+      setMsg("Inscrito! Você receberá novidades em primeira mão.");
+      setEmail("");
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : "Não foi possível inscrever.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div>
+      <h3 className="mb-4 text-sm font-semibold">Newsletter</h3>
+      <p className="mb-[15px] text-[0.85rem] text-muted-foreground">Receba novidades e lançamentos em primeira mão.</p>
+      <form onSubmit={assinar} noValidate className="flex gap-[10px] max-[480px]:flex-col">
+        <input
+          type="email"
+          required
+          placeholder="Seu melhor e-mail"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="h-11 flex-grow rounded-[10px] border border-border bg-background px-4 text-[0.9rem] shadow-inner outline-none focus:border-foreground transition-colors"
+        />
+        <Button type="submit" disabled={busy} className="h-11 rounded-[10px] bg-foreground px-7 text-[0.9rem] font-semibold text-background shadow-[0_12px_24px_rgba(0,0,0,0.18)] hover:-translate-y-0.5 hover:bg-foreground/90">
+          {busy ? "..." : "Assinar"}
+        </Button>
+      </form>
+      {msg ? <p className="mt-2 text-xs text-green-600">{msg}</p> : null}
+      {erro ? <p className="mt-2 text-xs text-destructive">{erro}</p> : null}
+    </div>
+  );
+}
 
 function Index() {
   const { user, loading } = useAuth();
@@ -1072,7 +1119,7 @@ function Index() {
             <div><p className="text-xl font-bold uppercase tracking-[0.24em]">Solatto</p><p className="mt-5 max-w-xs text-sm leading-6 text-muted-foreground">Calçados criados para levar conforto, personalidade e confiança a cada destino.</p></div>
             <div><h3 className="mb-4 text-sm font-semibold">Navegação</h3><ul className="space-y-3 text-sm text-muted-foreground"><li><a href="#inicio">Início</a></li><li><a href="#categorias">Calçados</a></li><li><a href="#novidades">Novidades</a></li><li><a href="#faq">Dúvidas</a></li></ul></div>
             <div><h3 className="mb-4 text-sm font-semibold">Institucional</h3><ul className="space-y-3 text-sm text-muted-foreground"><li><a href="#">Sobre nós</a></li><li><a href="#">Contato</a></li><li><a href="#">Trocas</a></li></ul></div>
-            <div><h3 className="mb-4 text-sm font-semibold">Newsletter</h3><p className="mb-[15px] text-[0.85rem] text-muted-foreground">Receba novidades e lançamentos em primeira mão.</p><div className="flex gap-[10px] max-[480px]:flex-col"><Input type="email" placeholder="Seu melhor e-mail" className="h-11 flex-grow rounded-[10px] border-border bg-background px-4 text-[0.9rem] shadow-inner" /><Button className="h-11 rounded-[10px] bg-foreground px-7 text-[0.9rem] font-semibold text-background shadow-[0_12px_24px_rgba(0,0,0,0.18)] hover:-translate-y-0.5 hover:bg-foreground/90">Assinar</Button></div></div>
+            <NewsletterForm />
           </div>
           <div className="flex justify-between border-t border-border pb-[10px] pt-[25px] text-[0.85rem] text-muted-foreground max-[480px]:flex-col max-[480px]:items-center max-[480px]:gap-[15px]"><span>Todos os direitos reservados. © 2026</span><span>Solatto · Feito para caminhar</span></div>
         </div>

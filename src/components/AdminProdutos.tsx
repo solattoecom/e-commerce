@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { supabase } from "@/integrations/supabase/external"
+import { notificarNovoProduto } from "@/lib/newsletter.functions"
 
 type Categoria = { id: string; nome: string }
 type Imagem = { id: string; url: string; ordem: number }
@@ -169,6 +170,14 @@ export function AdminProdutos() {
       else {
         setSlug(slugFinal)
         setProdutoAtual((prev) => prev ? { ...prev, nome: nome.trim(), slug: slugFinal, descricao: descricao.trim() || null, categoria_id: categoriaId || null, ativo } : prev)
+        void notificarNovoProduto({
+          data: {
+            nome: nome.trim(),
+            descricao: descricao.trim() || null,
+            slug: slugFinal,
+            preco: precos.varejo.preco ? parseFloat(precos.varejo.preco) : null,
+          },
+        }).catch(() => {})
       }
     } else {
       const { data, error } = await supabase
@@ -186,6 +195,14 @@ export function AdminProdutos() {
       else {
         setSlug(slugFinal)
         setProdutoAtual(data as unknown as Produto)
+        void notificarNovoProduto({
+          data: {
+            nome: nome.trim(),
+            descricao: descricao.trim() || null,
+            slug: slugFinal,
+            preco: (data as unknown as Produto).product_prices?.[0]?.preco ?? null,
+          },
+        }).catch(() => {})
       }
     }
     setSalvando(false)
