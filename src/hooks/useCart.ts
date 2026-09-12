@@ -83,11 +83,17 @@ export function useCart(userId: string | null) {
     [refresh],
   );
 
+  const clearCart = useCallback(async () => {
+    if (!userId) return;
+    await supabase.from("cart_items").delete().eq("usuario_id", userId);
+    await refresh();
+  }, [userId, refresh]);
+
   const count = items.reduce((total, item) => total + item.quantidade, 0);
   const total = items.reduce(
     (sum, item) => sum + (item.products?.product_prices?.[0]?.preco ?? 0) * item.quantidade,
     0,
   );
 
-  return { items, count, total, loading, addItem, setQuantity, removeItem, refresh };
+  return { items, count, total, loading, addItem, setQuantity, removeItem, refresh, clearCart };
 }

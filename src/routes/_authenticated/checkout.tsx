@@ -20,7 +20,7 @@ type Step = "endereco" | "entrega" | "pagamento" | "sucesso";
 function CheckoutPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { items, total, loading: cartLoading, refresh: refreshCart } = useCart(user?.id ?? null);
+  const { items, total, loading: cartLoading, refresh: refreshCart, clearCart } = useCart(user?.id ?? null);
 
   useEffect(() => {
     if (!cartLoading && items.length === 0) {
@@ -152,12 +152,12 @@ function CheckoutPage() {
           const s = await getOrderStatus({ data: { order_id: result.order_id } });
           if (s.status === "pago") {
             clearInterval(interval);
-            await refreshCart();
+            await clearCart();
             setStep("sucesso");
           }
         }, 5000);
       } else {
-        await refreshCart();
+        await clearCart();
         setStep("sucesso");
       }
     } catch (e) {
