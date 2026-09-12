@@ -369,14 +369,19 @@ function ProductPage() {
 
           <div className="mt-5">
             {preco ? (
-              <p className="flex items-baseline gap-3">
-                <span className="text-3xl font-semibold">{brl(Number(preco.preco))}</span>
-                {preco.preco_original ? (
-                  <span className="text-sm text-muted-foreground line-through">
-                    {brl(Number(preco.preco_original))}
-                  </span>
-                ) : null}
-              </p>
+              <div>
+                <p className="flex items-baseline gap-3">
+                  <span className="text-3xl font-semibold">{brl(Number(preco.preco))}</span>
+                  {preco.preco_original ? (
+                    <span className="text-sm text-muted-foreground line-through">
+                      {brl(Number(preco.preco_original))}
+                    </span>
+                  ) : null}
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  ou 10x de {brl(Number(preco.preco) / 10)}
+                </p>
+              </div>
             ) : (
               <p className="text-sm text-muted-foreground">Entre na sua conta para ver o preço</p>
             )}
