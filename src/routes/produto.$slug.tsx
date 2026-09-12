@@ -232,7 +232,8 @@ function ProductPage() {
 
   async function comprar() {
     if (!signedIn) {
-      void navigate({ to: "/", search: { login: "true" } });
+      sessionStorage.setItem("openLogin", "true");
+      void navigate({ to: "/" });
       return;
     }
     if (!tamanho || tamanhoSelecionadoIndisponivel) {
