@@ -524,7 +524,7 @@ type AccountType = (typeof accountTypes)[number];
 
 function Index() {
   const { user, loading } = useAuth();
-  const [showAccess, setShowAccess] = useState(true);
+  const [showAccess, setShowAccess] = useState(false);
   const [accountType, setAccountType] = useState<AccountType | null>(null);
   const [showLogin, setShowLogin] = useState(false);
   const [emailNaoConfirmado, setEmailNaoConfirmado] = useState<string | null>(null);
