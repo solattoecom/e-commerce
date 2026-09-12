@@ -121,6 +121,7 @@ function ProductPage() {
   const [alertaEmail, setAlertaEmail] = useState("");
   const [alertaEnviado, setAlertaEnviado] = useState(false);
   const [alertaSalvando, setAlertaSalvando] = useState(false);
+  const [alertaErro, setAlertaErro] = useState<string | null>(null);
 
   const [aba, setAba] = useState<"produto" | "caracteristicas" | "avaliacoes">("produto");
 
@@ -211,12 +212,18 @@ function ProductPage() {
     if (!produto || !tamanho) return;
     const tam = tamanhoSelecionadoObj?.tamanho ?? tamanho;
     setAlertaSalvando(true);
+    setAlertaErro(null);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase.from as any)("stock_alerts").upsert(
+    const { error } = await (supabase.from as any)("stock_alerts").upsert(
       { produto_id: produto.id, tamanho: tam, nome: alertaNome, email: alertaEmail },
       { onConflict: "produto_id,tamanho,email" },
     );
-    setAlertaEnviado(true);
+    if (error) {
+      console.error("stock_alerts upsert error:", error);
+      setAlertaErro(error.message ?? "Erro ao salvar. Tente novamente.");
+    } else {
+      setAlertaEnviado(true);
+    }
     setAlertaSalvando(false);
   }
   const media =
@@ -444,6 +451,7 @@ function ProductPage() {
                   >
                     {alertaSalvando ? "Salvando..." : "Avise-me"}
                   </button>
+                  {alertaErro ? <p className="text-xs text-destructive">{alertaErro}</p> : null}
                 </div>
               )}
             </div>
