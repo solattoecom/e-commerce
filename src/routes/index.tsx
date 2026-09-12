@@ -577,6 +577,10 @@ function Index() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [busy, setBusy] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [bloqueadoAte, setBloqueadoAte] = useState<number | null>(() => {
+    const v = localStorage.getItem("login_blocked_until");
+    return v ? Number(v) : null;
+  });
   const [aviso, setAviso] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [scrolled, setScrolled] = useState(false);
@@ -644,9 +648,17 @@ function Index() {
     return "Não foi possível concluir. Tente novamente.";
   };
 
+  const validarSenha = (senha: string): string | null => {
+    if (!/[A-Z]/.test(senha)) return "A senha precisa ter pelo menos uma letra maiúscula.";
+    if (!/[^A-Za-z0-9]/.test(senha)) return "A senha precisa ter pelo menos um caractere especial.";
+    return null;
+  };
+
   const handleSignUp = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!accountType) return;
+    const erroSenha = validarSenha(form.senha);
+    if (erroSenha) { setErro(erroSenha); return; }
     setBusy(true);
     setErro(null);
     setAviso(null);
@@ -673,11 +685,20 @@ function Index() {
 
   const handleSignIn = async (event: React.FormEvent) => {
     event.preventDefault();
+    const agora = Date.now();
+    if (bloqueadoAte && agora < bloqueadoAte) {
+      const restam = Math.ceil((bloqueadoAte - agora) / 60000);
+      setErro(`Muitas tentativas. Aguarde ${restam} min para tentar novamente.`);
+      return;
+    }
     setBusy(true);
     setErro(null);
     setEmailNaoConfirmado(null);
     try {
       await signIn(form.email, form.senha);
+      localStorage.removeItem("login_attempts");
+      localStorage.removeItem("login_blocked_until");
+      setBloqueadoAte(null);
       setForm({ nome: "", sobrenome: "", email: "", senha: "" });
       setRefreshKey((value) => value + 1);
       closeAccess();
@@ -686,6 +707,17 @@ function Index() {
       if (/not confirmed|email not confirmed/i.test(msg)) {
         setEmailNaoConfirmado(form.email.trim());
         setErro("Confirme seu e-mail antes de entrar.");
+      } else if (/Invalid login credentials/i.test(msg)) {
+        const tentativas = Number(localStorage.getItem("login_attempts") ?? "0") + 1;
+        localStorage.setItem("login_attempts", String(tentativas));
+        if (tentativas >= 5) {
+          const ate = Date.now() + 5 * 60 * 1000;
+          localStorage.setItem("login_blocked_until", String(ate));
+          setBloqueadoAte(ate);
+          setErro("Muitas tentativas incorretas. Aguarde 5 min para tentar novamente.");
+        } else {
+          setErro(`E-mail ou senha incorretos. ${5 - tentativas} tentativa${5 - tentativas > 1 ? "s" : ""} restante${5 - tentativas > 1 ? "s" : ""}.`);
+        }
       } else {
         setErro(traduzErro(msg));
       }
