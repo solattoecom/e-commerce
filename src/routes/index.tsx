@@ -527,6 +527,7 @@ function Index() {
   const [showAccess, setShowAccess] = useState(true);
   const [accountType, setAccountType] = useState<AccountType | null>(null);
   const [showLogin, setShowLogin] = useState(false);
+  const [emailNaoConfirmado, setEmailNaoConfirmado] = useState<string | null>(null);
   const [form, setForm] = useState({ nome: "", sobrenome: "", email: "", senha: "" });
   const [activeIndex, setActiveIndex] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -615,13 +616,36 @@ function Index() {
     event.preventDefault();
     setBusy(true);
     setErro(null);
+    setEmailNaoConfirmado(null);
     try {
       await signIn(form.email, form.senha);
       setForm({ nome: "", sobrenome: "", email: "", senha: "" });
       setRefreshKey((value) => value + 1);
       closeAccess();
     } catch (error) {
-      setErro(traduzErro(error instanceof Error ? error.message : ""));
+      const msg = error instanceof Error ? error.message : "";
+      if (/not confirmed|email not confirmed/i.test(msg)) {
+        setEmailNaoConfirmado(form.email.trim());
+        setErro("Confirme seu e-mail antes de entrar.");
+      } else {
+        setErro(traduzErro(msg));
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const reenviarConfirmacao = async () => {
+    if (!emailNaoConfirmado) return;
+    setBusy(true);
+    setErro(null);
+    try {
+      const { error } = await supabase.auth.resend({ type: "signup", email: emailNaoConfirmado });
+      if (error) throw error;
+      setAviso(`E-mail de confirmação reenviado para ${mascararEmail(emailNaoConfirmado)}.`);
+      setEmailNaoConfirmado(null);
+    } catch {
+      setErro("Não foi possível reenviar. Tente novamente.");
     } finally {
       setBusy(false);
     }
@@ -845,6 +869,11 @@ function Index() {
                     <Input required type="password" aria-label="Senha" placeholder="Senha" value={form.senha} onChange={(e) => setForm({ ...form, senha: e.target.value })} minLength={8} maxLength={72} className="h-12 border-border/70 bg-background/75 text-foreground backdrop-blur-sm placeholder:text-muted-foreground hover:border-border focus-visible:border-border focus-visible:ring-foreground/20" />
                     {aviso ? <p className="text-sm font-medium text-primary-foreground">{aviso}</p> : null}
                     {erro ? <p className="text-sm text-primary-foreground">{erro}</p> : null}
+                    {emailNaoConfirmado ? (
+                      <button type="button" disabled={busy} onClick={reenviarConfirmacao} className="text-sm underline underline-offset-4 text-primary-foreground/80 hover:text-primary-foreground disabled:opacity-60">
+                        Reenviar e-mail de confirmação
+                      </button>
+                    ) : null}
                     <Button type="submit" disabled={busy} className="h-12 rounded-md bg-background text-foreground shadow-none hover:bg-background/90 hover:text-foreground">{busy ? "Entrando…" : "Entrar"}</Button>
                   </form>
                 </>
