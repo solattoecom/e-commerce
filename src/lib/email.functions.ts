@@ -188,7 +188,7 @@ type EstoqueDisponivelInput = {
 export const enviarEmailEstoqueDisponivel = createServerFn({ method: "POST" })
   .inputValidator((input: EstoqueDisponivelInput) => input)
   .handler(async ({ data }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { supabaseAdmin } = await import("@/integrations/supabase/external.server");
 
     const { data: alertas } = await supabaseAdmin
       .from("stock_alerts" as never)
