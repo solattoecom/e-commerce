@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/external";
 import { useAuth } from "@/hooks/useAuth";
 import { useCart } from "@/hooks/useCart";
 import { quoteShipping, type ShippingQuote } from "@/lib/shipping.functions";
+import { cadastrarAlertaEstoque } from "@/lib/stock-alerts.functions";
 
 export const Route = createFileRoute("/produto/$slug")({
   component: ProductPage,
@@ -213,16 +214,14 @@ function ProductPage() {
     const tam = tamanhoSelecionadoObj?.tamanho ?? tamanho;
     setAlertaSalvando(true);
     setAlertaErro(null);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase.from as any)("stock_alerts").upsert(
-      { produto_id: produto.id, tamanho: tam, nome: alertaNome, email: alertaEmail },
-      { onConflict: "produto_id,tamanho,email" },
-    );
-    if (error) {
-      console.error("stock_alerts upsert error:", error);
-      setAlertaErro(error.message ?? "Erro ao salvar. Tente novamente.");
-    } else {
+    try {
+      await cadastrarAlertaEstoque({
+        data: { produto_id: produto.id, tamanho: tam, nome: alertaNome, email: alertaEmail },
+      });
       setAlertaEnviado(true);
+    } catch (err) {
+      setAlertaErro("Erro ao salvar. Tente novamente.");
+      console.error(err);
     }
     setAlertaSalvando(false);
   }
