@@ -179,7 +179,7 @@ export function ProductGrid({
                   </button>
                 ) : null}
               </div>
-              <p className="text-sm leading-6 text-muted-foreground">{product.descricao}</p>
+
               <div className="mt-auto pt-3">
                 {price ? (
                   <p className="flex items-baseline gap-2">
