@@ -1,5 +1,5 @@
 import { createAPIFileRoute } from "@tanstack/react-start/api";
-import { createTransport } from "nodemailer";
+import { enviarConfirmacaoPedido } from "@/lib/email.functions";
 
 export const APIRoute = createAPIFileRoute("/api/webhook/abacatepay")({
   POST: async ({ request }) => {
@@ -61,29 +61,23 @@ export const APIRoute = createAPIFileRoute("/api/webhook/abacatepay")({
         .single();
 
       if (profile?.email) {
-        const transporter = createTransport({
-          host: "smtp.gmail.com",
-          port: 465,
-          secure: true,
-          auth: {
-            user: process.env["GMAIL_USER"],
-            pass: process.env["GMAIL_APP_PASSWORD"],
-          },
-        });
+        const { data: orderItems } = await supabaseAdmin
+          .from("order_items")
+          .select("quantidade, preco_unitario, products(nome), product_variants(tamanho)")
+          .eq("pedido_id", order.id);
 
-        await transporter.sendMail({
-          from: `"Solatto" <${process.env["GMAIL_USER"]}>`,
-          to: profile.email,
-          subject: "Pedido confirmado — Solatto",
-          html: `
-            <h2>Olá, ${profile.nome}!</h2>
-            <p>Seu pagamento foi confirmado e seu pedido está sendo preparado.</p>
-            <p><strong>Número do pedido:</strong> ${order.id.slice(0, 8).toUpperCase()}</p>
-            <p><strong>Total:</strong> R$ ${order.total.toFixed(2).replace(".", ",")}</p>
-            <p>Acompanhe o status em <a href="https://e-commerce-rnfpag7k6-solattoecom-1856.vercel.app/pedidos">Meus Pedidos</a>.</p>
-            <p>Obrigado pela compra!</p>
-          `,
-        });
+        void enviarConfirmacaoPedido({
+          email: profile.email,
+          nome: profile.nome,
+          pedido_id: order.id,
+          total: order.total,
+          itens: (orderItems ?? []).map((item) => ({
+            nome: (item.products as { nome: string } | null)?.nome ?? "Produto",
+            tamanho: (item.product_variants as { tamanho: string } | null)?.tamanho ?? null,
+            quantidade: item.quantidade,
+            preco: item.preco_unitario,
+          })),
+        }).catch(() => {});
       }
 
       return new Response("ok", { status: 200 });
