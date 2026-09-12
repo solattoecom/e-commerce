@@ -182,12 +182,15 @@ export function ProductGrid({
 
               <div className="mt-auto pt-3">
                 {price ? (
-                  <p className="flex items-baseline gap-2">
-                    <span className="text-xl font-semibold">{brl(Number(price.preco))}</span>
-                    {price.preco_original ? (
-                      <span className="text-sm text-muted-foreground line-through">{brl(Number(price.preco_original))}</span>
-                    ) : null}
-                  </p>
+                  <div>
+                    <p className="flex items-baseline gap-2">
+                      <span className="text-xl font-semibold">{brl(Number(price.preco))}</span>
+                      {price.preco_original ? (
+                        <span className="text-sm text-muted-foreground line-through">{brl(Number(price.preco_original))}</span>
+                      ) : null}
+                    </p>
+                    <p className="text-xs text-muted-foreground">ou 10x de {brl(Number(price.preco) / 10)}</p>
+                  </div>
                 ) : (
                   <p className="text-sm text-muted-foreground">Entre na sua conta para ver o preço</p>
                 )}
