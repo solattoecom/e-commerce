@@ -111,8 +111,6 @@ function ProductPage() {
   const [tamanho, setTamanho] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
 
-  const [aba, setAba] = useState<"produto" | "caracteristicas" | "avaliacoes">("produto");
-
   const [avaliacoes, setAvaliacoes] = useState<Avaliacao[]>([]);
   const [minhaNota, setMinhaNota] = useState(0);
   const [salvando, setSalvando] = useState(false);
@@ -396,96 +394,81 @@ function ProductPage() {
             <li className="flex items-center gap-2"><Tag className="size-4 shrink-0 text-foreground" /> Frete grátis em compras acima de R$ 399.</li>
           </ul>
 
-        </div>
-      </div>
+          {produto.descricao ? (
+            <section className="mt-8">
+              <h2 className="text-base font-semibold">Descrição</h2>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">{produto.descricao}</p>
+            </section>
+          ) : null}
 
-      <div className="mt-12 border-t border-border">
-        <div className="flex gap-0 border-b border-border">
-          {(
-            [
-              ["produto", "Produto"],
-              ["caracteristicas", "Características"],
-              ["avaliacoes", `Avaliações${avaliacoes.length ? ` (${avaliacoes.length})` : ""}`],
-            ] as const
-          ).map(([chave, rotulo]) => (
-            <button
-              key={chave}
-              type="button"
-              onClick={() => setAba(chave)}
-              className={`cursor-pointer px-6 py-4 text-sm font-medium transition-colors border-b-2 -mb-px ${
-                aba === chave
-                  ? "border-foreground text-foreground"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {rotulo}
-            </button>
-          ))}
-        </div>
-
-        <div className="py-8">
-          {aba === "produto" ? (
-            produto.descricao ? (
-              <p className="max-w-2xl text-sm leading-7 text-muted-foreground">{produto.descricao}</p>
-            ) : (
-              <p className="text-sm text-muted-foreground">Sem descrição para este produto.</p>
-            )
-          ) : aba === "caracteristicas" ? (
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><span className="font-medium text-foreground">Categoria:</span> {produto.categories?.nome ?? "Calçados"}</li>
-              <li><span className="font-medium text-foreground">Numerações:</span> {variantes.map((v) => v.tamanho).join(", ") || "sob consulta"}</li>
-              {variantes[0]?.cor ? <li><span className="font-medium text-foreground">Cor:</span> {variantes[0].cor}</li> : null}
-              {variantes[0]?.sku ? <li><span className="font-medium text-foreground">Código:</span> {variantes[0].sku}</li> : null}
+          <section className="mt-8">
+            <h2 className="text-base font-semibold">Características</h2>
+            <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
+              <li>Categoria: {produto.categories?.nome ?? "Calçados"}</li>
+              <li>
+                Numerações: {variantes.map((v) => v.tamanho).join(", ") || "sob consulta"}
+              </li>
+              {variantes[0]?.cor ? <li>Cor: {variantes[0].cor}</li> : null}
+              {variantes[0]?.sku ? <li>Código: {variantes[0].sku}</li> : null}
             </ul>
-          ) : (
-            <>
-              {podeAvaliar ? (
-                <div className="mb-6 flex items-center gap-4">
-                  <Estrelas nota={minhaNota} onSelect={setMinhaNota} />
-                  <button
-                    type="button"
-                    disabled={minhaNota < 1 || salvando}
-                    onClick={enviarAvaliacao}
-                    className="cursor-pointer rounded-full bg-foreground px-5 py-2 text-sm font-semibold text-background transition-colors hover:bg-foreground/90 disabled:opacity-50"
-                  >
-                    {salvando ? "Enviando..." : "Avaliar"}
-                  </button>
-                </div>
-              ) : signedIn ? (
-                <p className="mb-6 text-sm text-muted-foreground">
-                  Apenas clientes que compraram este calçado podem avaliá-lo.
-                </p>
-              ) : (
-                <p className="mb-6 text-sm text-muted-foreground">
-                  <Link to="/" className="cursor-pointer underline underline-offset-4">Entre na sua conta</Link>{" "}
-                  para avaliar este calçado.
-                </p>
-              )}
-              <ul className="space-y-6">
-                {avaliacoes.length === 0 ? (
-                  <li className="text-sm text-muted-foreground">Ainda não há avaliações para este calçado.</li>
-                ) : null}
-                {avaliacoes.map((a) => (
-                  <li key={a.id} className="flex flex-wrap items-center gap-3 border-b border-border pb-4 last:border-0">
-                    <Estrelas nota={a.nota} tamanho="text-sm" />
-                    <span className="text-sm font-medium">{a.autor_nome}</span>
-                    <span className="text-xs text-muted-foreground">{new Date(a.criado_em).toLocaleDateString("pt-BR")}</span>
-                    {a.user_id === user?.id ? (
-                      <button
-                        type="button"
-                        onClick={() => apagarAvaliacao(a.id)}
-                        className="cursor-pointer text-xs text-destructive underline underline-offset-4"
-                      >
-                        apagar
-                      </button>
-                    ) : null}
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
+          </section>
         </div>
       </div>
+
+      <section className="mt-14 border-t border-border pt-10">
+        <h2 className="text-xl font-semibold">Avaliações</h2>
+
+        {podeAvaliar ? (
+          <div className="mt-5 flex items-center gap-4">
+            <Estrelas nota={minhaNota} onSelect={setMinhaNota} />
+            <button
+              type="button"
+              disabled={minhaNota < 1 || salvando}
+              onClick={enviarAvaliacao}
+              className="cursor-pointer rounded-full bg-foreground px-5 py-2 text-sm font-semibold text-background transition-colors hover:bg-foreground/90 disabled:opacity-50"
+            >
+              {salvando ? "Enviando..." : "Avaliar"}
+            </button>
+          </div>
+        ) : signedIn ? (
+          <p className="mt-4 text-sm text-muted-foreground">
+            Apenas clientes que compraram este calçado podem avaliá-lo.
+          </p>
+        ) : (
+          <p className="mt-4 text-sm text-muted-foreground">
+            <Link to="/" className="cursor-pointer underline underline-offset-4">
+              Entre na sua conta
+            </Link>{" "}
+            para avaliar este calçado.
+          </p>
+        )}
+
+        <ul className="mt-8 space-y-6">
+          {avaliacoes.length === 0 ? (
+            <li className="text-sm text-muted-foreground">
+              Ainda não há avaliações para este calçado.
+            </li>
+          ) : null}
+          {avaliacoes.map((a) => (
+            <li key={a.id} className="flex flex-wrap items-center gap-3 border-b border-border pb-4 last:border-0">
+              <Estrelas nota={a.nota} tamanho="text-sm" />
+              <span className="text-sm font-medium">{a.autor_nome}</span>
+              <span className="text-xs text-muted-foreground">
+                {new Date(a.criado_em).toLocaleDateString("pt-BR")}
+              </span>
+              {a.user_id === user?.id ? (
+                <button
+                  type="button"
+                  onClick={() => apagarAvaliacao(a.id)}
+                  className="cursor-pointer text-xs text-destructive underline underline-offset-4"
+                >
+                  apagar
+                </button>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      </section>
     </main>
   );
 }
