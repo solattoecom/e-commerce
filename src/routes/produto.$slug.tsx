@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/external";
 import { useAuth } from "@/hooks/useAuth";
 import { useCart } from "@/hooks/useCart";
+import { quoteShipping, type ShippingQuote } from "@/lib/shipping.functions";
 
 export const Route = createFileRoute("/produto/$slug")({
   component: ProductPage,
@@ -110,6 +111,11 @@ function ProductPage() {
   const [foto, setFoto] = useState(0);
   const [tamanho, setTamanho] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
+
+  const [cep, setCep] = useState("");
+  const [freteResultado, setFreteResultado] = useState<ShippingQuote | null>(null);
+  const [freteErro, setFreteErro] = useState<string | null>(null);
+  const [calculando, setCalculando] = useState(false);
 
   const [avaliacoes, setAvaliacoes] = useState<Avaliacao[]>([]);
   const [minhaNota, setMinhaNota] = useState(0);
@@ -393,6 +399,84 @@ function ProductPage() {
             <li className="flex items-center gap-2"><RefreshCw className="size-4 shrink-0 text-foreground" /> Troca fácil em até 7 dias úteis.</li>
             <li className="flex items-center gap-2"><Tag className="size-4 shrink-0 text-foreground" /> Frete grátis em compras acima de R$ 399.</li>
           </ul>
+
+          <div className="mt-6">
+            <p className="mb-2 text-sm font-medium">Calcular frete</p>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                inputMode="numeric"
+                placeholder="00000-000"
+                maxLength={9}
+                value={cep}
+                onChange={(e) => {
+                  const v = e.target.value.replace(/\D/g, "").slice(0, 8);
+                  setCep(v.length > 5 ? `${v.slice(0, 5)}-${v.slice(5)}` : v);
+                  setFreteResultado(null);
+                  setFreteErro(null);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    void (async () => {
+                      if (cep.replace(/\D/g, "").length !== 8) return;
+                      setCalculando(true);
+                      setFreteErro(null);
+                      try {
+                        const r = await quoteShipping({ cep, itens: 1, subtotal: preco ? Number(preco.preco) : 0 });
+                        setFreteResultado(r);
+                      } catch (err) {
+                        setFreteErro((err as Error).message);
+                      } finally {
+                        setCalculando(false);
+                      }
+                    })();
+                  }
+                }}
+                className="flex-1 rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
+              />
+              <button
+                type="button"
+                disabled={calculando || cep.replace(/\D/g, "").length !== 8}
+                onClick={async () => {
+                  setCalculando(true);
+                  setFreteErro(null);
+                  try {
+                    const r = await quoteShipping({ cep, itens: 1, subtotal: preco ? Number(preco.preco) : 0 });
+                    setFreteResultado(r);
+                  } catch (err) {
+                    setFreteErro((err as Error).message);
+                  } finally {
+                    setCalculando(false);
+                  }
+                }}
+                className="cursor-pointer rounded-xl border border-border px-4 py-2 text-sm font-medium transition-colors hover:border-foreground disabled:opacity-50"
+              >
+                {calculando ? "..." : "OK"}
+              </button>
+            </div>
+            {freteErro ? <p className="mt-2 text-xs text-destructive">{freteErro}</p> : null}
+            {freteResultado ? (
+              <div className="mt-3">
+                <p className="mb-2 text-xs text-muted-foreground">
+                  {freteResultado.cidade} — {freteResultado.uf}
+                </p>
+                <ul className="space-y-2">
+                  {freteResultado.opcoes.map((op) => (
+                    <li key={op.id} className="flex items-center justify-between rounded-xl border border-border px-3 py-2 text-sm">
+                      <span>
+                        <span className="font-medium">{op.nome}</span>
+                        <span className="ml-2 text-xs text-muted-foreground">{op.prazo}</span>
+                      </span>
+                      <span className="font-semibold">
+                        {op.valor === 0 ? "Grátis" : brl(op.valor)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+          </div>
 
           {produto.descricao ? (
             <section className="mt-8">
