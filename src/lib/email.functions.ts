@@ -177,3 +177,44 @@ export const enviarEmailConfirmacaoPedido = createServerFn({ method: "POST" })
 export const enviarEmailStatusPedido = createServerFn({ method: "POST" })
   .inputValidator((input: StatusInput) => input)
   .handler(async ({ data }) => { await enviarStatusPedido(data); });
+
+type EstoqueDisponivelInput = {
+  alertas: { nome: string; email: string }[];
+  produto_nome: string;
+  produto_slug: string;
+  tamanho: string;
+};
+
+export const enviarEmailEstoqueDisponivel = createServerFn({ method: "POST" })
+  .inputValidator((input: EstoqueDisponivelInput) => input)
+  .handler(async ({ data }) => {
+    const resend = getResend();
+    const url = `https://solatto.com.br/produto/${data.produto_slug}`;
+    await Promise.all(
+      data.alertas.map(({ nome, email }) =>
+        resend.emails.send({
+          from: FROM,
+          to: email,
+          subject: `${data.produto_nome} tamanho ${data.tamanho} chegou! · Solatto`,
+          html: baseTemplate(`
+            <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;">Chegou!</h1>
+            <p style="margin:0 0 24px;font-size:15px;color:#555;">
+              Olá, ${nome}! O produto que você queria voltou ao estoque.
+            </p>
+            <div style="background:#f9f9f9;border-radius:10px;padding:16px;margin-bottom:24px;">
+              <p style="margin:0 0 4px;font-size:12px;color:#888;text-transform:uppercase;letter-spacing:0.08em;">Produto</p>
+              <p style="margin:0;font-size:16px;font-weight:700;">${data.produto_nome}</p>
+              <p style="margin:4px 0 0;font-size:14px;color:#555;">Tamanho ${data.tamanho}</p>
+            </div>
+            <a href="${url}"
+               style="display:inline-block;background:#000;color:#fff;text-decoration:none;padding:12px 28px;border-radius:24px;font-size:14px;font-weight:700;letter-spacing:0.05em;">
+              Comprar agora
+            </a>
+            <p style="margin:24px 0 0;font-size:12px;color:#999;">
+              Corra! O estoque pode esgotar rapidamente.
+            </p>
+          `),
+        }),
+      ),
+    );
+  });

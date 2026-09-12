@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { supabase } from "@/integrations/supabase/external"
 import { notificarNovoProduto } from "@/lib/newsletter.functions"
+import { enviarEmailEstoqueDisponivel } from "@/lib/email.functions"
 
 type Categoria = { id: string; nome: string }
 type Imagem = { id: string; url: string; ordem: number }
@@ -279,6 +280,29 @@ export function AdminProdutos() {
     else setImagens((prev) => prev.filter((img) => img.id !== id))
   }
 
+  async function dispararAlertasEstoque(tamanho: string, estoque: number) {
+    if (!produtoAtual || estoque <= 0) return
+    const { data: alertas } = await supabase
+      .from("stock_alerts" as never)
+      .select("nome, email")
+      .eq("produto_id", produtoAtual.id)
+      .eq("tamanho", tamanho)
+    if (!alertas || (alertas as { nome: string; email: string }[]).length === 0) return
+    try {
+      await enviarEmailEstoqueDisponivel({
+        alertas: alertas as { nome: string; email: string }[],
+        produto_nome: produtoAtual.nome,
+        produto_slug: produtoAtual.slug,
+        tamanho,
+      })
+      await supabase
+        .from("stock_alerts" as never)
+        .delete()
+        .eq("produto_id", produtoAtual.id)
+        .eq("tamanho", tamanho)
+    } catch { /* silencioso */ }
+  }
+
   async function salvarVariante(v: Variante) {
     setSalvandoVariante(v.id)
     const { error } = await supabase
@@ -286,17 +310,19 @@ export function AdminProdutos() {
       .update({ tamanho: v.tamanho, estoque: v.estoque })
       .eq("id", v.id)
     if (error) setErroForm(error.message)
+    else void dispararAlertasEstoque(v.tamanho, v.estoque)
     setSalvandoVariante(null)
   }
 
   async function adicionarVariante() {
     if (!produtoAtual || !novaVariante.tamanho.trim()) return
+    const estoque = parseInt(novaVariante.estoque) || 0
     const { data, error } = await supabase
       .from("product_variants")
       .insert({
         produto_id: produtoAtual.id,
         tamanho: novaVariante.tamanho.trim(),
-        estoque: parseInt(novaVariante.estoque) || 0,
+        estoque,
       })
       .select("id, tamanho, estoque")
       .single()
@@ -304,6 +330,7 @@ export function AdminProdutos() {
     else {
       setVariantes((prev) => [...prev, data as Variante])
       setNovaVariante({ tamanho: "", estoque: "" })
+      void dispararAlertasEstoque(novaVariante.tamanho.trim(), estoque)
     }
   }
 

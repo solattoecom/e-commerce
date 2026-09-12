@@ -117,6 +117,11 @@ function ProductPage() {
   const [freteErro, setFreteErro] = useState<string | null>(null);
   const [calculando, setCalculando] = useState(false);
 
+  const [alertaNome, setAlertaNome] = useState("");
+  const [alertaEmail, setAlertaEmail] = useState("");
+  const [alertaEnviado, setAlertaEnviado] = useState(false);
+  const [alertaSalvando, setAlertaSalvando] = useState(false);
+
   const [avaliacoes, setAvaliacoes] = useState<Avaliacao[]>([]);
   const [minhaNota, setMinhaNota] = useState(0);
   const [salvando, setSalvando] = useState(false);
@@ -194,6 +199,24 @@ function ProductPage() {
     a.tamanho.localeCompare(b.tamanho, "pt-BR", { numeric: true }),
   );
   const preco = produto.product_prices?.[0];
+
+  const TAMANHOS_FIXOS = ["37", "38", "39", "40", "41", "42", "43", "44"];
+  const tamanhoSelecionadoObj = variantes.find((v) => v.id === tamanho);
+  const tamanhoSelecionadoIndisponivel =
+    tamanho !== null && (!tamanhoSelecionadoObj || tamanhoSelecionadoObj.estoque <= 0);
+
+  async function cadastrarAlerta() {
+    if (!produto || !tamanho) return;
+    const tam = tamanhoSelecionadoObj?.tamanho ?? tamanho;
+    setAlertaSalvando(true);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase.from as any)("stock_alerts").upsert(
+      { produto_id: produto.id, tamanho: tam, nome: alertaNome, email: alertaEmail },
+      { onConflict: "produto_id,tamanho,email" },
+    );
+    setAlertaEnviado(true);
+    setAlertaSalvando(false);
+  }
   const media =
     avaliacoes.length > 0
       ? avaliacoes.reduce((soma, a) => soma + a.nota, 0) / avaliacoes.length
@@ -204,12 +227,12 @@ function ProductPage() {
       void navigate({ to: "/" });
       return;
     }
-    if (variantes.length > 0 && !tamanho) {
-      setAviso("Escolha a numeração antes de continuar.");
+    if (!tamanho || tamanhoSelecionadoIndisponivel) {
+      setAviso(tamanhoSelecionadoIndisponivel ? "Este tamanho está indisponível." : "Escolha a numeração antes de continuar.");
       return;
     }
     setAviso(null);
-    await addItem(produto!.id, tamanho);
+    await addItem(produto!.id, tamanhoSelecionadoObj?.id ?? tamanho);
     void navigate({ to: "/checkout" });
   }
 
@@ -351,48 +374,89 @@ function ProductPage() {
             )}
           </div>
 
-          {variantes.length > 0 ? (
-            <div className="mt-6">
-              <p className="text-sm font-medium">
-                Tamanho{" "}
-                <span className="text-muted-foreground">
-                  {variantes.find((v) => v.id === tamanho)?.tamanho ?? ""}
-                </span>
-              </p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {variantes.map((v) => {
-                  const semEstoque = v.estoque <= 0;
-                  return (
-                    <button
-                      key={v.id}
-                      type="button"
-                      disabled={semEstoque}
-                      onClick={() => {
-                        setAviso(null);
-                        setTamanho(v.id);
-                      }}
-                      className={`min-w-12 cursor-pointer rounded-lg border px-3 py-2 text-sm transition-colors ${
-                        tamanho === v.id
-                          ? "border-foreground bg-foreground text-background"
-                          : "border-border hover:border-foreground"
-                      } ${semEstoque ? "cursor-not-allowed opacity-40 line-through" : ""}`}
-                    >
-                      {v.tamanho}
-                    </button>
-                  );
-                })}
-              </div>
+          <div className="mt-6">
+            <p className="text-sm font-medium">
+              Tamanho{" "}
+              <span className="text-muted-foreground">{tamanhoSelecionadoObj?.tamanho ?? ""}</span>
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {TAMANHOS_FIXOS.map((tam) => {
+                const variante = variantes.find((v) => v.tamanho === tam);
+                const comEstoque = variante && variante.estoque > 0;
+                const selecionado = tamanho === (variante?.id ?? tam);
+                return (
+                  <button
+                    key={tam}
+                    type="button"
+                    onClick={() => {
+                      setAviso(null);
+                      setAlertaEnviado(false);
+                      setTamanho(variante?.id ?? tam);
+                    }}
+                    className={`min-w-12 cursor-pointer rounded-lg border px-3 py-2 text-sm transition-colors ${
+                      selecionado
+                        ? "border-foreground bg-foreground text-background"
+                        : comEstoque
+                          ? "border-border hover:border-foreground"
+                          : "border-border text-muted-foreground/50 line-through hover:border-foreground/40"
+                    }`}
+                  >
+                    {tam}
+                  </button>
+                );
+              })}
             </div>
-          ) : null}
+          </div>
 
-          <button
-            type="button"
-            onClick={comprar}
-            className="mt-6 w-full cursor-pointer rounded-full bg-foreground px-6 py-3.5 text-sm font-semibold uppercase tracking-wide text-background transition-colors hover:bg-foreground/90"
-          >
-            {signedIn ? "Comprar agora" : "Entrar para comprar"}
-          </button>
-          {aviso ? <p className="mt-2 text-xs text-destructive">{aviso}</p> : null}
+          {tamanhoSelecionadoIndisponivel ? (
+            <div className="mt-6">
+              <p className="text-lg font-bold uppercase">Produto indisponível</p>
+              <p className="mt-0.5 text-xs uppercase tracking-widest text-muted-foreground">
+                Avise-me quando chegar
+              </p>
+              {alertaEnviado ? (
+                <p className="mt-3 text-sm text-green-600">
+                  Pronto! Você será avisado quando o tamanho chegar.
+                </p>
+              ) : (
+                <div className="mt-3 flex flex-col gap-2">
+                  <input
+                    type="text"
+                    placeholder="Seu nome"
+                    value={alertaNome}
+                    onChange={(e) => setAlertaNome(e.target.value)}
+                    className="rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
+                  />
+                  <input
+                    type="email"
+                    placeholder="Seu e-mail"
+                    value={alertaEmail}
+                    onChange={(e) => setAlertaEmail(e.target.value)}
+                    className="rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
+                  />
+                  <button
+                    type="button"
+                    disabled={!alertaNome.trim() || !alertaEmail.trim() || alertaSalvando}
+                    onClick={cadastrarAlerta}
+                    className="cursor-pointer rounded-full border border-foreground px-6 py-2.5 text-sm font-semibold uppercase tracking-wide transition-colors hover:bg-foreground hover:text-background disabled:opacity-50"
+                  >
+                    {alertaSalvando ? "Salvando..." : "Avise-me"}
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={comprar}
+                className="mt-6 w-full cursor-pointer rounded-full bg-foreground px-6 py-3.5 text-sm font-semibold uppercase tracking-wide text-background transition-colors hover:bg-foreground/90"
+              >
+                {signedIn ? "Comprar agora" : "Entrar para comprar"}
+              </button>
+              {aviso ? <p className="mt-2 text-xs text-destructive">{aviso}</p> : null}
+            </>
+          )}
 
           <ul className="mt-6 space-y-2 text-sm text-muted-foreground">
             <li className="flex items-center gap-2"><Truck className="size-4 shrink-0 text-foreground" /> Envio para todo o Brasil.</li>
