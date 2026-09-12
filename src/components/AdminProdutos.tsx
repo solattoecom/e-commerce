@@ -282,25 +282,14 @@ export function AdminProdutos() {
 
   async function dispararAlertasEstoque(tamanho: string, estoque: number) {
     if (!produtoAtual || estoque <= 0) return
-    const { data: alertas } = await supabase
-      .from("stock_alerts" as never)
-      .select("nome, email")
-      .eq("produto_id", produtoAtual.id)
-      .eq("tamanho", tamanho)
-    if (!alertas || (alertas as { nome: string; email: string }[]).length === 0) return
-    try {
-      await enviarEmailEstoqueDisponivel({
-        alertas: alertas as { nome: string; email: string }[],
+    await enviarEmailEstoqueDisponivel({
+      data: {
+        produto_id: produtoAtual.id,
         produto_nome: produtoAtual.nome,
         produto_slug: produtoAtual.slug,
         tamanho,
-      })
-      await supabase
-        .from("stock_alerts" as never)
-        .delete()
-        .eq("produto_id", produtoAtual.id)
-        .eq("tamanho", tamanho)
-    } catch { /* silencioso */ }
+      },
+    }).catch(console.error)
   }
 
   async function salvarVariante(v: Variante) {

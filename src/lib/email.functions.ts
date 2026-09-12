@@ -179,7 +179,7 @@ export const enviarEmailStatusPedido = createServerFn({ method: "POST" })
   .handler(async ({ data }) => { await enviarStatusPedido(data); });
 
 type EstoqueDisponivelInput = {
-  alertas: { nome: string; email: string }[];
+  produto_id: string;
   produto_nome: string;
   produto_slug: string;
   tamanho: string;
@@ -188,10 +188,22 @@ type EstoqueDisponivelInput = {
 export const enviarEmailEstoqueDisponivel = createServerFn({ method: "POST" })
   .inputValidator((input: EstoqueDisponivelInput) => input)
   .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: alertas } = await supabaseAdmin
+      .from("stock_alerts" as never)
+      .select("id, nome, email")
+      .eq("produto_id", data.produto_id)
+      .eq("tamanho", data.tamanho);
+
+    if (!alertas || (alertas as { id: string; nome: string; email: string }[]).length === 0) return;
+
     const resend = getResend();
     const url = `https://solatto.com.br/produto/${data.produto_slug}`;
+    const lista = alertas as { id: string; nome: string; email: string }[];
+
     await Promise.all(
-      data.alertas.map(({ nome, email }) =>
+      lista.map(({ nome, email }) =>
         resend.emails.send({
           from: FROM,
           to: email,
@@ -217,4 +229,9 @@ export const enviarEmailEstoqueDisponivel = createServerFn({ method: "POST" })
         }),
       ),
     );
+
+    await supabaseAdmin
+      .from("stock_alerts" as never)
+      .delete()
+      .in("id", lista.map((a) => a.id));
   });
