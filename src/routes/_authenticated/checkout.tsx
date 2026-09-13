@@ -307,7 +307,6 @@ function CheckoutPage() {
       {step === "entrega" && (
         <div className="space-y-4">
           <h2 className="flex items-center gap-2 text-lg font-semibold"><Truck className="h-5 w-5" /> Opção de entrega</h2>
-          <CouponInput subtotal={total} onApply={setDesconto} />
           <div className="space-y-2">
             {shippingOptions.map((opt) => (
               <button key={opt.id} type="button" onClick={() => setSelectedShipping(opt)}
@@ -332,6 +331,7 @@ function CheckoutPage() {
       {step === "pagamento" && (
         <div className="space-y-4">
           <h2 className="flex items-center gap-2 text-lg font-semibold"><CreditCard className="h-5 w-5" /> Pagamento</h2>
+          <CouponInput subtotal={total} onApply={setDesconto} />
           <div className="grid gap-2">
             <Label htmlFor="telefone">Celular (WhatsApp)</Label>
             <Input id="telefone" placeholder="(11) 99999-9999" value={telefone} onChange={(e) => setTelefone(e.target.value)} maxLength={15} />
