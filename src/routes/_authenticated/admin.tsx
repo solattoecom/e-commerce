@@ -238,7 +238,7 @@ function AdminPanel() {
       code: novoCupom.code.trim().toUpperCase(),
       type: novoCupom.type,
       value: Number(novoCupom.value),
-      expires_at: novoCupom.expires_at || null,
+      expires_at: novoCupom.expires_at ? new Date(novoCupom.expires_at).toISOString() : null,
       max_uses: novoCupom.max_uses ? Number(novoCupom.max_uses) : null,
     });
     if (error) {
@@ -260,14 +260,15 @@ function AdminPanel() {
   };
 
   const handleSalvarEdicaoCupom = async (id: string) => {
+    const expiresAt = editCupom.expires_at ? new Date(editCupom.expires_at).toISOString() : null;
     const { error } = await supabase.from("coupons").update({
-      expires_at: editCupom.expires_at || null,
+      expires_at: expiresAt,
       max_uses: editCupom.max_uses ? Number(editCupom.max_uses) : null,
     }).eq("id", id);
     if (error) return;
     setCupons((prev) => prev.map((c) => c.id === id ? {
       ...c,
-      expires_at: editCupom.expires_at || null,
+      expires_at: expiresAt,
       max_uses: editCupom.max_uses ? Number(editCupom.max_uses) : null,
     } : c));
     setEditandoCupom(null);
