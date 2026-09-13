@@ -82,7 +82,7 @@ export function CouponInput({ subtotal, onApply }: Props) {
           onChange={(e) => setCode(e.target.value.toUpperCase())}
           placeholder="Digite o cupom"
           aria-label="Código do cupom"
-          className="h-10"
+          className="h-10 focus-visible:ring-border"
         />
         <Button
           type="submit"
