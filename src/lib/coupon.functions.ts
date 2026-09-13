@@ -38,3 +38,10 @@ export const validateCoupon = createServerFn({ method: "POST" })
       discount_amount: Math.round(discount_amount * 100) / 100,
     };
   });
+
+export const incrementCouponUsage = createServerFn({ method: "POST" })
+  .inputValidator((input: { coupon_id: string }) => input)
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/external.server");
+    await supabaseAdmin.rpc("increment_coupon_used_count", { p_coupon_id: data.coupon_id });
+  });

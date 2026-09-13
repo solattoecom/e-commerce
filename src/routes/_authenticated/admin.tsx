@@ -10,6 +10,7 @@ import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useAdminExists } from "@/hooks/useAdminExists";
 import { claimFirstAdmin } from "@/lib/admin.functions";
 import { enviarEmailStatusPedido } from "@/lib/email.functions";
+import { incrementCouponUsage } from "@/lib/coupon.functions";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminPanel,
@@ -205,7 +206,7 @@ function AdminPanel() {
     if (error) setErro(error.message);
     else {
       if (status === "pago" && pedido.coupon_id) {
-        await (supabase as any).rpc("increment_coupon_used_count", { p_coupon_id: pedido.coupon_id });
+        await incrementCouponUsage({ data: { coupon_id: pedido.coupon_id } });
       }
       setNfePorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; return next; });
       if (pedido.profiles?.email) {
