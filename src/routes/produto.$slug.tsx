@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCart } from "@/hooks/useCart";
 import { quoteShipping, type ShippingQuote } from "@/lib/shipping.functions";
 import { cadastrarAlertaEstoque } from "@/lib/stock-alerts.functions";
+import { isValidEmail } from "@/lib/validate";
 
 export const Route = createFileRoute("/produto/$slug")({
   component: ProductPage,
@@ -211,6 +212,7 @@ function ProductPage() {
 
   async function cadastrarAlerta() {
     if (!produto || !tamanho) return;
+    if (!isValidEmail(alertaEmail)) { setAlertaErro("Digite um e-mail válido."); return; }
     const tam = tamanhoSelecionadoObj?.tamanho ?? tamanho;
     setAlertaSalvando(true);
     setAlertaErro(null);

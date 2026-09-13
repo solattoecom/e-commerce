@@ -40,6 +40,7 @@ import { deleteMyAccount } from "@/lib/account.functions";
 import { signIn, signOut, signUpWithType, useAuth, type ClientType } from "@/hooks/useAuth";
 import { useCart } from "@/hooks/useCart";
 import { useWishlist } from "@/hooks/useWishlist";
+import { isValidEmail } from "@/lib/validate";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -385,6 +386,7 @@ function ProfileDialog({
   const salvar = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!dados) return;
+    if (dados.email.trim() && !isValidEmail(dados.email)) { setErro("Digite um e-mail válido."); return; }
     setSalvando(true);
     setErro(null);
     setMsg(null);
@@ -530,7 +532,7 @@ function NewsletterForm() {
 
   const assinar = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim()) return;
+    if (!isValidEmail(email)) { setErro("Digite um e-mail válido."); return; }
     setBusy(true);
     setMsg(null);
     setErro(null);
@@ -690,6 +692,7 @@ function Index() {
   const handleSignUp = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!accountType) return;
+    if (!isValidEmail(form.email)) { setErro("Digite um e-mail válido."); return; }
     const erroSenha = validarSenha(form.senha);
     if (erroSenha) { setErro(erroSenha); return; }
     setBusy(true);
@@ -718,6 +721,7 @@ function Index() {
 
   const handleSignIn = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (!isValidEmail(form.email)) { setErro("Digite um e-mail válido."); return; }
     const agora = Date.now();
     if (bloqueadoAte && agora < bloqueadoAte) {
       const restam = Math.ceil((bloqueadoAte - agora) / 60000);
