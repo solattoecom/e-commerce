@@ -25,6 +25,8 @@ type CreateOrderInput = {
   card_holder?: string;
   card_expiry?: string;
   card_cvv?: string;
+  coupon_id?: string | null;
+  desconto?: number;
 };
 
 export type CreateOrderResult = {
@@ -83,6 +85,8 @@ export const createOrder = createServerFn({ method: "POST" })
         endereco: address,
         payment_method: data.payment_method,
         address_id: data.address_id,
+        coupon_id: data.coupon_id ?? null,
+        desconto: data.desconto ?? 0,
       })
       .select("id")
       .single();
@@ -98,6 +102,10 @@ export const createOrder = createServerFn({ method: "POST" })
         subtotal: item.preco_unitario * item.quantidade,
       }))
     );
+
+    if (data.coupon_id) {
+      await supabaseAdmin.rpc("increment_coupon_used_count", { p_coupon_id: data.coupon_id });
+    }
 
     const abacateBody = {
       method: data.payment_method === "pix" ? "PIX" : "CREDIT_CARD",

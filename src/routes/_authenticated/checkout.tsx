@@ -10,6 +10,8 @@ import { useCart } from "@/hooks/useCart";
 import { useAddresses, type NewAddress } from "@/hooks/useAddresses";
 import { quoteShipping, type ShippingOption } from "@/lib/shipping.functions";
 import { createOrder, getOrderStatus } from "@/lib/checkout.functions";
+import { CouponInput } from "@/components/CouponInput";
+import type { DiscountResult } from "@/lib/coupon.functions";
 
 export const Route = createFileRoute("/_authenticated/checkout")({
   component: CheckoutPage,
@@ -37,6 +39,7 @@ function CheckoutPage() {
 
   const [shippingOptions, setShippingOptions] = useState<ShippingOption[]>([]);
   const [selectedShipping, setSelectedShipping] = useState<ShippingOption | null>(null);
+  const [desconto, setDesconto] = useState<DiscountResult | null>(null);
   const [shippingLoading, setShippingLoading] = useState(false);
 
   const [paymentMethod, setPaymentMethod] = useState<"pix" | "cartao">("pix");
@@ -51,7 +54,7 @@ function CheckoutPage() {
   const selectedAddress = addresses.find((a) => a.id === selectedAddressId) ?? null;
   const itemCount = items.reduce((n, i) => n + i.quantidade, 0);
   const frete = selectedShipping?.valor ?? 0;
-  const totalFinal = total + frete;
+  const totalFinal = total - (desconto?.discount_amount ?? 0) + frete;
 
   const handleCepBlur = async (cep: string) => {
     const digits = cep.replace(/\D/g, "");
@@ -134,6 +137,8 @@ function CheckoutPage() {
           })),
           subtotal: total,
           total: totalFinal,
+          coupon_id: desconto?.coupon_id ?? null,
+          desconto: desconto?.discount_amount ?? 0,
           ...(paymentMethod === "cartao" && {
             card_number: card.number,
             card_holder: card.holder,
@@ -217,6 +222,11 @@ function CheckoutPage() {
 
       <div className="mb-6 rounded-lg border bg-muted/30 p-4 text-sm">
         <p className="font-medium">{itemCount} {itemCount === 1 ? "item" : "itens"} — Subtotal: R$ {total.toFixed(2).replace(".", ",")}</p>
+        {desconto ? (
+          <p className="text-muted-foreground text-sm">
+            Cupom ({desconto.code}): -{Number(desconto.discount_amount).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+          </p>
+        ) : null}
         {selectedShipping && <p className="text-muted-foreground">Frete: R$ {frete.toFixed(2).replace(".", ",")} — Total: R$ {totalFinal.toFixed(2).replace(".", ",")}</p>}
       </div>
 
@@ -297,6 +307,7 @@ function CheckoutPage() {
       {step === "entrega" && (
         <div className="space-y-4">
           <h2 className="flex items-center gap-2 text-lg font-semibold"><Truck className="h-5 w-5" /> Opção de entrega</h2>
+          <CouponInput subtotal={total} onApply={setDesconto} />
           <div className="space-y-2">
             {shippingOptions.map((opt) => (
               <button key={opt.id} type="button" onClick={() => setSelectedShipping(opt)}
