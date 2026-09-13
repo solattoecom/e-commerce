@@ -106,14 +106,36 @@ Sem edição pós-criação — para corrigir um cupom, desativa e cria outro. M
 2. Usuário finaliza pedido → `createOrder` chama `applyOrderCoupon` internamente
 3. `used_count` incrementa → cupom salvo no pedido
 
+## Detalhes do Pedido (`pedidos.tsx`)
+
+Na seção de totais de cada pedido expandido, exibir o cupom aplicado quando `coupon_id` estiver preenchido. A query do Supabase deve fazer join com `coupons` para trazer `code`, `type` e `value`. Exibição:
+
+```
+Subtotal          R$ 150,00
+Cupom (SOLATTO10) - R$ 15,00
+Frete             Grátis
+Total             R$ 135,00
+```
+
+A linha do cupom aparece em verde, entre subtotal e frete, com o código entre parênteses e o valor do desconto negativo.
+
+O tipo `Order` em `pedidos.tsx` precisa incluir:
+```ts
+coupon: { code: string; type: "percent" | "fixed"; value: number } | null;
+desconto: number | null;
+```
+
+A coluna `desconto` é salva na tabela `orders` ao criar o pedido.
+
 ## Arquivos Afetados
 
 | Arquivo | Ação |
 |---------|------|
-| `supabase/migrations/YYYYMMDD_coupons.sql` | Criar tabela `coupons` e coluna em `orders` |
+| `supabase/migrations/YYYYMMDD_coupons.sql` | Criar tabela `coupons`, coluna `coupon_id` e `desconto` em `orders` |
 | `src/lib/coupon.functions.ts` | Criar (novo) |
 | `src/components/CouponInput.tsx` | Criar (novo) |
 | `src/routes/index.tsx` | Integrar `CouponInput` no carrinho |
 | `src/routes/_authenticated/checkout.tsx` | Integrar `CouponInput` no checkout |
-| `src/lib/checkout.functions.ts` | Chamar `applyOrderCoupon` e incluir desconto no total |
+| `src/lib/checkout.functions.ts` | Chamar `applyOrderCoupon`, salvar `desconto` e incluir no total |
+| `src/routes/_authenticated/pedidos.tsx` | Exibir cupom aplicado nos detalhes do pedido |
 | `src/routes/_authenticated/admin.tsx` | Adicionar seção de cupons |
