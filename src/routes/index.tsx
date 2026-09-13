@@ -591,9 +591,26 @@ function Index() {
   const [frete, setFrete] = useState<ShippingOption | null>(null);
   const [desconto, setDesconto] = useState<DiscountResult | null>(null);
   const [showProfile, setShowProfile] = useState(false);
+  const [tamSelecionado, setTamSelecionado] = useState<string | null>(null);
+  const [tamanhos, setTamanhos] = useState<string[]>([]);
   const cart = useCart(user?.id ?? null);
   const wishlist = useWishlist(user?.id ?? null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    supabase
+      .from("product_variants")
+      .select("tamanho, estoque, products!inner(ativo)")
+      .gt("estoque", 0)
+      .eq("products.ativo", true)
+      .then(({ data }) => {
+        if (!data) return;
+        const unicos = [...new Set(data.map((v) => v.tamanho))].sort((a, b) =>
+          a.localeCompare(b, "pt-BR", { numeric: true }),
+        );
+        setTamanhos(unicos);
+      });
+  }, []);
 
   useEffect(() => {
     if (sessionStorage.getItem("openLogin") && !user && !loading) {
@@ -1128,11 +1145,54 @@ function Index() {
           </div>
         </section>
 
+        {tamanhos.length > 0 ? (
+          <section className="border-y border-border bg-muted/30 py-12">
+            <div className="mx-auto w-full max-w-[1440px] px-5 md:px-8">
+              <div className="mb-6 text-center">
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-foreground/60">Encontre o seu</p>
+                <h2 className="mt-2 text-2xl font-semibold sm:text-3xl">Compre por tamanho</h2>
+              </div>
+              <div className="flex flex-wrap justify-center gap-2">
+                {tamanhos.map((tam) => (
+                  <button
+                    key={tam}
+                    type="button"
+                    onClick={() => {
+                      setTamSelecionado((prev) => (prev === tam ? null : tam));
+                      document.getElementById("novidades")?.scrollIntoView({ behavior: "smooth" });
+                    }}
+                    className={`min-w-[52px] cursor-pointer rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
+                      tamSelecionado === tam
+                        ? "border-foreground bg-foreground text-background"
+                        : "border-border bg-background hover:border-foreground"
+                    }`}
+                  >
+                    {tam}
+                  </button>
+                ))}
+                {tamSelecionado ? (
+                  <button
+                    type="button"
+                    onClick={() => setTamSelecionado(null)}
+                    className="cursor-pointer rounded-full border border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:border-foreground hover:text-foreground"
+                  >
+                    Limpar
+                  </button>
+                ) : null}
+              </div>
+            </div>
+          </section>
+        ) : null}
+
         <section id="novidades" className="scroll-mt-28 bg-background py-16">
           <div className="mx-auto w-full max-w-[1440px] px-5 md:px-8">
             <div className="mb-10 text-center">
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-foreground/60">Solatto essencial</p>
-              <h2 className="mx-auto mt-4 max-w-2xl text-3xl font-medium leading-tight sm:text-5xl">Feito no Brasil, pensado para acompanhar você.</h2>
+              <h2 className="mx-auto mt-4 max-w-2xl text-3xl font-medium leading-tight sm:text-5xl">
+                {tamSelecionado
+                  ? `Calçados no número ${tamSelecionado}`
+                  : "Feito no Brasil, pensado para acompanhar você."}
+              </h2>
               <p className="mt-4 text-sm text-muted-foreground">
                 {user ? "Preços exclusivos do seu tipo de conta." : "Entre na sua conta para ver os preços do seu perfil."}
               </p>
@@ -1141,6 +1201,7 @@ function Index() {
               signedIn={Boolean(user)}
               refreshKey={refreshKey}
               search={busca}
+              filterSize={tamSelecionado ?? undefined}
               onAdd={handleAddToCart}
               wishlistIds={wishlist.ids}
               onToggleWishlist={user ? (id) => wishlist.toggle(id) : undefined}

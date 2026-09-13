@@ -22,6 +22,7 @@ export function ProductGrid({
   signedIn,
   refreshKey = 0,
   search = "",
+  filterSize,
   onAdd,
   wishlistIds = new Set(),
   onToggleWishlist,
@@ -29,6 +30,7 @@ export function ProductGrid({
   signedIn: boolean;
   refreshKey?: number;
   search?: string;
+  filterSize?: string;
   onAdd?: (produtoId: string, variacaoId: string | null) => void;
   wishlistIds?: Set<string>;
   onToggleWishlist?: (produtoId: string) => void;
@@ -77,7 +79,7 @@ export function ProductGrid({
   }
 
   const termo = search.trim().toLowerCase();
-  const visiveis = termo
+  const porBusca = termo
     ? products.filter((product) =>
         `${product.nome} ${product.descricao ?? ""} ${product.categories?.nome ?? ""}`
           .toLowerCase()
@@ -85,10 +87,22 @@ export function ProductGrid({
       )
     : products;
 
+  const visiveis = filterSize
+    ? porBusca.filter((product) =>
+        product.product_variants.some(
+          (v) => v.tamanho === filterSize && v.estoque > 0,
+        ),
+      )
+    : porBusca;
+
   if (visiveis.length === 0) {
     return (
       <p className="text-center text-sm text-muted-foreground">
-        Nenhum calçado encontrado para "{search.trim()}".
+        {termo
+          ? `Nenhum calçado encontrado para "${search.trim()}".`
+          : filterSize
+            ? `Nenhum calçado disponível no número ${filterSize}.`
+            : "Nenhum calçado disponível no momento."}
       </p>
     );
   }
