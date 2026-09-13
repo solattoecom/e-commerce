@@ -13,11 +13,15 @@ export const validateCoupon = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<DiscountResult> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/external.server");
 
-    const { data: coupon, error } = await supabaseAdmin
+    type CouponRow = {
+      id: string; code: string; type: string; value: number;
+      expires_at: string | null; max_uses: number | null; used_count: number; active: boolean;
+    };
+    const { data: coupon, error } = await (supabaseAdmin as any)
       .from("coupons")
       .select("id, code, type, value, expires_at, max_uses, used_count, active")
       .ilike("code", data.code.trim())
-      .single();
+      .single() as { data: CouponRow | null; error: unknown };
 
     if (error || !coupon) throw new Error("Cupom inválido.");
     if (!coupon.active) throw new Error("Cupom inativo.");
