@@ -121,8 +121,8 @@ function SobrePage() {
       </section>
 
       {/* Localização */}
-      <section className="px-4 py-14 sm:px-6 sm:py-20">
-        <div className="mx-auto max-w-[780px]">
+      <section className="py-14 sm:py-20">
+        <div className="mx-auto max-w-[780px] px-4 sm:px-6">
           <div className="mb-6 flex items-center gap-2">
             <MapPin className="size-5 shrink-0 text-muted-foreground" />
             <h2 className="text-xl font-semibold sm:text-2xl">Nossa fábrica</h2>
@@ -131,22 +131,24 @@ function SobrePage() {
             Venha nos visitar! Nossa fábrica está localizada em Franca — SP, referência nacional na
             produção de calçados de couro. Atendemos visitantes mediante agendamento.
           </p>
+        </div>
 
-          {/* Iframe do Google Maps */}
-          <div className="overflow-hidden rounded-2xl border border-border">
-            <iframe
-              title="Localização da fábrica Solatto"
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d117955.56789!2d-47.4673!3d-20.5386!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94b0f15a0b4c9f8d%3A0x4f0f7d28b3d0b0a0!2sFranca%2C%20SP!5e0!3m2!1spt-BR!2sbr!4v1"
-              width="100%"
-              height="400"
-              style={{ border: 0 }}
-              allowFullScreen
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-              className="block w-full"
-            />
-          </div>
+        {/* Iframe do Google Maps — largura total */}
+        <div className="border-y border-border">
+          <iframe
+            title="Localização da fábrica Solatto"
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d117955.56789!2d-47.4673!3d-20.5386!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94b0f15a0b4c9f8d%3A0x4f0f7d28b3d0b0a0!2sFranca%2C%20SP!5e0!3m2!1spt-BR!2sbr!4v1"
+            width="100%"
+            height="450"
+            style={{ border: 0 }}
+            allowFullScreen
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            className="block w-full"
+          />
+        </div>
 
+        <div className="mx-auto max-w-[780px] px-4 sm:px-6">
           <p className="mt-4 text-center text-sm text-muted-foreground">
             Franca — SP · CEP 14400-000 ·{" "}
             <a
