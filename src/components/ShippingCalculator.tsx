@@ -53,7 +53,7 @@ export function ShippingCalculator({ itens, subtotal, onSelect }: Props) {
           inputMode="numeric"
           placeholder="Digite seu CEP"
           aria-label="CEP"
-          className="h-10 focus-visible:ring-border"
+          className="h-10"
         />
         <Button
           type="submit"
