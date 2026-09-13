@@ -211,14 +211,13 @@ function StickyHeader({
               </span>
             ) : null}
           </button>
-          <button
-            type="button"
+          <Link
+            to="/sobre"
             aria-label="Nossa localização"
-            onClick={() => {}}
             className="grid h-9 w-9 cursor-pointer place-items-center rounded-full text-foreground transition-colors hover:bg-muted"
           >
             <MapPin className="size-[18px]" />
-          </button>
+          </Link>
           <div className="relative" ref={menuRef}>
             <button
               type="button"
