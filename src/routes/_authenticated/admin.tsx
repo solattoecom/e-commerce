@@ -206,7 +206,11 @@ function AdminPanel() {
     if (error) setErro(error.message);
     else {
       if (status === "pago" && pedido.coupon_id) {
-        await incrementCouponUsage({ data: { coupon_id: pedido.coupon_id } });
+        try {
+          await incrementCouponUsage({ data: { coupon_id: pedido.coupon_id } });
+        } catch (couponErr) {
+          console.error("Erro ao incrementar cupom:", couponErr);
+        }
       }
       setNfePorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; return next; });
       if (pedido.profiles?.email) {

@@ -43,5 +43,19 @@ export const incrementCouponUsage = createServerFn({ method: "POST" })
   .inputValidator((input: { coupon_id: string }) => input)
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/external.server");
-    await supabaseAdmin.rpc("increment_coupon_used_count", { p_coupon_id: data.coupon_id });
+
+    const { data: coupon, error: fetchError } = await supabaseAdmin
+      .from("coupons")
+      .select("used_count")
+      .eq("id", data.coupon_id)
+      .single();
+
+    if (fetchError || !coupon) throw new Error("Cupom não encontrado.");
+
+    const { error: updateError } = await supabaseAdmin
+      .from("coupons")
+      .update({ used_count: coupon.used_count + 1 })
+      .eq("id", data.coupon_id);
+
+    if (updateError) throw new Error(updateError.message);
   });
