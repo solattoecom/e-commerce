@@ -556,7 +556,7 @@ function NewsletterForm() {
           placeholder="Seu melhor e-mail"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="h-11 flex-grow rounded-[10px] border border-border bg-background px-4 text-[0.9rem] shadow-inner outline-none focus:border-foreground transition-colors"
+          className="h-11 flex-grow rounded-[10px] border border-border bg-background px-4 text-[0.9rem] outline-none transition-colors"
         />
         <Button type="submit" disabled={busy} className="h-11 rounded-[10px] bg-foreground px-7 text-[0.9rem] font-semibold text-background shadow-[0_12px_24px_rgba(0,0,0,0.18)] hover:-translate-y-0.5 hover:bg-foreground/90">
           {busy ? "..." : "Assinar"}
