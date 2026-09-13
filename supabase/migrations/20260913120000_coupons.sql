@@ -14,8 +14,8 @@ CREATE TABLE public.coupons (
 );
 
 ALTER TABLE public.orders
-  ADD COLUMN IF NOT EXISTS coupon_id  uuid REFERENCES public.coupons(id),
-  ADD COLUMN IF NOT EXISTS desconto   numeric(10,2) NOT NULL DEFAULT 0;
+  ADD COLUMN IF NOT EXISTS coupon_id  uuid REFERENCES public.coupons(id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS desconto   numeric(10,2) NOT NULL DEFAULT 0 CHECK (desconto >= 0);
 
 -- RLS: apenas service_role acessa diretamente
 GRANT ALL ON public.coupons TO service_role;
