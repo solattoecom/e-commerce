@@ -60,6 +60,7 @@ type Pedido = {
   subtotal: number;
   frete: number;
   total: number;
+  coupon_id: string | null;
   payment_method: string | null;
   nota_fiscal: string | null;
   codigo_rastreio: string | null;
@@ -203,6 +204,9 @@ function AdminPanel() {
       .eq("id", pedido.id);
     if (error) setErro(error.message);
     else {
+      if (status === "pago" && pedido.coupon_id) {
+        await (supabase as any).rpc("increment_coupon_used_count", { p_coupon_id: pedido.coupon_id });
+      }
       setNfePorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; return next; });
       if (pedido.profiles?.email) {
         void enviarEmailStatusPedido({
