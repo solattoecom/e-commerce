@@ -147,7 +147,7 @@ function AdminPanel() {
       supabase
         .from("orders")
         .select(
-          "id, status, subtotal, frete, total, payment_method, nota_fiscal, codigo_rastreio, criado_em, usuario_id, endereco, profiles(nome, sobrenome, email), order_items(id, quantidade, preco_unitario, subtotal, products(nome, product_images(url)), product_variants(tamanho))",
+          "id, status, subtotal, frete, total, coupon_id, payment_method, nota_fiscal, codigo_rastreio, criado_em, usuario_id, endereco, profiles(nome, sobrenome, email), order_items(id, quantidade, preco_unitario, subtotal, products(nome, product_images(url)), product_variants(tamanho))",
         )
         .order("criado_em", { ascending: false }),
     ]);
