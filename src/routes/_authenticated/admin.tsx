@@ -132,6 +132,8 @@ function AdminPanel() {
   });
   const [cupomErro, setCupomErro] = useState<string | null>(null);
   const [cupomSucesso, setCupomSucesso] = useState<string | null>(null);
+  const [editandoCupom, setEditandoCupom] = useState<string | null>(null);
+  const [editCupom, setEditCupom] = useState({ expires_at: "", max_uses: "" });
 
   const carregar = useCallback(async () => {
     setCarregandoDados(true);
@@ -246,6 +248,20 @@ function AdminPanel() {
   const handleToggleCupom = async (id: string, active: boolean) => {
     await supabase.from("coupons").update({ active: !active }).eq("id", id);
     setCupons((prev) => prev.map((c) => (c.id === id ? { ...c, active: !active } : c)));
+  };
+
+  const handleSalvarEdicaoCupom = async (id: string) => {
+    const { error } = await supabase.from("coupons").update({
+      expires_at: editCupom.expires_at || null,
+      max_uses: editCupom.max_uses ? Number(editCupom.max_uses) : null,
+    }).eq("id", id);
+    if (error) return;
+    setCupons((prev) => prev.map((c) => c.id === id ? {
+      ...c,
+      expires_at: editCupom.expires_at || null,
+      max_uses: editCupom.max_uses ? Number(editCupom.max_uses) : null,
+    } : c));
+    setEditandoCupom(null);
   };
 
   async function virarAdmin() {
@@ -635,35 +651,86 @@ function AdminPanel() {
                 </thead>
                 <tbody className="divide-y divide-border">
                   {cupons.map((c) => (
-                    <tr key={c.id} className={!c.active ? "opacity-50" : ""}>
-                      <td className="px-4 py-3 font-mono font-semibold">{c.code}</td>
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {c.type === "percent" ? "%" : "R$"}
-                      </td>
-                      <td className="px-4 py-3">
-                        {c.type === "percent" ? `${c.value}%` : Number(c.value).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                      </td>
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {c.expires_at ? new Date(c.expires_at).toLocaleDateString("pt-BR") : "Sem validade"}
-                      </td>
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {c.used_count}{c.max_uses !== null ? `/${c.max_uses}` : ""}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${c.active ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>
-                          {c.active ? "Ativo" : "Inativo"}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <button
-                          type="button"
-                          onClick={() => handleToggleCupom(c.id, c.active)}
-                          className="cursor-pointer rounded-full px-3 py-1 text-xs font-semibold bg-muted hover:bg-muted/70"
-                        >
-                          {c.active ? "Desativar" : "Ativar"}
-                        </button>
-                      </td>
-                    </tr>
+                    <>
+                      <tr key={c.id} className={!c.active ? "opacity-50" : ""}>
+                        <td className="px-4 py-3 font-mono font-semibold">{c.code}</td>
+                        <td className="px-4 py-3 text-muted-foreground">
+                          {c.type === "percent" ? "%" : "R$"}
+                        </td>
+                        <td className="px-4 py-3">
+                          {c.type === "percent" ? `${c.value}%` : Number(c.value).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground">
+                          {c.expires_at ? new Date(c.expires_at).toLocaleDateString("pt-BR") : "Sem validade"}
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground">
+                          {c.used_count}{c.max_uses !== null ? `/${c.max_uses}` : ""}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${c.active ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>
+                            {c.active ? "Ativo" : "Inativo"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditandoCupom(editandoCupom === c.id ? null : c.id);
+                                setEditCupom({
+                                  expires_at: c.expires_at ? c.expires_at.slice(0, 16) : "",
+                                  max_uses: c.max_uses !== null ? String(c.max_uses) : "",
+                                });
+                              }}
+                              className="cursor-pointer rounded-full px-3 py-1 text-xs font-semibold bg-muted hover:bg-muted/70"
+                            >
+                              {editandoCupom === c.id ? "Cancelar" : "Editar"}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleToggleCupom(c.id, c.active)}
+                              className="cursor-pointer rounded-full px-3 py-1 text-xs font-semibold bg-muted hover:bg-muted/70"
+                            >
+                              {c.active ? "Desativar" : "Ativar"}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                      {editandoCupom === c.id ? (
+                        <tr key={`${c.id}-edit`} className="bg-muted/20">
+                          <td colSpan={7} className="px-4 py-3">
+                            <div className="flex flex-wrap items-end gap-3">
+                              <div>
+                                <label className="mb-1 block text-xs text-muted-foreground">Validade</label>
+                                <input
+                                  type="datetime-local"
+                                  className="h-9 rounded-md border border-border bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-border"
+                                  value={editCupom.expires_at}
+                                  onChange={(e) => setEditCupom((p) => ({ ...p, expires_at: e.target.value }))}
+                                />
+                              </div>
+                              <div>
+                                <label className="mb-1 block text-xs text-muted-foreground">Limite de usos</label>
+                                <input
+                                  type="number"
+                                  min="1"
+                                  className="h-9 w-32 rounded-md border border-border bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-border"
+                                  value={editCupom.max_uses}
+                                  onChange={(e) => setEditCupom((p) => ({ ...p, max_uses: e.target.value }))}
+                                />
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleSalvarEdicaoCupom(c.id)}
+                                className="cursor-pointer rounded-full bg-foreground px-4 py-1.5 text-xs font-semibold text-background hover:bg-foreground/85"
+                              >
+                                Salvar
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ) : null}
+                    </>
                   ))}
                 </tbody>
               </table>
