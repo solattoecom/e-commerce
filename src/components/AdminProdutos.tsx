@@ -573,7 +573,7 @@ export function AdminProdutos() {
               {variantes.length > 0 ? (
                 <ul className="mb-4 flex flex-col gap-2">
                   {variantes.map((v) => (
-                    <li key={v.id} className="flex items-center gap-2">
+                    <li key={v.id} className="flex flex-wrap items-center gap-2">
                       <input
                         type="text"
                         value={v.tamanho}
@@ -614,7 +614,7 @@ export function AdminProdutos() {
                   ))}
                 </ul>
               ) : null}
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <input
                   type="text"
                   value={novaVariante.tamanho}
@@ -644,8 +644,8 @@ export function AdminProdutos() {
               <h2 className="mb-4 text-sm font-semibold">Preços</h2>
               <div className="flex flex-col gap-3">
                 {TIPOS_PRECO.map((tipo) => (
-                  <div key={tipo} className="flex flex-wrap items-center gap-3">
-                    <span className="w-28 text-sm capitalize text-muted-foreground">{tipo}</span>
+                  <div key={tipo} className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-end sm:gap-3">
+                    <span className="text-sm capitalize text-muted-foreground sm:w-28">{tipo}</span>
                     <div>
                       <label className="mb-1 block text-xs text-muted-foreground">Preço</label>
                       <input
@@ -656,7 +656,7 @@ export function AdminProdutos() {
                           setPrecos((prev) => ({ ...prev, [tipo]: { ...prev[tipo], preco: e.target.value } }))
                         }
                         placeholder="0,00"
-                        className="w-32 rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
+                        className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground sm:w-32"
                       />
                     </div>
                     <div>
@@ -672,7 +672,7 @@ export function AdminProdutos() {
                           }))
                         }
                         placeholder="0,00"
-                        className="w-32 rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground"
+                        className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground sm:w-32"
                       />
                     </div>
                   </div>

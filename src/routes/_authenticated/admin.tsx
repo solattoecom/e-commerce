@@ -330,7 +330,7 @@ function AdminPanel() {
         </Link>
       </header>
 
-      <div className="mb-6 flex gap-2">
+      <div className="mb-6 flex flex-wrap gap-2">
         {(
           [
             ["solicitacoes", `Solicitações${pendentes.length ? ` (${pendentes.length})` : ""}`],
@@ -508,7 +508,7 @@ function AdminPanel() {
                       {/* Alterar status */}
                       <div>
                         <p className="font-semibold mb-2">Alterar status</p>
-                        <div className="flex flex-wrap items-center gap-2">
+                        <div className="flex flex-wrap items-start gap-2">
                           <select
                             value={statusSelecionado}
                             disabled={ocupado === p.id}
@@ -539,7 +539,7 @@ function AdminPanel() {
                                 onChange={(event) =>
                                   setNfePorPedido((prev) => ({ ...prev, [p.id]: event.target.value }))
                                 }
-                                className="rounded-full border border-border bg-background px-3 py-2 text-xs"
+                                className="w-full rounded-full border border-border bg-background px-3 py-2 text-xs sm:w-auto"
                               />
                               <input
                                 type="text"
@@ -548,7 +548,7 @@ function AdminPanel() {
                                 onChange={(event) =>
                                   setRastreioPorPedido((prev) => ({ ...prev, [p.id]: event.target.value }))
                                 }
-                                className="rounded-full border border-border bg-background px-3 py-2 text-xs"
+                                className="w-full rounded-full border border-border bg-background px-3 py-2 text-xs sm:w-auto"
                               />
                               <button
                                 type="button"
@@ -575,8 +575,8 @@ function AdminPanel() {
         <section className="space-y-6">
           <div className="overflow-hidden rounded-2xl border border-border p-5 space-y-4">
             <h3 className="font-semibold">Novo cupom</h3>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="col-span-2 sm:col-span-1">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="sm:col-span-1">
                 <label className="mb-1 block text-xs text-muted-foreground">Código *</label>
                 <input
                   className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm uppercase"
@@ -646,7 +646,8 @@ function AdminPanel() {
             {cupons.length === 0 ? (
               <p className="p-6 text-sm text-muted-foreground">Nenhum cupom cadastrado ainda.</p>
             ) : (
-              <table className="w-full text-sm">
+              <div className="overflow-x-auto">
+              <table className="w-full min-w-[600px] text-sm">
                 <thead className="border-b border-border bg-muted/40">
                   <tr>
                     <th className="px-4 py-3 text-left font-medium">Código</th>
@@ -743,6 +744,7 @@ function AdminPanel() {
                   ))}
                 </tbody>
               </table>
+              </div>
             )}
           </div>
         </section>
