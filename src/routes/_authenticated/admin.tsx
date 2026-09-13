@@ -70,6 +70,18 @@ type Pedido = {
   order_items: PedidoItem[];
 };
 
+type Cupom = {
+  id: string;
+  code: string;
+  type: "percent" | "fixed";
+  value: number;
+  expires_at: string | null;
+  max_uses: number | null;
+  used_count: number;
+  active: boolean;
+  criado_em: string;
+};
+
 const STATUS_PEDIDO = [
   "pendente",
   "pago",
@@ -101,7 +113,7 @@ function AdminPanel() {
   const { user, loading: carregandoUsuario } = useAuth();
   const { isAdmin, loading: carregandoPapel } = useIsAdmin(user?.id);
   const { existe: jaTemAdmin } = useAdminExists();
-  const [aba, setAba] = useState<"solicitacoes" | "pedidos" | "produtos">("solicitacoes");
+  const [aba, setAba] = useState<"solicitacoes" | "pedidos" | "produtos" | "cupons">("solicitacoes");
   const [solicitacoes, setSolicitacoes] = useState<Solicitacao[]>([]);
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [carregandoDados, setCarregandoDados] = useState(true);
@@ -110,6 +122,16 @@ function AdminPanel() {
   const [nfePorPedido, setNfePorPedido] = useState<Record<string, string>>({});
   const [rastreioPorPedido, setRastreioPorPedido] = useState<Record<string, string>>({});
   const [expandido, setExpandido] = useState<string | null>(null);
+  const [cupons, setCupons] = useState<Cupom[]>([]);
+  const [novoCupom, setNovoCupom] = useState({
+    code: "",
+    type: "percent" as "percent" | "fixed",
+    value: "",
+    expires_at: "",
+    max_uses: "",
+  });
+  const [cupomErro, setCupomErro] = useState<string | null>(null);
+  const [cupomSucesso, setCupomSucesso] = useState<string | null>(null);
 
   const carregar = useCallback(async () => {
     setCarregandoDados(true);
@@ -128,6 +150,11 @@ function AdminPanel() {
     setErro(reqErro?.message ?? pedErro?.message ?? null);
     setSolicitacoes((reqs ?? []) as unknown as Solicitacao[]);
     setPedidos((peds ?? []) as unknown as Pedido[]);
+    supabase
+      .from("coupons")
+      .select("id, code, type, value, expires_at, max_uses, used_count, active, criado_em")
+      .order("criado_em", { ascending: false })
+      .then(({ data }) => setCupons((data as Cupom[]) ?? []));
     setCarregandoDados(false);
   }, []);
 
@@ -188,6 +215,38 @@ function AdminPanel() {
     }
     setOcupado(null);
   }
+
+  const handleCriarCupom = async () => {
+    setCupomErro(null);
+    setCupomSucesso(null);
+    if (!novoCupom.code.trim() || !novoCupom.value) {
+      setCupomErro("Código e valor são obrigatórios.");
+      return;
+    }
+    const { error } = await supabase.from("coupons").insert({
+      code: novoCupom.code.trim().toUpperCase(),
+      type: novoCupom.type,
+      value: Number(novoCupom.value),
+      expires_at: novoCupom.expires_at || null,
+      max_uses: novoCupom.max_uses ? Number(novoCupom.max_uses) : null,
+    });
+    if (error) {
+      setCupomErro(error.message.includes("unique") ? "Já existe um cupom com esse código." : error.message);
+      return;
+    }
+    setCupomSucesso("Cupom criado!");
+    setNovoCupom({ code: "", type: "percent", value: "", expires_at: "", max_uses: "" });
+    const { data } = await supabase
+      .from("coupons")
+      .select("id, code, type, value, expires_at, max_uses, used_count, active, criado_em")
+      .order("criado_em", { ascending: false });
+    setCupons((data as Cupom[]) ?? []);
+  };
+
+  const handleToggleCupom = async (id: string, active: boolean) => {
+    await supabase.from("coupons").update({ active: !active }).eq("id", id);
+    setCupons((prev) => prev.map((c) => (c.id === id ? { ...c, active: !active } : c)));
+  };
 
   async function virarAdmin() {
     setOcupado("claim");
@@ -252,6 +311,7 @@ function AdminPanel() {
             ["solicitacoes", `Solicitações${pendentes.length ? ` (${pendentes.length})` : ""}`],
             ["pedidos", `Pedidos${pedidos.length ? ` (${pedidos.length})` : ""}`],
             ["produtos", "Produtos"],
+            ["cupons", "Cupons"],
           ] as const
         ).map(([chave, rotulo]) => (
           <button
@@ -484,9 +544,133 @@ function AdminPanel() {
             })}
           </ul>
         </section>
-      ) : (
+      ) : aba === "produtos" ? (
         <AdminProdutos />
-      )}
+      ) : aba === "cupons" ? (
+        <section className="space-y-6">
+          <div className="overflow-hidden rounded-2xl border border-border p-5 space-y-4">
+            <h3 className="font-semibold">Novo cupom</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="col-span-2 sm:col-span-1">
+                <label className="mb-1 block text-xs text-muted-foreground">Código *</label>
+                <input
+                  className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm uppercase"
+                  placeholder="SOLATTO10"
+                  value={novoCupom.code}
+                  onChange={(e) => setNovoCupom((p) => ({ ...p, code: e.target.value.toUpperCase() }))}
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs text-muted-foreground">Tipo *</label>
+                <select
+                  className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+                  value={novoCupom.type}
+                  onChange={(e) => setNovoCupom((p) => ({ ...p, type: e.target.value as "percent" | "fixed" }))}
+                >
+                  <option value="percent">Percentual (%)</option>
+                  <option value="fixed">Valor fixo (R$)</option>
+                </select>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs text-muted-foreground">
+                  Valor * {novoCupom.type === "percent" ? "(%)" : "(R$)"}
+                </label>
+                <input
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+                  placeholder={novoCupom.type === "percent" ? "10" : "20.00"}
+                  value={novoCupom.value}
+                  onChange={(e) => setNovoCupom((p) => ({ ...p, value: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs text-muted-foreground">Validade (opcional)</label>
+                <input
+                  type="datetime-local"
+                  className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+                  value={novoCupom.expires_at}
+                  onChange={(e) => setNovoCupom((p) => ({ ...p, expires_at: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs text-muted-foreground">Limite de usos (opcional)</label>
+                <input
+                  type="number"
+                  min="1"
+                  className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+                  placeholder="100"
+                  value={novoCupom.max_uses}
+                  onChange={(e) => setNovoCupom((p) => ({ ...p, max_uses: e.target.value }))}
+                />
+              </div>
+            </div>
+            {cupomErro ? <p className="text-sm text-destructive">{cupomErro}</p> : null}
+            {cupomSucesso ? <p className="text-sm text-green-600">{cupomSucesso}</p> : null}
+            <button
+              type="button"
+              onClick={handleCriarCupom}
+              className="cursor-pointer rounded-full bg-foreground px-5 py-2 text-sm font-semibold text-background hover:bg-foreground/85"
+            >
+              Criar cupom
+            </button>
+          </div>
+
+          <div className="overflow-hidden rounded-2xl border border-border">
+            {cupons.length === 0 ? (
+              <p className="p-6 text-sm text-muted-foreground">Nenhum cupom cadastrado ainda.</p>
+            ) : (
+              <table className="w-full text-sm">
+                <thead className="border-b border-border bg-muted/40">
+                  <tr>
+                    <th className="px-4 py-3 text-left font-medium">Código</th>
+                    <th className="px-4 py-3 text-left font-medium">Tipo</th>
+                    <th className="px-4 py-3 text-left font-medium">Valor</th>
+                    <th className="px-4 py-3 text-left font-medium">Validade</th>
+                    <th className="px-4 py-3 text-left font-medium">Usos</th>
+                    <th className="px-4 py-3 text-left font-medium">Status</th>
+                    <th className="px-4 py-3" />
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {cupons.map((c) => (
+                    <tr key={c.id} className={!c.active ? "opacity-50" : ""}>
+                      <td className="px-4 py-3 font-mono font-semibold">{c.code}</td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {c.type === "percent" ? "%" : "R$"}
+                      </td>
+                      <td className="px-4 py-3">
+                        {c.type === "percent" ? `${c.value}%` : Number(c.value).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {c.expires_at ? new Date(c.expires_at).toLocaleDateString("pt-BR") : "Sem validade"}
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {c.used_count}{c.max_uses !== null ? `/${c.max_uses}` : ""}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${c.active ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>
+                          {c.active ? "Ativo" : "Inativo"}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleCupom(c.id, c.active)}
+                          className="cursor-pointer rounded-full px-3 py-1 text-xs font-semibold bg-muted hover:bg-muted/70"
+                        >
+                          {c.active ? "Desativar" : "Ativar"}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </section>
+      ) : null}
     </main>
   );
 }
