@@ -104,7 +104,7 @@ export const createOrder = createServerFn({ method: "POST" })
     );
 
     if (data.coupon_id) {
-      await (supabaseAdmin as any).rpc("increment_coupon_used_count", { p_coupon_id: data.coupon_id });
+      await supabaseAdmin.rpc("increment_coupon_used_count", { p_coupon_id: data.coupon_id });
     }
 
     const abacateBody = {

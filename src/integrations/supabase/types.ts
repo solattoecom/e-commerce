@@ -14,6 +14,56 @@ export type Database = {
   }
   public: {
     Tables: {
+      addresses: {
+        Row: {
+          bairro: string
+          cep: string
+          cidade: string
+          complemento: string | null
+          criado_em: string
+          estado: string
+          id: string
+          numero: string
+          padrao: boolean
+          rua: string
+          user_id: string
+        }
+        Insert: {
+          bairro: string
+          cep: string
+          cidade: string
+          complemento?: string | null
+          criado_em?: string
+          estado: string
+          id?: string
+          numero: string
+          padrao?: boolean
+          rua: string
+          user_id: string
+        }
+        Update: {
+          bairro?: string
+          cep?: string
+          cidade?: string
+          complemento?: string | null
+          criado_em?: string
+          estado?: string
+          id?: string
+          numero?: string
+          padrao?: boolean
+          rua?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "addresses_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cart_items: {
         Row: {
           atualizado_em: string
@@ -125,6 +175,60 @@ export type Database = {
           },
         ]
       }
+      coupons: {
+        Row: {
+          active: boolean
+          code: string
+          criado_em: string
+          expires_at: string | null
+          id: string
+          max_uses: number | null
+          type: Database["public"]["Enums"]["coupon_type"]
+          used_count: number
+          value: number
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          criado_em?: string
+          expires_at?: string | null
+          id?: string
+          max_uses?: number | null
+          type: Database["public"]["Enums"]["coupon_type"]
+          used_count?: number
+          value: number
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          criado_em?: string
+          expires_at?: string | null
+          id?: string
+          max_uses?: number | null
+          type?: Database["public"]["Enums"]["coupon_type"]
+          used_count?: number
+          value?: number
+        }
+        Relationships: []
+      }
+      newsletter_subscribers: {
+        Row: {
+          criado_em: string | null
+          email: string
+          id: string
+        }
+        Insert: {
+          criado_em?: string | null
+          email: string
+          id?: string
+        }
+        Update: {
+          criado_em?: string | null
+          email?: string
+          id?: string
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           id: string
@@ -179,39 +283,80 @@ export type Database = {
       }
       orders: {
         Row: {
+          address_id: string | null
           atualizado_em: string
+          codigo_rastreio: string | null
+          comissao_percent: number
+          comissao_valor: number
+          coupon_id: string | null
           criado_em: string
+          desconto: number
           endereco: Json
           frete: number
           id: string
+          nota_fiscal: string | null
+          payment_id: string | null
+          payment_method: string | null
           status: Database["public"]["Enums"]["order_status"]
           subtotal: number
           total: number
           usuario_id: string
         }
         Insert: {
+          address_id?: string | null
           atualizado_em?: string
+          codigo_rastreio?: string | null
+          comissao_percent?: number
+          comissao_valor?: number
+          coupon_id?: string | null
           criado_em?: string
+          desconto?: number
           endereco?: Json
           frete?: number
           id?: string
+          nota_fiscal?: string | null
+          payment_id?: string | null
+          payment_method?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           subtotal?: number
           total?: number
           usuario_id: string
         }
         Update: {
+          address_id?: string | null
           atualizado_em?: string
+          codigo_rastreio?: string | null
+          comissao_percent?: number
+          comissao_valor?: number
+          coupon_id?: string | null
           criado_em?: string
+          desconto?: number
           endereco?: Json
           frete?: number
           id?: string
+          nota_fiscal?: string | null
+          payment_id?: string | null
+          payment_method?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           subtotal?: number
           total?: number
           usuario_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "orders_address_id_fkey"
+            columns: ["address_id"]
+            isOneToOne: false
+            referencedRelation: "addresses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "orders_usuario_id_fkey"
             columns: ["usuario_id"]
@@ -427,6 +572,82 @@ export type Database = {
         }
         Relationships: []
       }
+      representantes: {
+        Row: {
+          atualizado_em: string
+          cnpj: string | null
+          comissao_percent: number
+          criado_em: string
+          modalidade: string
+          razao_social: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          atualizado_em?: string
+          cnpj?: string | null
+          comissao_percent?: number
+          criado_em?: string
+          modalidade: string
+          razao_social?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          atualizado_em?: string
+          cnpj?: string | null
+          comissao_percent?: number
+          criado_em?: string
+          modalidade?: string
+          razao_social?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "representantes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_alerts: {
+        Row: {
+          criado_em: string
+          email: string
+          id: string
+          nome: string
+          produto_id: string
+          tamanho: string
+        }
+        Insert: {
+          criado_em?: string
+          email: string
+          id?: string
+          nome: string
+          produto_id: string
+          tamanho: string
+        }
+        Update: {
+          criado_em?: string
+          email?: string
+          id?: string
+          nome?: string
+          produto_id?: string
+          tamanho?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_alerts_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_client_types: {
         Row: {
           tipo: Database["public"]["Enums"]["app_client_type"]
@@ -468,11 +689,44 @@ export type Database = {
         }
         Relationships: []
       }
+      wishlist_items: {
+        Row: {
+          criado_em: string
+          id: string
+          produto_id: string
+          usuario_id: string
+        }
+        Insert: {
+          criado_em?: string
+          id?: string
+          produto_id: string
+          usuario_id: string
+        }
+        Update: {
+          criado_em?: string
+          id?: string
+          produto_id?: string
+          usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wishlist_items_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      decrement_stock: {
+        Args: { p_quantidade: number; p_variacao_id: string }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -480,14 +734,24 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_coupon_used_count: {
+        Args: { p_coupon_id: string }
+        Returns: undefined
+      }
       my_client_type: {
         Args: never
         Returns: Database["public"]["Enums"]["app_client_type"]
       }
     }
     Enums: {
-      app_client_type: "varejo" | "atacado" | "dropshipping"
+      app_client_type:
+        | "varejo"
+        | "atacado"
+        | "dropshipping"
+        | "atacado_presencial"
+        | "atacado_distancia"
       app_role: "admin"
+      coupon_type: "percent" | "fixed"
       order_status:
         | "pendente"
         | "pago"
@@ -622,8 +886,15 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_client_type: ["varejo", "atacado", "dropshipping"],
+      app_client_type: [
+        "varejo",
+        "atacado",
+        "dropshipping",
+        "atacado_presencial",
+        "atacado_distancia",
+      ],
       app_role: ["admin"],
+      coupon_type: ["percent", "fixed"],
       order_status: [
         "pendente",
         "pago",

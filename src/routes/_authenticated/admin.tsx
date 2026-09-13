@@ -150,11 +150,11 @@ function AdminPanel() {
     setErro(reqErro?.message ?? pedErro?.message ?? null);
     setSolicitacoes((reqs ?? []) as unknown as Solicitacao[]);
     setPedidos((peds ?? []) as unknown as Pedido[]);
-    (supabase as any)
+    supabase
       .from("coupons")
       .select("id, code, type, value, expires_at, max_uses, used_count, active, criado_em")
       .order("criado_em", { ascending: false })
-      .then(({ data }: { data: Cupom[] | null }) => setCupons(data ?? []));
+      .then(({ data }) => setCupons((data as Cupom[]) ?? []));
     setCarregandoDados(false);
   }, []);
 
@@ -223,7 +223,7 @@ function AdminPanel() {
       setCupomErro("Código e valor são obrigatórios.");
       return;
     }
-    const { error } = await (supabase as any).from("coupons").insert({
+    const { error } = await supabase.from("coupons").insert({
       code: novoCupom.code.trim().toUpperCase(),
       type: novoCupom.type,
       value: Number(novoCupom.value),
@@ -231,20 +231,20 @@ function AdminPanel() {
       max_uses: novoCupom.max_uses ? Number(novoCupom.max_uses) : null,
     });
     if (error) {
-      setCupomErro((error as { message: string }).message.includes("unique") ? "Já existe um cupom com esse código." : (error as { message: string }).message);
+      setCupomErro(error.message.includes("unique") ? "Já existe um cupom com esse código." : error.message);
       return;
     }
     setCupomSucesso("Cupom criado!");
     setNovoCupom({ code: "", type: "percent", value: "", expires_at: "", max_uses: "" });
-    const { data } = await (supabase as any)
+    const { data } = await supabase
       .from("coupons")
       .select("id, code, type, value, expires_at, max_uses, used_count, active, criado_em")
-      .order("criado_em", { ascending: false }) as { data: Cupom[] | null };
-    setCupons(data ?? []);
+      .order("criado_em", { ascending: false });
+    setCupons((data as Cupom[]) ?? []);
   };
 
   const handleToggleCupom = async (id: string, active: boolean) => {
-    await (supabase as any).from("coupons").update({ active: !active }).eq("id", id);
+    await supabase.from("coupons").update({ active: !active }).eq("id", id);
     setCupons((prev) => prev.map((c) => (c.id === id ? { ...c, active: !active } : c)));
   };
 
