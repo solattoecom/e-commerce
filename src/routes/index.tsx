@@ -551,7 +551,7 @@ function NewsletterForm() {
     <div>
       <h3 className="mb-4 text-sm font-semibold">Newsletter</h3>
       <p className="mb-[15px] text-[0.85rem] text-muted-foreground">Receba novidades e lançamentos em primeira mão.</p>
-      <form onSubmit={assinar} noValidate className="flex gap-[10px] max-[480px]:flex-col">
+      <form onSubmit={assinar} noValidate className="flex gap-[10px] max-[900px]:flex-col">
         <input
           type="email"
           required
@@ -560,7 +560,7 @@ function NewsletterForm() {
           onChange={(e) => setEmail(e.target.value)}
           className="h-11 flex-grow rounded-[10px] border border-border bg-background px-4 text-[0.9rem] shadow-inner outline-none focus:border-foreground transition-colors"
         />
-        <Button type="submit" disabled={busy} className="h-11 rounded-[10px] bg-foreground px-7 text-[0.9rem] font-semibold text-background shadow-[0_12px_24px_rgba(0,0,0,0.18)] hover:-translate-y-0.5 hover:bg-foreground/90 max-[480px]:w-full">
+        <Button type="submit" disabled={busy} className="h-11 rounded-[10px] bg-foreground px-7 text-[0.9rem] font-semibold text-background shadow-[0_12px_24px_rgba(0,0,0,0.18)] hover:-translate-y-0.5 hover:bg-foreground/90 max-[900px]:w-full">
           {busy ? "..." : "Assinar"}
         </Button>
       </form>
