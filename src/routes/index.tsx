@@ -29,7 +29,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ProductGrid } from "@/components/ProductGrid";
 import { ShippingCalculator } from "@/components/ShippingCalculator";
+import { CouponInput } from "@/components/CouponInput";
 import type { ShippingOption } from "@/lib/shipping.functions";
+import type { DiscountResult } from "@/lib/coupon.functions";
 import { assinarNewsletter } from "@/lib/newsletter.functions";
 import { supabase } from "@/integrations/supabase/external";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
@@ -588,6 +590,7 @@ function Index() {
   const [showCart, setShowCart] = useState(false);
   const [showWishlist, setShowWishlist] = useState(false);
   const [frete, setFrete] = useState<ShippingOption | null>(null);
+  const [desconto, setDesconto] = useState<DiscountResult | null>(null);
   const [showProfile, setShowProfile] = useState(false);
   const cart = useCart(user?.id ?? null);
   const wishlist = useWishlist(user?.id ?? null);
@@ -817,16 +820,27 @@ function Index() {
             </div>
             <div className="border-t border-border px-5 py-4">
               {cart.items.length > 0 ? (
-                <ShippingCalculator
-                  itens={cart.items.reduce((sum, item) => sum + item.quantidade, 0)}
-                  subtotal={cart.total}
-                  onSelect={setFrete}
-                />
+                <>
+                  <ShippingCalculator
+                    itens={cart.items.reduce((sum, item) => sum + item.quantidade, 0)}
+                    subtotal={cart.total}
+                    onSelect={setFrete}
+                  />
+                  <CouponInput subtotal={cart.total} onApply={setDesconto} />
+                </>
               ) : null}
               <div className="mb-1 flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Subtotal</span>
                 <span>{Number(cart.total).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
               </div>
+              {desconto ? (
+                <div className="mb-1 flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Cupom ({desconto.code})</span>
+                  <span className="text-green-600 font-medium">
+                    -{Number(desconto.discount_amount).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                  </span>
+                </div>
+              ) : null}
               {frete ? (
                 <div className="mb-1 flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Frete ({frete.nome})</span>
@@ -840,7 +854,7 @@ function Index() {
               <div className="mb-3 mt-2 flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Total</span>
                 <span className="text-lg font-semibold">
-                  {Number(cart.total + (frete?.valor ?? 0)).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                  {Number(cart.total - (desconto?.discount_amount ?? 0) + (frete?.valor ?? 0)).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                 </span>
               </div>
               <Button
