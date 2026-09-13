@@ -41,6 +41,16 @@ export const APIRoute = createAPIFileRoute("/api/webhook/abacatepay")({
         .update({ status: "pago" })
         .eq("id", order.id);
 
+      const { data: paidOrder } = await supabaseAdmin
+        .from("orders")
+        .select("coupon_id")
+        .eq("id", order.id)
+        .single();
+
+      if (paidOrder?.coupon_id) {
+        await supabaseAdmin.rpc("increment_coupon_used_count", { p_coupon_id: paidOrder.coupon_id });
+      }
+
       const { data: items } = await supabaseAdmin
         .from("order_items")
         .select("variacao_id, quantidade")
