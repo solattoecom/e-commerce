@@ -35,11 +35,14 @@ type Order = {
   subtotal: number;
   frete: number;
   total: number;
+  coupon_id: string | null;
+  desconto: number;
   payment_method: string | null;
   nota_fiscal: string | null;
   codigo_rastreio: string | null;
   criado_em: string;
   endereco: Record<string, string>;
+  coupons: { code: string; type: string; value: number } | null;
   order_items: OrderItem[];
 };
 
@@ -58,7 +61,8 @@ function PedidosPage() {
       const { data } = await supabase
         .from("orders")
         .select(`
-          id, status, subtotal, frete, total, payment_method, nota_fiscal, codigo_rastreio, criado_em, endereco,
+          id, status, subtotal, frete, total, desconto, payment_method, nota_fiscal, codigo_rastreio, criado_em, endereco,
+          coupons(code, type, value),
           order_items(id, quantidade, preco_unitario, subtotal,
             products(nome, product_images(url)),
             product_variants(tamanho)
@@ -190,6 +194,12 @@ function PedidosPage() {
                         <span>Subtotal</span>
                         <span>{brl(order.subtotal)}</span>
                       </div>
+                      {order.coupons && order.desconto > 0 ? (
+                        <div className="flex justify-between text-green-600 font-medium">
+                          <span>Cupom ({order.coupons.code})</span>
+                          <span>-{brl(order.desconto)}</span>
+                        </div>
+                      ) : null}
                       <div className="flex justify-between text-muted-foreground">
                         <span>Frete</span>
                         <span>{order.frete === 0 ? "Grátis" : brl(order.frete)}</span>
