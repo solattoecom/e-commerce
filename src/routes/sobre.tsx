@@ -143,7 +143,7 @@ function SobrePage() {
               allowFullScreen
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
-              className="w-full"
+              className="block w-full"
             />
           </div>
 
