@@ -17,8 +17,8 @@ export const APIRoute = createAPIFileRoute("/api/webhook/abacatepay")({
       const event = body.event as string | undefined;
       const bodyData = body.data as Record<string, unknown> | undefined;
 
-      // Suporte a billing.paid e checkout.completed (AbacatePay v2)
-      const billing = (bodyData?.billing ?? bodyData?.checkout ?? bodyData) as Record<string, unknown> | undefined;
+      // Suporta billing.paid (pixQrCode), billing.paid (billing) e checkout.completed
+      const billing = (bodyData?.pixQrCode ?? bodyData?.billing ?? bodyData?.checkout ?? bodyData) as Record<string, unknown> | undefined;
       const status = (billing?.status as string | undefined)?.toUpperCase();
       const isPaid =
         event === "billing.paid" ||
@@ -31,7 +31,6 @@ export const APIRoute = createAPIFileRoute("/api/webhook/abacatepay")({
         return new Response("ignored", { status: 200 });
       }
 
-      // Tenta obter order_id via metadata ou externalId
       const metadata = billing?.metadata as Record<string, unknown> | undefined;
       const orderId =
         (metadata?.order_id as string | undefined) ??
