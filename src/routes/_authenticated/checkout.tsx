@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, ArrowRight, Check, CreditCard, MapPin, QrCode, Truck } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Copy, CreditCard, MapPin, QrCode, Truck } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -349,9 +349,20 @@ function CheckoutPage() {
             <div className="rounded-lg border bg-muted/30 p-4 text-sm text-muted-foreground">
               <div className="flex items-center gap-2"><QrCode className="h-4 w-4" /><span>QR Code gerado ao confirmar</span></div>
               {pixQr && (
-                <div className="mt-3 space-y-2">
+                <div className="mt-3 space-y-3">
                   {pixQrCode && <img src={pixQrCode} alt="QR Code Pix" className="mx-auto h-48 w-48" />}
                   <p className="break-all font-mono text-xs">{pixQr}</p>
+                  <button
+                    type="button"
+                    onClick={() => navigator.clipboard.writeText(pixQr).then(() => {
+                      const el = document.getElementById("pix-copy-label");
+                      if (el) { el.textContent = "Copiado!"; setTimeout(() => { el.textContent = "Copiar código Pix"; }, 2000); }
+                    })}
+                    className="flex w-full items-center justify-center gap-2 rounded-md border border-border bg-background py-2 text-sm font-medium transition-colors hover:bg-muted"
+                  >
+                    <Copy className="h-4 w-4" />
+                    <span id="pix-copy-label">Copiar código Pix</span>
+                  </button>
                   <p className="text-center text-xs text-muted-foreground">Aguardando confirmação do pagamento...</p>
                 </div>
               )}
