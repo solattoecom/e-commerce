@@ -51,6 +51,14 @@ function CheckoutPage() {
   const [orderId, setOrderId] = useState<string | null>(null);
   const [pixQr, setPixQr] = useState<string | null>(null);
   const [pixQrCode, setPixQrCode] = useState<string | null>(null);
+  const [pixSecondsLeft, setPixSecondsLeft] = useState<number>(3600);
+
+  useEffect(() => {
+    if (!pixQr) return;
+    setPixSecondsLeft(3600);
+    const tick = setInterval(() => setPixSecondsLeft((s) => Math.max(0, s - 1)), 1000);
+    return () => clearInterval(tick);
+  }, [pixQr]);
 
   const selectedAddress = addresses.find((a) => a.id === selectedAddressId) ?? null;
   const itemCount = items.reduce((n, i) => n + i.quantidade, 0);
@@ -378,7 +386,26 @@ function CheckoutPage() {
                     <Copy className="h-4 w-4" />
                     <span id="pix-copy-label">Copiar código Pix</span>
                   </button>
-                  <p className="text-center text-xs text-muted-foreground">Aguardando confirmação do pagamento...</p>
+                  <div className="space-y-1.5">
+                    {pixSecondsLeft > 0 ? (
+                      <>
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                          <span>Aguardando pagamento...</span>
+                          <span className="font-mono tabular-nums">
+                            {String(Math.floor(pixSecondsLeft / 60)).padStart(2, "0")}:{String(pixSecondsLeft % 60).padStart(2, "0")}
+                          </span>
+                        </div>
+                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                          <div
+                            className="h-full rounded-full bg-foreground transition-all duration-1000"
+                            style={{ width: `${(pixSecondsLeft / 3600) * 100}%` }}
+                          />
+                        </div>
+                      </>
+                    ) : (
+                      <p className="text-center text-xs font-medium text-destructive">QR Code expirado. Gere um novo pedido.</p>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
