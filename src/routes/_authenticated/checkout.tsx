@@ -160,7 +160,7 @@ function CheckoutPage() {
               clearInterval(interval);
               clearTimeout(timeout);
               await clearCart();
-              setStep("sucesso");
+              await navigate({ to: "/pedidos" });
             }
           } catch {}
         }, 3000);
