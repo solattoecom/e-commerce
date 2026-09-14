@@ -154,13 +154,17 @@ function CheckoutPage() {
         setPixQr(result.pix_qr ?? null);
         setPixQrCode(result.pix_qr_code ?? null);
         const interval = setInterval(async () => {
-          const s = await getOrderStatus({ data: { order_id: result.order_id } });
-          if (s.status === "pago") {
-            clearInterval(interval);
-            await clearCart();
-            setStep("sucesso");
-          }
-        }, 5000);
+          try {
+            const s = await getOrderStatus({ data: { order_id: result.order_id } });
+            if (s.status === "pago") {
+              clearInterval(interval);
+              clearTimeout(timeout);
+              await clearCart();
+              setStep("sucesso");
+            }
+          } catch {}
+        }, 3000);
+        const timeout = setTimeout(() => clearInterval(interval), 10 * 60 * 1000);
       } else {
         await clearCart();
         setStep("sucesso");

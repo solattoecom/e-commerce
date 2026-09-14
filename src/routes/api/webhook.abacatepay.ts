@@ -6,36 +6,55 @@ export const APIRoute = createAPIFileRoute("/api/webhook/abacatepay")({
     try {
       const secret = process.env["ABACATEPAY_WEBHOOK_SECRET"];
       if (secret) {
-        const signature = request.headers.get("x-webhook-secret") ?? request.headers.get("x-abacatepay-signature") ?? "";
-        if (signature !== secret) {
+        const incomingSecret =
+          request.headers.get("x-webhook-secret") ??
+          request.headers.get("x-abacatepay-secret") ??
+          request.headers.get("x-abacatepay-signature") ??
+          request.headers.get("authorization")?.replace("Bearer ", "") ??
+          "";
+        if (incomingSecret !== secret) {
+          console.warn("[webhook] secret inválido:", incomingSecret);
           return new Response("unauthorized", { status: 401 });
         }
       }
 
       const { supabaseAdmin } = await import("@/integrations/supabase/external.server");
 
-      const body = await request.json() as {
-        event: string;
-        data: {
-          billing: {
-            id: string;
-            status: string;
-            metadata?: { order_id?: string };
-          };
-        };
-      };
+      const body = await request.json() as Record<string, unknown>;
+      console.log("[webhook] payload:", JSON.stringify(body));
 
+      const event = body.event as string | undefined;
+      const bodyData = body.data as Record<string, unknown> | undefined;
+
+      // Suporte a billing.paid e checkout.completed (AbacatePay v2)
+      const billing = (bodyData?.billing ?? bodyData?.checkout ?? bodyData) as Record<string, unknown> | undefined;
+      const status = (billing?.status as string | undefined)?.toUpperCase();
       const isPaid =
-        body.event === "billing.paid" ||
-        body.event === "checkout.completed" ||
-        body.data?.billing?.status === "PAID";
+        event === "billing.paid" ||
+        event === "checkout.completed" ||
+        status === "PAID" ||
+        status === "COMPLETED";
 
       if (!isPaid) {
+        console.log("[webhook] evento ignorado:", event, status);
         return new Response("ignored", { status: 200 });
       }
 
-      const paymentId = body.data.billing.id;
-      const orderId = body.data.billing.metadata?.order_id;
+      // Tenta obter order_id via metadata ou externalId
+      const metadata = billing?.metadata as Record<string, unknown> | undefined;
+      const orderId =
+        (metadata?.order_id as string | undefined) ??
+        (billing?.externalId as string | undefined) ??
+        (billing?.external_id as string | undefined);
+
+      const paymentId = billing?.id as string | undefined;
+
+      console.log("[webhook] orderId:", orderId, "paymentId:", paymentId);
+
+      if (!orderId && !paymentId) {
+        console.error("[webhook] sem orderId nem paymentId");
+        return new Response("missing ids", { status: 400 });
+      }
 
       const query = supabaseAdmin
         .from("orders")
@@ -44,7 +63,7 @@ export const APIRoute = createAPIFileRoute("/api/webhook/abacatepay")({
 
       const { data: order } = orderId
         ? await query.eq("id", orderId).single()
-        : await query.eq("payment_id", paymentId).single();
+        : await query.eq("payment_id", paymentId!).single();
 
       if (!order) return new Response("order not found", { status: 404 });
       if (order.status === "pago") return new Response("already paid", { status: 200 });
