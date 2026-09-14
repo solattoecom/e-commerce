@@ -1075,14 +1075,12 @@ function Index() {
 
           <div className="absolute left-0 right-0 top-0 z-20 px-6 pt-6 md:px-10">
             <nav className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-2 rounded-full bg-neutral-900/90 py-3 pl-4 pr-6 backdrop-blur">
-                <svg viewBox="0 0 256 256" className="h-5 w-5" aria-hidden="true">
-                  <path
-                    fill="#ffffff"
-                    d="M 128 192 L 128 256 L 64.5 256 L 32 223 L 0 192 L 0 128 L 64 128 Z M 256 192 L 256 256 L 192.5 256 L 160 223 L 128 192 L 128 128 L 192 128 Z M 128 64 L 128 128 L 64.5 128 L 32 95 L 0 64 L 0 0 L 64 0 Z M 256 64 L 256 128 L 192.5 128 L 160 95 L 128 64 L 128 0 L 192 0 Z"
-                  />
+              <div className="flex items-center gap-2 rounded-full bg-neutral-900/90 py-3 pl-3 pr-6 backdrop-blur">
+                <svg viewBox="0 0 32 32" className="h-6 w-6" aria-hidden="true">
+                  <rect width="32" height="32" rx="6" fill="#ffffff"/>
+                  <text x="16" y="23" font-family="serif" font-size="22" font-weight="700" fill="#000000" text-anchor="middle">S</text>
                 </svg>
-                <span className="hero-readex text-sm font-normal tracking-tight text-white">solatto</span>
+                <span className="hero-readex text-sm font-normal tracking-tight text-white">olatto</span>
               </div>
 
               <div className="hidden items-center gap-1 rounded-full bg-neutral-900/90 px-3 py-2 backdrop-blur md:flex">
