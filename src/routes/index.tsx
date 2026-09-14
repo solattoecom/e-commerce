@@ -569,7 +569,7 @@ function NewsletterForm() {
       <div className="mt-5 flex items-center gap-3">
         <p className="text-xs text-muted-foreground">Siga a gente</p>
         <a
-          href="https://www.instagram.com/solatto"
+          href="https://www.instagram.com/solattoatacadovarejodrop"
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Instagram da Solatto"
