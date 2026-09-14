@@ -17,7 +17,12 @@ export const APIRoute = createAPIFileRoute("/api/webhook/abacatepay")({
         };
       };
 
-      if (body.event !== "billing.paid" && body.data?.billing?.status !== "PAID") {
+      const isPaid =
+        body.event === "billing.paid" ||
+        body.event === "checkout.completed" ||
+        body.data?.billing?.status === "PAID";
+
+      if (!isPaid) {
         return new Response("ignored", { status: 200 });
       }
 
