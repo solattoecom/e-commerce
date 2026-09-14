@@ -605,10 +605,11 @@ function Index() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [busy, setBusy] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
-  const [bloqueadoAte, setBloqueadoAte] = useState<number | null>(() => {
-    const v = localStorage.getItem("login_blocked_until");
-    return v ? Number(v) : null;
-  });
+  const [bloqueadoAte, setBloqueadoAte] = useState<number | null>(null);
+  useEffect(() => {
+    const v = typeof window !== "undefined" ? localStorage.getItem("login_blocked_until") : null;
+    if (v) setBloqueadoAte(Number(v));
+  }, []);
   const [aviso, setAviso] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [scrolled, setScrolled] = useState(false);
