@@ -1,7 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/external-auth-middleware";
 
-const ABACATEPAY_URL = "https://api.abacatepay.com/v2/transparents/create";
+const ABACATEPAY_PIX_URL = "https://api.abacatepay.com/v2/transparents/create";
+const ABACATEPAY_PRODUCTS_URL = "https://api.abacatepay.com/v2/products/create";
+const ABACATEPAY_CHECKOUT_URL = "https://api.abacatepay.com/v2/checkouts/create";
 
 type OrderItem = {
   produto_id: string;
@@ -35,6 +37,7 @@ export type CreateOrderResult = {
   pix_qr?: string;
   pix_qr_code?: string;
   pix_expiration?: string;
+  checkout_url?: string;
   status: string;
 };
 
@@ -104,59 +107,90 @@ export const createOrder = createServerFn({ method: "POST" })
       }))
     );
 
-    const abacateBody = {
-      method: data.payment_method === "pix" ? "PIX" : "CREDIT_CARD",
-      data: {
-        amount: Math.round(data.total * 100),
-        description: `Pedido ${order.id.slice(0, 8).toUpperCase()}`,
-        expiresIn: 3600,
-        externalId: order.id,
-        customer: {
-          name: `${profile.nome} ${profile.sobrenome}`.trim(),
-          email: profile.email,
-          cellphone: data.telefone || "00000000000",
-          taxId: "",
-        },
-      },
+    const headers = {
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
     };
 
-    const abacateRes = await fetch(ABACATEPAY_URL, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(abacateBody),
-    });
+    if (data.payment_method === "pix") {
+      const pixBody = {
+        method: "PIX",
+        data: {
+          amount: Math.round(data.total * 100),
+          description: `Pedido ${order.id.slice(0, 8).toUpperCase()}`,
+          expiresIn: 3600,
+          externalId: order.id,
+          customer: {
+            name: `${profile.nome} ${profile.sobrenome}`.trim(),
+            email: profile.email,
+            cellphone: data.telefone || "00000000000",
+            taxId: "",
+          },
+        },
+      };
 
-    if (!abacateRes.ok) {
-      const err = await abacateRes.text();
-      await supabaseAdmin.from("orders").delete().eq("id", order.id);
-      throw new Error(`AbacatePay: ${err}`);
+      const pixRes = await fetch(ABACATEPAY_PIX_URL, { method: "POST", headers, body: JSON.stringify(pixBody) });
+      if (!pixRes.ok) {
+        const err = await pixRes.text();
+        await supabaseAdmin.from("orders").delete().eq("id", order.id);
+        throw new Error(`AbacatePay: ${err}`);
+      }
+
+      const pixData = await pixRes.json() as { data: { id: string; status: string; brCode?: string; brCodeBase64?: string; expiresAt?: string } };
+      await supabaseAdmin.from("orders").update({ payment_id: pixData.data.id }).eq("id", order.id);
+
+      return {
+        order_id: order.id,
+        payment_method: "pix",
+        pix_qr: pixData.data.brCode,
+        pix_qr_code: pixData.data.brCodeBase64,
+        pix_expiration: pixData.data.expiresAt,
+        status: pixData.data.status,
+      };
     }
 
-    const abacateData = await abacateRes.json() as {
-      data: {
-        id: string;
-        status: string;
-        brCode?: string;
-        brCodeBase64?: string;
-        expiresAt?: string;
-      };
-    };
+    // Cartão: cria produto temporário no AbacatePay e depois o checkout
+    const prodRes = await fetch(ABACATEPAY_PRODUCTS_URL, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        externalId: order.id,
+        name: `Pedido ${order.id.slice(0, 8).toUpperCase()}`,
+        price: Math.round(data.total * 100),
+        currency: "BRL",
+      }),
+    });
+    if (!prodRes.ok) {
+      const err = await prodRes.text();
+      await supabaseAdmin.from("orders").delete().eq("id", order.id);
+      throw new Error(`AbacatePay produto: ${err}`);
+    }
+    const prodData = await prodRes.json() as { data: { id: string } };
 
-    await supabaseAdmin
-      .from("orders")
-      .update({ payment_id: abacateData.data.id })
-      .eq("id", order.id);
+    const checkoutRes = await fetch(ABACATEPAY_CHECKOUT_URL, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        items: [{ id: prodData.data.id, quantity: 1 }],
+        methods: ["CARD"],
+        externalId: order.id,
+        completionUrl: "https://www.solatto.com.br/pedidos",
+        metadata: { order_id: order.id },
+      }),
+    });
+    if (!checkoutRes.ok) {
+      const err = await checkoutRes.text();
+      await supabaseAdmin.from("orders").delete().eq("id", order.id);
+      throw new Error(`AbacatePay checkout: ${err}`);
+    }
+    const checkoutData = await checkoutRes.json() as { data: { id: string; url: string; status: string } };
+    await supabaseAdmin.from("orders").update({ payment_id: checkoutData.data.id }).eq("id", order.id);
 
     return {
       order_id: order.id,
-      payment_method: data.payment_method,
-      pix_qr: abacateData.data.brCode,
-      pix_qr_code: abacateData.data.brCodeBase64,
-      pix_expiration: abacateData.data.expiresAt,
-      status: abacateData.data.status,
+      payment_method: "cartao",
+      checkout_url: checkoutData.data.url,
+      status: checkoutData.data.status,
     };
   });
 

@@ -151,6 +151,12 @@ function CheckoutPage() {
 
       setOrderId(result.order_id);
 
+      if (paymentMethod === "cartao" && result.checkout_url) {
+        await clearCart();
+        window.location.href = result.checkout_url;
+        return;
+      }
+
       if (paymentMethod === "pix") {
         setPixQr(result.pix_qr ?? null);
         setPixQrCode(result.pix_qr_code ?? null);
@@ -167,9 +173,6 @@ function CheckoutPage() {
           } catch {}
         }, 3000);
         const timeout = setTimeout(() => clearInterval(interval), 10 * 60 * 1000);
-      } else {
-        await clearCart();
-        setStep("sucesso");
       }
     } catch (e) {
       const msg = e instanceof Error ? e.message : JSON.stringify(e);
