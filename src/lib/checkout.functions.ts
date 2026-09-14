@@ -182,15 +182,19 @@ export const getOrderStatus = createServerFn({ method: "GET" })
           const res = await fetch(`https://api.abacatepay.com/v1/billing/check?id=${order.payment_id}`, {
             headers: { "Authorization": `Bearer ${apiKey}` },
           });
+          const text = await res.text();
+          console.log("[getOrderStatus] AbacatePay status:", res.status, text);
           if (res.ok) {
-            const json = await res.json() as { data?: { status?: string } };
+            const json = JSON.parse(text) as { data?: { status?: string } };
             const abacateStatus = json.data?.status?.toUpperCase();
             if (abacateStatus === "PAID" || abacateStatus === "COMPLETED") {
               await supabaseAdmin.from("orders").update({ status: "pago" }).eq("id", order.id);
               return { status: "pago", payment_id: order.payment_id };
             }
           }
-        } catch {}
+        } catch (e) {
+          console.error("[getOrderStatus] erro ao consultar AbacatePay:", e);
+        }
       }
     }
 
