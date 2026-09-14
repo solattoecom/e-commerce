@@ -4,6 +4,14 @@ import { enviarConfirmacaoPedido } from "@/lib/email.functions";
 export const APIRoute = createAPIFileRoute("/api/webhook/abacatepay")({
   POST: async ({ request }) => {
     try {
+      const secret = process.env["ABACATEPAY_WEBHOOK_SECRET"];
+      if (secret) {
+        const signature = request.headers.get("x-webhook-secret") ?? request.headers.get("x-abacatepay-signature") ?? "";
+        if (signature !== secret) {
+          return new Response("unauthorized", { status: 401 });
+        }
+      }
+
       const { supabaseAdmin } = await import("@/integrations/supabase/external.server");
 
       const body = await request.json() as {
