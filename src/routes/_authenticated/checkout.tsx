@@ -168,7 +168,7 @@ function CheckoutPage() {
               clearTimeout(timeout);
               setPaid(true);
               await clearCart();
-              await navigate({ to: "/pedidos" });
+              setStep("sucesso");
             }
           } catch {}
         }, 3000);
@@ -192,15 +192,21 @@ function CheckoutPage() {
 
   if (step === "sucesso") {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-6 px-4">
-        <div className="grid h-16 w-16 place-items-center rounded-full bg-green-100">
-          <Check className="h-8 w-8 text-green-600" />
+      <div className="flex min-h-screen flex-col items-center justify-center gap-8 px-6 text-center">
+        <div className="grid h-28 w-28 place-items-center rounded-full bg-foreground">
+          <Check className="h-14 w-14 text-background stroke-[2.5]" />
         </div>
-        <h1 className="text-2xl font-semibold">Pedido confirmado!</h1>
-        <p className="text-sm text-muted-foreground">
-          Número: <span className="font-mono font-medium">{orderId?.slice(0, 8).toUpperCase()}</span>
-        </p>
-        <Button onClick={() => navigate({ to: "/pedidos" })}>Ver meus pedidos</Button>
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold tracking-tight">Pedido confirmado!</h1>
+          <p className="text-sm text-muted-foreground font-mono">#{orderId?.slice(0, 8).toUpperCase()}</p>
+        </div>
+        <div className="max-w-sm space-y-3 rounded-xl border bg-muted/40 px-6 py-5 text-sm text-muted-foreground">
+          <p className="text-base font-semibold text-foreground">Aguarde o despacho do seu produto.</p>
+          <p>Assim que enviarmos o pedido, você receberá o código de rastreio para acompanhar a entrega.</p>
+        </div>
+        <Button className="bg-foreground text-background hover:bg-foreground/90" onClick={() => navigate({ to: "/pedidos" })}>
+          Ver meus pedidos
+        </Button>
       </div>
     );
   }
