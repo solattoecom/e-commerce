@@ -149,7 +149,12 @@ function CookieBanner() {
   if (!visible) return null;
 
   function accept() {
-    localStorage.setItem("cookie_consent", "1");
+    localStorage.setItem("cookie_consent", "accepted");
+    setVisible(false);
+  }
+
+  function decline() {
+    localStorage.setItem("cookie_consent", "declined");
     setVisible(false);
   }
 
@@ -162,12 +167,20 @@ function CookieBanner() {
         </Link>
         .
       </p>
-      <button
-        onClick={accept}
-        className="mt-3 shrink-0 rounded-md bg-foreground px-5 py-2 text-sm font-semibold text-background transition-colors hover:bg-foreground/85 sm:mt-0"
-      >
-        Aceitar
-      </button>
+      <div className="mt-3 flex shrink-0 gap-3 sm:mt-0">
+        <button
+          onClick={decline}
+          className="rounded-md border border-border px-5 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:border-foreground hover:text-foreground"
+        >
+          Recusar
+        </button>
+        <button
+          onClick={accept}
+          className="rounded-md bg-foreground px-5 py-2 text-sm font-semibold text-background transition-colors hover:bg-foreground/85"
+        >
+          Aceitar
+        </button>
+      </div>
     </div>
   );
 }
