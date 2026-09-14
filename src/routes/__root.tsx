@@ -124,7 +124,7 @@ function WhatsAppButton() {
   if (pathname === "/admin") return null;
   return (
     <a
-      href="https://wa.me/5511999999999"
+      href="https://wa.me/5516999136670"
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Falar no WhatsApp"
