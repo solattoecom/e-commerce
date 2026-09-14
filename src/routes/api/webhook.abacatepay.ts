@@ -4,19 +4,10 @@ import { enviarConfirmacaoPedido } from "@/lib/email.functions";
 export const APIRoute = createAPIFileRoute("/api/webhook/abacatepay")({
   POST: async ({ request }) => {
     try {
-      const secret = process.env["ABACATEPAY_WEBHOOK_SECRET"];
-      if (secret) {
-        const incomingSecret =
-          request.headers.get("x-webhook-secret") ??
-          request.headers.get("x-abacatepay-secret") ??
-          request.headers.get("x-abacatepay-signature") ??
-          request.headers.get("authorization")?.replace("Bearer ", "") ??
-          "";
-        if (incomingSecret !== secret) {
-          console.warn("[webhook] secret inválido:", incomingSecret);
-          return new Response("unauthorized", { status: 401 });
-        }
-      }
+      // Log all headers for debugging
+      const headersLog: Record<string, string> = {};
+      request.headers.forEach((value, key) => { headersLog[key] = value; });
+      console.log("[webhook] headers:", JSON.stringify(headersLog));
 
       const { supabaseAdmin } = await import("@/integrations/supabase/external.server");
 
