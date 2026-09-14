@@ -25,12 +25,13 @@ function CheckoutPage() {
   const { items, total, loading: cartLoading, refresh: refreshCart, clearCart } = useCart(user?.id ?? null);
 
   useEffect(() => {
-    if (!cartLoading && items.length === 0) {
+    if (!paid && !cartLoading && items.length === 0) {
       void navigate({ to: "/" });
     }
-  }, [cartLoading, items.length, navigate]);
+  }, [paid, cartLoading, items.length, navigate]);
   const { addresses, loading: addrLoading, addAddress, removeAddress } = useAddresses(user?.id ?? null);
 
+  const [paid, setPaid] = useState(false);
   const [step, setStep] = useState<Step>("endereco");
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [showNewAddr, setShowNewAddr] = useState(false);
@@ -159,6 +160,7 @@ function CheckoutPage() {
             if (s.status === "pago") {
               clearInterval(interval);
               clearTimeout(timeout);
+              setPaid(true);
               await clearCart();
               await navigate({ to: "/pedidos" });
             }
