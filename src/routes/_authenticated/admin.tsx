@@ -43,7 +43,9 @@ type Solicitacao = {
   tipo_solicitado: string;
   status: string;
   criado_em: string;
-  profiles: { nome: string; sobrenome: string; email: string } | null;
+  nome: string;
+  sobrenome: string;
+  email: string;
 };
 
 type PedidoItem = {
@@ -140,10 +142,7 @@ function AdminPanel() {
   const carregar = useCallback(async () => {
     setCarregandoDados(true);
     const [{ data: reqs, error: reqErro }, { data: peds, error: pedErro }] = await Promise.all([
-      supabase
-        .from("client_type_requests")
-        .select("id, user_id, tipo_solicitado, status, criado_em, profiles(nome, sobrenome, email)")
-        .order("criado_em", { ascending: false }),
+      supabase.rpc("get_confirmed_client_type_requests"),
       supabase
         .from("orders")
         .select(
@@ -368,10 +367,10 @@ function AdminPanel() {
               <li key={s.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium">
-                    {s.profiles ? `${s.profiles.nome} ${s.profiles.sobrenome}` : "Cliente"}
+                    {s.nome ? `${s.nome} ${s.sobrenome}` : "Cliente"}
                   </p>
                   <p className="truncate text-xs text-muted-foreground">
-                    {s.profiles?.email} · pediu <strong>{s.tipo_solicitado}</strong> em{" "}
+                    {s.email} · pediu <strong>{s.tipo_solicitado}</strong> em{" "}
                     {dataCurta(s.criado_em)}
                   </p>
                 </div>
