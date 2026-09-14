@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react"
+import { toast } from "sonner"
 import { supabase } from "@/integrations/supabase/external"
 import { notificarNovoProduto } from "@/lib/newsletter.functions"
 import { enviarEmailEstoqueDisponivel } from "@/lib/email.functions"
@@ -169,6 +170,7 @@ export function AdminProdutos() {
         .eq("id", produtoAtual.id)
       if (error) setErroForm(error.message)
       else {
+        toast.success("Produto salvo com sucesso!")
         setSlug(slugFinal)
         setProdutoAtual((prev) => prev ? { ...prev, nome: nome.trim(), slug: slugFinal, descricao: descricao.trim() || null, categoria_id: categoriaId || null, ativo } : prev)
         void notificarNovoProduto({
@@ -194,6 +196,7 @@ export function AdminProdutos() {
         .single()
       if (error) setErroForm(error.message)
       else {
+        toast.success("Produto criado com sucesso!")
         setSlug(slugFinal)
         setProdutoAtual(data as unknown as Produto)
         void notificarNovoProduto({
@@ -351,6 +354,7 @@ export function AdminProdutos() {
         .from("product_prices")
         .upsert(upserts, { onConflict: "produto_id,tipo" })
       if (error) setErroForm(error.message)
+      else toast.success("Preços salvos com sucesso!")
     }
     setSalvandoPrecos(false)
   }
