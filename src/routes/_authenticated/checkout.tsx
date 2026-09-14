@@ -23,15 +23,15 @@ function CheckoutPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { items, total, loading: cartLoading, refresh: refreshCart, clearCart } = useCart(user?.id ?? null);
+  const { addresses, loading: addrLoading, addAddress, removeAddress } = useAddresses(user?.id ?? null);
+
+  const [paid, setPaid] = useState(false);
 
   useEffect(() => {
     if (!paid && !cartLoading && items.length === 0) {
       void navigate({ to: "/" });
     }
   }, [paid, cartLoading, items.length, navigate]);
-  const { addresses, loading: addrLoading, addAddress, removeAddress } = useAddresses(user?.id ?? null);
-
-  const [paid, setPaid] = useState(false);
   const [step, setStep] = useState<Step>("endereco");
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [showNewAddr, setShowNewAddr] = useState(false);
