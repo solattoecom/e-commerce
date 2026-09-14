@@ -8,7 +8,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -139,6 +139,39 @@ function WhatsAppButton() {
   );
 }
 
+function CookieBanner() {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    if (!localStorage.getItem("cookie_consent")) setVisible(true);
+  }, []);
+
+  if (!visible) return null;
+
+  function accept() {
+    localStorage.setItem("cookie_consent", "1");
+    setVisible(false);
+  }
+
+  return (
+    <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background px-5 py-4 shadow-lg sm:flex sm:items-center sm:justify-between sm:gap-6">
+      <p className="text-sm text-muted-foreground">
+        Usamos cookies essenciais para o funcionamento do site e cookies analíticos para melhorar sua experiência.{" "}
+        <Link to="/privacidade" className="underline underline-offset-4 hover:text-foreground">
+          Política de Privacidade
+        </Link>
+        .
+      </p>
+      <button
+        onClick={accept}
+        className="mt-3 shrink-0 rounded-md bg-foreground px-5 py-2 text-sm font-semibold text-background transition-colors hover:bg-foreground/85 sm:mt-0"
+      >
+        Aceitar
+      </button>
+    </div>
+  );
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
@@ -146,6 +179,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <Outlet />
       <WhatsAppButton />
+      <CookieBanner />
       <Toaster />
     </QueryClientProvider>
   );
