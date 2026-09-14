@@ -190,6 +190,19 @@ export const getOrderStatus = createServerFn({ method: "GET" })
             const abacateStatus = json.data?.status?.toUpperCase();
             if (abacateStatus === "PAID" || abacateStatus === "COMPLETED" || abacateStatus === "APPROVED") {
               await supabaseAdmin.from("orders").update({ status: "pago" }).eq("id", order.id);
+
+              const { data: items } = await supabaseAdmin
+                .from("order_items")
+                .select("variacao_id, quantidade")
+                .eq("pedido_id", order.id);
+              for (const item of items ?? []) {
+                if (!item.variacao_id) continue;
+                await supabaseAdmin.rpc("decrement_stock", {
+                  p_variacao_id: item.variacao_id,
+                  p_quantidade: item.quantidade,
+                });
+              }
+
               return { status: "pago", payment_id: order.payment_id };
             }
           }
