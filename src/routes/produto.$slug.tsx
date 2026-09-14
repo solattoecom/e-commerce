@@ -205,7 +205,6 @@ function ProductPage() {
   );
   const preco = produto.product_prices?.[0];
 
-  const TAMANHOS_FIXOS = ["37", "38", "39", "40", "41", "42", "43", "44"];
   const tamanhoSelecionadoObj = variantes.find((v) => v.id === tamanho);
   const tamanhoSelecionadoIndisponivel =
     tamanho !== null && (!tamanhoSelecionadoObj || tamanhoSelecionadoObj.estoque <= 0);
@@ -396,18 +395,17 @@ function ProductPage() {
               <span className="text-muted-foreground">{tamanhoSelecionadoObj?.tamanho ?? ""}</span>
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
-              {TAMANHOS_FIXOS.map((tam) => {
-                const variante = variantes.find((v) => v.tamanho === tam);
-                const comEstoque = variante && variante.estoque > 0;
-                const selecionado = tamanho === (variante?.id ?? tam);
+              {variantes.map((variante) => {
+                const comEstoque = variante.estoque > 0;
+                const selecionado = tamanho === variante.id;
                 return (
                   <button
-                    key={tam}
+                    key={variante.id}
                     type="button"
                     onClick={() => {
                       setAviso(null);
                       setAlertaEnviado(false);
-                      setTamanho(variante?.id ?? tam);
+                      setTamanho(variante.id);
                     }}
                     className={`min-w-12 cursor-pointer rounded-lg border px-3 py-2 text-sm transition-colors ${
                       selecionado
@@ -417,7 +415,7 @@ function ProductPage() {
                           : "border-border text-muted-foreground/50 line-through hover:border-foreground/40"
                     }`}
                   >
-                    {tam}
+                    {variante.tamanho}
                   </button>
                 );
               })}
