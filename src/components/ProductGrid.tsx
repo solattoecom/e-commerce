@@ -13,7 +13,20 @@ type Product = {
   product_images: { url: string; ordem: number }[];
   product_variants: { id: string; tamanho: string; estoque: number }[];
   product_prices: { preco: number; preco_original: number | null }[];
+  product_reviews: { nota: number }[];
 };
+
+function Stars({ media, count }: { media: number; count: number }) {
+  if (count === 0) return null;
+  return (
+    <div className="flex items-center gap-1">
+      {[1, 2, 3, 4, 5].map((n) => (
+        <span key={n} className={`text-sm ${n <= Math.round(media) ? "text-yellow-400" : "text-muted-foreground/30"}`}>★</span>
+      ))}
+      <span className="text-xs text-muted-foreground">({count})</span>
+    </div>
+  );
+}
 
 const brl = (value: number) =>
   value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -44,8 +57,8 @@ export function ProductGrid({
   useEffect(() => {
     let active = true;
     const columns = signedIn
-      ? "id, nome, slug, descricao, categories(nome), product_images(url, ordem), product_variants(id, tamanho, estoque), product_prices(preco, preco_original)"
-      : "id, nome, slug, descricao, categories(nome), product_images(url, ordem), product_variants(id, tamanho, estoque)";
+      ? "id, nome, slug, descricao, categories(nome), product_images(url, ordem), product_variants(id, tamanho, estoque), product_prices(preco, preco_original), product_reviews(nota)"
+      : "id, nome, slug, descricao, categories(nome), product_images(url, ordem), product_variants(id, tamanho, estoque), product_reviews(nota)";
     supabase
       .from("products")
       .select(columns)
@@ -207,6 +220,12 @@ export function ProductGrid({
                       <span className="text-green-600 font-medium">{brl(Number(price.preco) * 0.9)} no PIX</span>
                       {" · "}10x de {brl(Number(price.preco) / 10)}
                     </p>
+                    {(() => {
+                      const reviews = product.product_reviews ?? [];
+                      const count = reviews.length;
+                      const media = count > 0 ? reviews.reduce((s, r) => s + r.nota, 0) / count : 0;
+                      return <Stars media={media} count={count} />;
+                    })()}
                   </div>
                 ) : (
                   <p className="text-sm text-muted-foreground">Entre na sua conta para ver o preço</p>

@@ -133,6 +133,7 @@ function ProductPage() {
   const [minhaNota, setMinhaNota] = useState(0);
   const [salvando, setSalvando] = useState(false);
   const [podeAvaliar, setPodeAvaliar] = useState(false);
+  const [relacionados, setRelacionados] = useState<Produto[]>([]);
 
   const signedIn = Boolean(user);
 
@@ -175,6 +176,23 @@ function ProductPage() {
     const minha = avaliacoes.find((a) => a.user_id === user?.id);
     if (minha) setMinhaNota(minha.nota);
   }, [avaliacoes, user?.id]);
+
+  useEffect(() => {
+    if (!produto) return;
+    const categoriaNome = produto.categories?.nome;
+    supabase
+      .from("products")
+      .select("id, nome, slug, categories(nome), product_images(url, ordem), product_prices(preco, preco_original), product_reviews(nota)")
+      .neq("id", produto.id)
+      .limit(20)
+      .then(({ data }) => {
+        const lista = (data ?? []) as unknown as Produto[];
+        const filtrados = categoriaNome
+          ? lista.filter((p) => p.categories?.nome === categoriaNome)
+          : lista;
+        setRelacionados(filtrados.slice(0, 6));
+      });
+  }, [produto]);
 
   useEffect(() => {
     if (!user || !produto) return;
@@ -650,6 +668,42 @@ function ProductPage() {
           )}
         </div>
       </div>
+
+      {relacionados.length > 0 && (
+        <section className="mt-12 border-t border-border pt-8 px-4 sm:px-6">
+          <h2 className="mb-5 text-lg font-semibold">Clientes também compraram</h2>
+          <div className="flex gap-4 overflow-x-auto pb-2">
+            {relacionados.map((rel) => {
+              const img = [...(rel.product_images ?? [])].sort((a, b) => a.ordem - b.ordem)[0];
+              const preco = (rel.product_prices ?? [])[0];
+              const reviews = (rel as unknown as { product_reviews?: { nota: number }[] }).product_reviews ?? [];
+              const media = reviews.length > 0 ? reviews.reduce((s, r) => s + r.nota, 0) / reviews.length : 0;
+              return (
+                <Link
+                  key={rel.id}
+                  to="/produto/$slug"
+                  params={{ slug: rel.slug }}
+                  className="w-40 shrink-0 rounded-xl border border-border bg-background p-3 transition-colors hover:bg-muted/40"
+                >
+                  <div className="mb-2 aspect-square overflow-hidden rounded-lg bg-muted">
+                    {img && <img src={img.url} alt={rel.nome} className="h-full w-full object-contain" />}
+                  </div>
+                  <p className="truncate text-xs font-medium">{rel.nome}</p>
+                  {preco && <p className="mt-0.5 text-xs font-semibold">{Number(preco.preco).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</p>}
+                  {reviews.length > 0 && (
+                    <div className="mt-0.5 flex items-center gap-0.5">
+                      {[1,2,3,4,5].map((n) => (
+                        <span key={n} className={`text-xs ${n <= Math.round(media) ? "text-yellow-400" : "text-muted-foreground/30"}`}>★</span>
+                      ))}
+                      <span className="text-xs text-muted-foreground">({reviews.length})</span>
+                    </div>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      )}
     </main>
   );
 }
