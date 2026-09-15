@@ -168,9 +168,11 @@ function CheckoutPage() {
       if (paymentMethod === "pix") {
         setPixQr(result.pix_qr ?? null);
         setPixQrCode(result.pix_qr_code ?? null);
+        let retries = 0;
         const interval = setInterval(async () => {
           try {
             const s = await getOrderStatus({ data: { order_id: result.order_id } });
+            retries = 0;
             if (s.status === "pago") {
               clearInterval(interval);
               clearTimeout(timeout);
@@ -178,7 +180,10 @@ function CheckoutPage() {
               await clearCart();
               setStep("sucesso");
             }
-          } catch {}
+          } catch {
+            retries++;
+            if (retries >= 5) clearInterval(interval);
+          }
         }, 3000);
         const timeout = setTimeout(() => clearInterval(interval), 10 * 60 * 1000);
       }

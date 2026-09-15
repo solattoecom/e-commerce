@@ -56,7 +56,6 @@ export const createOrder = createServerFn({ method: "POST" })
           .select("estoque")
           .eq("id", item.variacao_id)
           .single();
-        console.log("[createOrder] stock check", item.nome, item.variacao_id, "→ variacao:", JSON.stringify(variacao), "error:", JSON.stringify(variacaoError), "quantidade:", item.quantidade);
         if (!variacao || variacao.estoque < item.quantidade) {
           throw new Error(`Estoque insuficiente para o produto "${item.nome}". (estoque=${variacao?.estoque ?? "null"} qtd=${item.quantidade})`);
         }
@@ -218,7 +217,6 @@ export const getOrderStatus = createServerFn({ method: "GET" })
             headers: { "Authorization": `Bearer ${apiKey}` },
           });
           const text = await res.text();
-          console.log("[getOrderStatus] AbacatePay status:", res.status, text);
           if (res.ok) {
             const json = JSON.parse(text) as { data?: { status?: string } };
             const abacateStatus = json.data?.status?.toUpperCase();

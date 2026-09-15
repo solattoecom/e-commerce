@@ -117,7 +117,8 @@ function AdminPanel() {
   const { user, loading: carregandoUsuario } = useAuth();
   const { isAdmin, loading: carregandoPapel } = useIsAdmin(user?.id);
   const { existe: jaTemAdmin } = useAdminExists();
-  const [aba, setAba] = useState<"solicitacoes" | "pedidos" | "produtos" | "cupons">("solicitacoes");
+  const [aba, setAba] = useState<"dashboard" | "solicitacoes" | "pedidos" | "produtos" | "cupons">("dashboard");
+  const [filtroStatus, setFiltroStatus] = useState<string>("todos");
   const [solicitacoes, setSolicitacoes] = useState<Solicitacao[]>([]);
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [carregandoDados, setCarregandoDados] = useState(true);
@@ -333,6 +334,7 @@ function AdminPanel() {
       <div className="mb-6 flex flex-wrap gap-2">
         {(
           [
+            ["dashboard", "Dashboard"],
             ["solicitacoes", `Solicitações${pendentes.length ? ` (${pendentes.length})` : ""}`],
             ["pedidos", `Pedidos${pedidos.length ? ` (${pedidos.length})` : ""}`],
             ["produtos", "Produtos"],
@@ -357,7 +359,31 @@ function AdminPanel() {
       {erro ? <p className="mb-4 text-sm text-destructive">{erro}</p> : null}
       {carregandoDados ? <p className="text-sm text-muted-foreground">Carregando...</p> : null}
 
-      {aba === "solicitacoes" ? (
+      {aba === "dashboard" ? (() => {
+        const hoje = new Date().toDateString();
+        const pedidosHoje = pedidos.filter((p) => new Date(p.criado_em).toDateString() === hoje);
+        const vendasHoje = pedidosHoje.filter((p) => !["pendente", "cancelado"].includes(p.status)).reduce((s, p) => s + Number(p.total), 0);
+        const totalGeral = pedidos.filter((p) => !["pendente", "cancelado"].includes(p.status)).reduce((s, p) => s + Number(p.total), 0);
+        const qtdPendentes = pedidos.filter((p) => p.status === "pendente").length;
+        const qtdAguardandoEnvio = pedidos.filter((p) => ["pago", "separando"].includes(p.status)).length;
+        const cards = [
+          { label: "Vendas hoje", value: brl(vendasHoje), sub: `${pedidosHoje.filter((p) => !["pendente","cancelado"].includes(p.status)).length} pedido(s)` },
+          { label: "Aguardando envio", value: String(qtdAguardandoEnvio), sub: "pagos + separando" },
+          { label: "Pendentes de pagamento", value: String(qtdPendentes), sub: "aguardando PIX/cartão" },
+          { label: "Total recebido", value: brl(totalGeral), sub: `${pedidos.filter((p) => !["pendente","cancelado"].includes(p.status)).length} pedidos no total` },
+        ];
+        return (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {cards.map((c) => (
+              <div key={c.label} className="rounded-2xl border border-border bg-background p-5 space-y-1">
+                <p className="text-xs text-muted-foreground">{c.label}</p>
+                <p className="text-2xl font-bold">{c.value}</p>
+                <p className="text-xs text-muted-foreground">{c.sub}</p>
+              </div>
+            ))}
+          </div>
+        );
+      })() : aba === "solicitacoes" ? (
         <section className="overflow-hidden rounded-2xl border border-border">
           {solicitacoes.length === 0 && !carregandoDados ? (
             <p className="p-6 text-sm text-muted-foreground">Nenhuma solicitação por enquanto.</p>
@@ -403,12 +429,25 @@ function AdminPanel() {
           </ul>
         </section>
       ) : aba === "pedidos" ? (
-        <section className="overflow-hidden rounded-2xl border border-border">
+        <section className="space-y-4">
+          <div className="flex flex-wrap gap-2">
+            {(["todos", ...STATUS_PEDIDO] as const).map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => setFiltroStatus(s)}
+                className={`cursor-pointer rounded-full px-3 py-1.5 text-xs font-medium capitalize transition-colors ${filtroStatus === s ? "bg-foreground text-background" : "bg-muted text-foreground hover:bg-muted/70"}`}
+              >
+                {s === "todos" ? `Todos (${pedidos.length})` : `${s} (${pedidos.filter((p) => p.status === s).length})`}
+              </button>
+            ))}
+          </div>
+          <div className="overflow-hidden rounded-2xl border border-border">
           {pedidos.length === 0 && !carregandoDados ? (
             <p className="p-6 text-sm text-muted-foreground">Nenhum pedido ainda.</p>
           ) : null}
           <ul className="divide-y divide-border">
-            {pedidos.map((p) => {
+            {pedidos.filter((p) => filtroStatus === "todos" || p.status === filtroStatus).map((p) => {
               const statusSelecionado = p.status;
               const nfeAtual = nfePorPedido[p.id] ?? "";
               const rastreioAtual = rastreioPorPedido[p.id] ?? "";
@@ -568,6 +607,7 @@ function AdminPanel() {
               );
             })}
           </ul>
+          </div>
         </section>
       ) : aba === "produtos" ? (
         <AdminProdutos />

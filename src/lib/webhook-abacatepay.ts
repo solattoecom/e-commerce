@@ -2,14 +2,9 @@ import { enviarConfirmacaoPedido } from "@/lib/email.functions";
 
 export async function handleAbacatePayWebhook(request: Request): Promise<Response> {
   try {
-    const headersLog: Record<string, string> = {};
-    request.headers.forEach((value, key) => { headersLog[key] = value; });
-    console.log("[webhook] headers:", JSON.stringify(headersLog));
-
     const { supabaseAdmin } = await import("@/integrations/supabase/external.server");
 
     const body = await request.json() as Record<string, unknown>;
-    console.log("[webhook] payload:", JSON.stringify(body));
 
     const event = body.event as string | undefined;
     const bodyData = body.data as Record<string, unknown> | undefined;
@@ -22,10 +17,7 @@ export async function handleAbacatePayWebhook(request: Request): Promise<Respons
       status === "PAID" ||
       status === "COMPLETED";
 
-    if (!isPaid) {
-      console.log("[webhook] evento ignorado:", event, status);
-      return new Response("ignored", { status: 200 });
-    }
+    if (!isPaid) return new Response("ignored", { status: 200 });
 
     const metadata = billing?.metadata as Record<string, unknown> | undefined;
     const orderId =
@@ -35,12 +27,7 @@ export async function handleAbacatePayWebhook(request: Request): Promise<Respons
 
     const paymentId = billing?.id as string | undefined;
 
-    console.log("[webhook] orderId:", orderId, "paymentId:", paymentId);
-
-    if (!orderId && !paymentId) {
-      console.error("[webhook] sem orderId nem paymentId");
-      return new Response("missing ids", { status: 400 });
-    }
+    if (!orderId && !paymentId) return new Response("missing ids", { status: 400 });
 
     const query = supabaseAdmin
       .from("orders")
