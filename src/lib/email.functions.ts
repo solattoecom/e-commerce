@@ -233,6 +233,10 @@ type EstoqueDisponivelInput = {
   tamanho: string;
 };
 
+export const enviarEmailAvaliacaoPedido = createServerFn({ method: "POST" })
+  .inputValidator((input: AvaliacaoInput) => input)
+  .handler(async ({ data }) => { await enviarEmailAvaliacao(data); });
+
 export const enviarEmailEstoqueDisponivel = createServerFn({ method: "POST" })
   .inputValidator((input: EstoqueDisponivelInput) => input)
   .handler(async ({ data }) => {
