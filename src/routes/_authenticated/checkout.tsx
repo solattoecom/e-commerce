@@ -64,6 +64,15 @@ function CheckoutPage() {
   const itemCount = items.reduce((n, i) => n + i.quantidade, 0);
   const frete = selectedShipping?.valor ?? 0;
   const totalFinal = total - (desconto?.discount_amount ?? 0) + frete;
+  const pixDesconto = totalFinal * 0.1;
+  const totalPix = totalFinal - pixDesconto;
+  const totalEfetivo = paymentMethod === "pix" ? totalPix : totalFinal;
+
+  const calcParcela = (n: number) => {
+    if (n <= 10) return totalFinal / n;
+    const taxa = 0.0199;
+    return totalFinal * (taxa * Math.pow(1 + taxa, n)) / (Math.pow(1 + taxa, n) - 1);
+  };
 
   const handleCepBlur = async (cep: string) => {
     const digits = cep.replace(/\D/g, "");
@@ -145,7 +154,7 @@ function CheckoutPage() {
             preco_unitario: item.products?.product_prices?.[0]?.preco ?? 0,
           })),
           subtotal: total,
-          total: totalFinal,
+          total: totalEfetivo,
           coupon_id: desconto?.coupon_id ?? null,
           desconto: desconto?.discount_amount ?? 0,
           ...(paymentMethod === "cartao" && {
@@ -263,6 +272,9 @@ function CheckoutPage() {
           </p>
         ) : null}
         {selectedShipping && <p className="text-muted-foreground">Frete: R$ {frete.toFixed(2).replace(".", ",")} — Total: R$ {totalFinal.toFixed(2).replace(".", ",")}</p>}
+        {step === "pagamento" && paymentMethod === "pix" && (
+          <p className="text-sm font-medium text-green-600">Desconto PIX 10%: -R$ {pixDesconto.toFixed(2).replace(".", ",")} → Total: R$ {totalPix.toFixed(2).replace(".", ",")}</p>
+        )}
       </div>
 
       {step === "endereco" && (
@@ -447,16 +459,14 @@ function CheckoutPage() {
                   onChange={(e) => setCard((c) => ({ ...c, parcelas: e.target.value }))}
                   className="h-10 rounded-md border border-input bg-background px-3 text-sm"
                 >
-                  {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => {
-                    const taxa = 0.0199;
-                    const valorParcela = n === 1
-                      ? totalFinal
-                      : totalFinal * (taxa * Math.pow(1 + taxa, n)) / (Math.pow(1 + taxa, n) - 1);
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => {
+                    const valorParcela = calcParcela(n);
                     const totalComJuros = valorParcela * n;
+                    const semJuros = n <= 10;
                     return (
                       <option key={n} value={String(n)}>
                         {n}x de R$ {valorParcela.toFixed(2).replace(".", ",")}
-                        {n === 1 ? " (sem juros)" : ` — total R$ ${totalComJuros.toFixed(2).replace(".", ",")}`}
+                        {semJuros ? " (sem juros)" : ` — total R$ ${totalComJuros.toFixed(2).replace(".", ",")}`}
                       </option>
                     );
                   })}
@@ -482,7 +492,7 @@ function CheckoutPage() {
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setStep("entrega")}><ArrowLeft className="mr-2 h-4 w-4" /> Voltar</Button>
             <Button type="button" className="flex-1 bg-foreground text-background hover:bg-foreground/90" disabled={busy} onClick={handlePay}>
-              {busy ? "Processando..." : `Pagar R$ ${totalFinal.toFixed(2).replace(".", ",")}`}
+              {busy ? "Processando..." : `Pagar R$ ${totalEfetivo.toFixed(2).replace(".", ",")}`}
             </Button>
           </div>
         </div>

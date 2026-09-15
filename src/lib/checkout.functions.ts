@@ -190,8 +190,9 @@ export const createOrder = createServerFn({ method: "POST" })
         externalReference: order.id,
         installmentCount: data.card_parcelas && data.card_parcelas > 1 ? data.card_parcelas : undefined,
         installmentValue: data.card_parcelas && data.card_parcelas > 1 ? (() => {
-          const taxa = 0.0199;
           const n = data.card_parcelas!;
+          if (n <= 10) return Number((data.total / n).toFixed(2));
+          const taxa = 0.0199;
           return Number((data.total * (taxa * Math.pow(1 + taxa, n)) / (Math.pow(1 + taxa, n) - 1)).toFixed(2));
         })() : undefined,
         creditCard: {

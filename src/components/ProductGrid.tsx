@@ -203,7 +203,10 @@ export function ProductGrid({
                         <span className="text-sm text-muted-foreground line-through">{brl(Number(price.preco_original))}</span>
                       ) : null}
                     </p>
-                    <p className="text-xs text-muted-foreground">ou 10x de {brl(Number(price.preco) / 10)}</p>
+                    <p className="text-xs text-muted-foreground">
+                      <span className="text-green-600 font-medium">{brl(Number(price.preco) * 0.9)} no PIX</span>
+                      {" · "}10x de {brl(Number(price.preco) / 10)}
+                    </p>
                   </div>
                 ) : (
                   <p className="text-sm text-muted-foreground">Entre na sua conta para ver o preço</p>

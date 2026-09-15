@@ -383,7 +383,8 @@ function ProductPage() {
                   ) : null}
                 </p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  ou 10x de {brl((() => { const taxa = 0.0199; const n = 10; const v = Number(preco.preco); return v * (taxa * Math.pow(1 + taxa, n)) / (Math.pow(1 + taxa, n) - 1); })())}
+                  <span className="text-green-600 font-medium">{brl(Number(preco.preco) * 0.9)} no PIX</span>
+                  {" · "}ou 10x de {brl(Number(preco.preco) / 10)} sem juros
                 </p>
               </div>
             ) : (
