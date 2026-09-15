@@ -189,7 +189,11 @@ export const createOrder = createServerFn({ method: "POST" })
         description: `Pedido ${order.id.slice(0, 8).toUpperCase()}`,
         externalReference: order.id,
         installmentCount: data.card_parcelas && data.card_parcelas > 1 ? data.card_parcelas : undefined,
-        installmentValue: data.card_parcelas && data.card_parcelas > 1 ? Number((data.total / data.card_parcelas).toFixed(2)) : undefined,
+        installmentValue: data.card_parcelas && data.card_parcelas > 1 ? (() => {
+          const taxa = 0.0199;
+          const n = data.card_parcelas!;
+          return Number((data.total * (taxa * Math.pow(1 + taxa, n)) / (Math.pow(1 + taxa, n) - 1)).toFixed(2));
+        })() : undefined,
         creditCard: {
           holderName: data.card_holder,
           number: (data.card_number ?? "").replace(/\s/g, ""),

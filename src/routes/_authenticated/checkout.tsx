@@ -447,12 +447,19 @@ function CheckoutPage() {
                   onChange={(e) => setCard((c) => ({ ...c, parcelas: e.target.value }))}
                   className="h-10 rounded-md border border-input bg-background px-3 text-sm"
                 >
-                  {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
-                    <option key={n} value={String(n)}>
-                      {n}x de R$ {(totalFinal / n).toFixed(2).replace(".", ",")}
-                      {n === 1 ? " (sem juros)" : ""}
-                    </option>
-                  ))}
+                  {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => {
+                    const taxa = 0.0199;
+                    const valorParcela = n === 1
+                      ? totalFinal
+                      : totalFinal * (taxa * Math.pow(1 + taxa, n)) / (Math.pow(1 + taxa, n) - 1);
+                    const totalComJuros = valorParcela * n;
+                    return (
+                      <option key={n} value={String(n)}>
+                        {n}x de R$ {valorParcela.toFixed(2).replace(".", ",")}
+                        {n === 1 ? " (sem juros)" : ` — total R$ ${totalComJuros.toFixed(2).replace(".", ",")}`}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
               <div className="grid gap-2">
