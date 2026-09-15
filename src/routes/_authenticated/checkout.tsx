@@ -186,6 +186,7 @@ function CheckoutPage() {
       }
 
       if (paymentMethod === "boleto") {
+        setPaid(true);
         await clearCart();
         setBoletoUrl(result.boleto_url ?? null);
         return;
