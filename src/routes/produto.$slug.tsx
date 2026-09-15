@@ -125,7 +125,9 @@ function ProductPage() {
   const [alertaSalvando, setAlertaSalvando] = useState(false);
   const [alertaErro, setAlertaErro] = useState<string | null>(null);
 
-  const [aba, setAba] = useState<"produto" | "caracteristicas" | "avaliacoes">("produto");
+  const [aba, setAba] = useState<"produto" | "caracteristicas" | "avaliacoes">(
+    typeof window !== "undefined" && window.location.hash === "#avaliacoes" ? "avaliacoes" : "produto"
+  );
 
   const [avaliacoes, setAvaliacoes] = useState<Avaliacao[]>([]);
   const [minhaNota, setMinhaNota] = useState(0);

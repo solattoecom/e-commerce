@@ -186,7 +186,7 @@ export async function enviarEmailAvaliacao(data: AvaliacaoInput) {
         <p style="margin:0;font-size:14px;font-weight:600;">${item.nome}</p>
       </td>
       <td style="padding:10px 0;border-bottom:1px solid #f0f0f0;text-align:right;">
-        <a href="https://www.solatto.com.br/produto/${item.slug}"
+        <a href="https://www.solatto.com.br/produto/${item.slug}#avaliacoes"
            style="display:inline-block;background:#000;color:#fff;text-decoration:none;padding:7px 16px;border-radius:20px;font-size:12px;font-weight:600;">
           Avaliar
         </a>
