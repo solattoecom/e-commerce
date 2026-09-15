@@ -45,7 +45,7 @@ function CheckoutPage() {
 
   const [paymentMethod, setPaymentMethod] = useState<"pix" | "cartao">("pix");
   const [telefone, setTelefone] = useState("");
-  const [card, setCard] = useState({ number: "", holder: "", expiry: "", cvv: "", cpf: "" });
+  const [card, setCard] = useState({ number: "", holder: "", expiry: "", cvv: "", cpf: "", parcelas: "1" });
   const [busy, setBusy] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [orderId, setOrderId] = useState<string | null>(null);
@@ -154,6 +154,7 @@ function CheckoutPage() {
             card_expiry: card.expiry,
             card_cvv: card.cvv,
             card_cpf: card.cpf,
+            card_parcelas: Number(card.parcelas),
           }),
         },
       });
@@ -437,6 +438,22 @@ function CheckoutPage() {
                   <Label htmlFor="card_cvv">CVV</Label>
                   <Input id="card_cvv" placeholder="000" maxLength={4} value={card.cvv} onChange={(e) => setCard((c) => ({ ...c, cvv: e.target.value }))} />
                 </div>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="card_parcelas">Parcelas</Label>
+                <select
+                  id="card_parcelas"
+                  value={card.parcelas}
+                  onChange={(e) => setCard((c) => ({ ...c, parcelas: e.target.value }))}
+                  className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                >
+                  {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
+                    <option key={n} value={String(n)}>
+                      {n}x de R$ {(totalFinal / n).toFixed(2).replace(".", ",")}
+                      {n === 1 ? " (sem juros)" : ""}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="card_cpf">CPF do titular</Label>

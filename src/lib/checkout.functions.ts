@@ -27,6 +27,7 @@ type CreateOrderInput = {
   card_expiry?: string;
   card_cvv?: string;
   card_cpf?: string;
+  card_parcelas?: number;
   coupon_id?: string | null;
   desconto?: number;
 };
@@ -187,6 +188,8 @@ export const createOrder = createServerFn({ method: "POST" })
         dueDate: new Date().toISOString().split("T")[0],
         description: `Pedido ${order.id.slice(0, 8).toUpperCase()}`,
         externalReference: order.id,
+        installmentCount: data.card_parcelas && data.card_parcelas > 1 ? data.card_parcelas : undefined,
+        installmentValue: data.card_parcelas && data.card_parcelas > 1 ? Number((data.total / data.card_parcelas).toFixed(2)) : undefined,
         creditCard: {
           holderName: data.card_holder,
           number: (data.card_number ?? "").replace(/\s/g, ""),
