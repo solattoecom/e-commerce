@@ -41,6 +41,7 @@ import { signIn, signOut, signUpWithType, useAuth, type ClientType } from "@/hoo
 import { useCart } from "@/hooks/useCart";
 import { useWishlist } from "@/hooks/useWishlist";
 import { isValidEmail } from "@/lib/validate";
+import { checkRateLimit, recordRateLimitAttempt } from "@/lib/rate-limit.functions";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -710,6 +711,14 @@ function Index() {
     setBusy(true);
     setErro(null);
     setAviso(null);
+    const rlSignup = await checkRateLimit("signup");
+    if (rlSignup.blocked) {
+      const min = rlSignup.retryAfterSeconds ? Math.ceil(rlSignup.retryAfterSeconds / 60) : 60;
+      setErro(`Muitas tentativas de cadastro. Aguarde ${min} min para tentar novamente.`);
+      setBusy(false);
+      return;
+    }
+    await recordRateLimitAttempt("signup");
     try {
       await signUpWithType({ ...form, tipo: accountType.id as ClientType });
       const email = form.email.trim();
@@ -740,6 +749,12 @@ function Index() {
       setErro(`Muitas tentativas. Aguarde ${restam} min para tentar novamente.`);
       return;
     }
+    const rlLogin = await checkRateLimit("login");
+    if (rlLogin.blocked) {
+      const min = rlLogin.retryAfterSeconds ? Math.ceil(rlLogin.retryAfterSeconds / 60) : 5;
+      setErro(`Muitas tentativas incorretas. Aguarde ${min} min para tentar novamente.`);
+      return;
+    }
     setBusy(true);
     setErro(null);
     setEmailNaoConfirmado(null);
@@ -757,6 +772,7 @@ function Index() {
         setEmailNaoConfirmado(form.email.trim());
         setErro("Confirme seu e-mail antes de entrar.");
       } else if (/Invalid login credentials/i.test(msg)) {
+        void recordRateLimitAttempt("login");
         const tentativas = Number(localStorage.getItem("login_attempts") ?? "0") + 1;
         localStorage.setItem("login_attempts", String(tentativas));
         if (tentativas >= 5) {
