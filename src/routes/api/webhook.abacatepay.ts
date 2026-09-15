@@ -48,8 +48,7 @@ export const APIRoute = createAPIFileRoute("/api/webhook/abacatepay")({
 
       const query = supabaseAdmin
         .from("orders")
-        .select("id, usuario_id, total, status")
-        .eq("status", "pendente");
+        .select("id, usuario_id, total, status");
 
       const { data: order } = orderId
         ? await query.eq("id", orderId).single()
