@@ -226,6 +226,49 @@ export const enviarEmailStatusPedido = createServerFn({ method: "POST" })
   .inputValidator((input: StatusInput) => input)
   .handler(async ({ data }) => { await enviarStatusPedido(data); });
 
+export const notificarMudancaStatus = createServerFn({ method: "POST" })
+  .inputValidator((input: { order_id: string; status: string; codigo_rastreio?: string | null }) => input)
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/external.server");
+
+    const { data: order } = await supabaseAdmin
+      .from("orders")
+      .select("id, usuario_id, order_items(products(nome, slug))")
+      .eq("id", data.order_id)
+      .single();
+
+    if (!order) return;
+
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("nome, email")
+      .eq("id", order.usuario_id)
+      .single();
+
+    if (!profile?.email) return;
+
+    await enviarStatusPedido({
+      email: profile.email,
+      nome: profile.nome,
+      pedido_id: data.order_id,
+      status: data.status,
+      codigo_rastreio: data.codigo_rastreio,
+    });
+
+    if (data.status === "entregue") {
+      const itens = ((order.order_items ?? []) as { products: { nome: string; slug: string } | null }[])
+        .filter((i) => i.products)
+        .map((i) => ({ nome: i.products!.nome, slug: i.products!.slug }));
+
+      await enviarEmailAvaliacao({
+        email: profile.email,
+        nome: profile.nome,
+        pedido_id: data.order_id,
+        itens,
+      });
+    }
+  });
+
 type EstoqueDisponivelInput = {
   produto_id: string;
   produto_nome: string;

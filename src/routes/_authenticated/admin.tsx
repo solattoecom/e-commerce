@@ -9,7 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useAdminExists } from "@/hooks/useAdminExists";
 import { claimFirstAdmin } from "@/lib/admin.functions";
-import { enviarEmailStatusPedido, enviarEmailAvaliacaoPedido } from "@/lib/email.functions";
+import { notificarMudancaStatus } from "@/lib/email.functions";
 import { incrementCouponUsage } from "@/lib/coupon.functions";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -215,29 +215,11 @@ function AdminPanel() {
       }
       setNfePorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; return next; });
       setStatusPorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; return next; });
-      if (pedido.profiles?.email) {
-        void enviarEmailStatusPedido({ data: {
-          email: pedido.profiles.email,
-          nome: pedido.profiles.nome,
-          pedido_id: pedido.id,
-          status,
-          codigo_rastreio: rastreio?.trim() || null,
-        } }).catch((e) => { console.error("Erro e-mail status:", e); });
-
-        if (status === "entregue") {
-          void enviarEmailAvaliacaoPedido({ data: {
-            email: pedido.profiles.email,
-            nome: pedido.profiles.nome,
-            pedido_id: pedido.id,
-            itens: pedido.order_items
-              .filter((i) => i.products)
-              .map((i) => ({
-                nome: i.products!.nome,
-                slug: (i.products as { nome: string; slug?: string }).slug ?? "",
-              })),
-          } }).catch((e) => { console.error("Erro e-mail avaliação:", e); });
-        }
-      }
+      void notificarMudancaStatus({ data: {
+        order_id: pedido.id,
+        status,
+        codigo_rastreio: rastreio?.trim() || null,
+      } }).catch((e) => { console.error("Erro ao notificar status:", e); });
       await carregar();
     }
     setOcupado(null);
