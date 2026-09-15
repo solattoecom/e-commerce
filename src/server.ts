@@ -3,6 +3,7 @@ import "./lib/error-capture";
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 import { handleAbacatePayWebhook } from "./lib/webhook-abacatepay";
+import { handleAsaasWebhook } from "./lib/webhook-asaas";
 import { runTrackingCron } from "./lib/tracking-cron";
 
 type ServerEntry = {
@@ -52,6 +53,10 @@ export default {
       const url = new URL(request.url);
       if (url.pathname === "/api/webhook/abacatepay" && request.method === "POST") {
         return await handleAbacatePayWebhook(request);
+      }
+
+      if (url.pathname === "/api/webhook/asaas" && request.method === "POST") {
+        return await handleAsaasWebhook(request);
       }
 
       if (url.pathname === "/api/cron/check-deliveries" && request.method === "GET") {

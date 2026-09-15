@@ -45,7 +45,7 @@ function CheckoutPage() {
 
   const [paymentMethod, setPaymentMethod] = useState<"pix" | "cartao">("pix");
   const [telefone, setTelefone] = useState("");
-  const [card, setCard] = useState({ number: "", holder: "", expiry: "", cvv: "" });
+  const [card, setCard] = useState({ number: "", holder: "", expiry: "", cvv: "", cpf: "" });
   const [busy, setBusy] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [orderId, setOrderId] = useState<string | null>(null);
@@ -153,15 +153,21 @@ function CheckoutPage() {
             card_holder: card.holder,
             card_expiry: card.expiry,
             card_cvv: card.cvv,
+            card_cpf: card.cpf,
           }),
         },
       });
 
       setOrderId(result.order_id);
 
-      if (paymentMethod === "cartao" && result.checkout_url) {
-        await clearCart();
-        window.location.href = result.checkout_url;
+      if (paymentMethod === "cartao") {
+        if (result.status === "pago") {
+          setPaid(true);
+          await clearCart();
+          setStep("sucesso");
+        } else {
+          setErro("Pagamento não confirmado. Verifique os dados do cartão e tente novamente.");
+        }
         return;
       }
 
@@ -431,6 +437,20 @@ function CheckoutPage() {
                   <Label htmlFor="card_cvv">CVV</Label>
                   <Input id="card_cvv" placeholder="000" maxLength={4} value={card.cvv} onChange={(e) => setCard((c) => ({ ...c, cvv: e.target.value }))} />
                 </div>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="card_cpf">CPF do titular</Label>
+                <Input
+                  id="card_cpf"
+                  placeholder="000.000.000-00"
+                  maxLength={14}
+                  value={card.cpf}
+                  onChange={(e) => {
+                    const v = e.target.value.replace(/\D/g, "").slice(0, 11);
+                    const fmt = v.replace(/(\d{3})(\d{3})(\d{3})(\d{0,2})/, (_, a, b, c, d) => d ? `${a}.${b}.${c}-${d}` : c ? `${a}.${b}.${c}` : b ? `${a}.${b}` : a);
+                    setCard((c) => ({ ...c, cpf: fmt }));
+                  }}
+                />
               </div>
             </div>
           )}

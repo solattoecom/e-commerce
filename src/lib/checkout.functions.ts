@@ -2,8 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/external-auth-middleware";
 
 const ABACATEPAY_PIX_URL = "https://api.abacatepay.com/v2/transparents/create";
-const ABACATEPAY_PRODUCTS_URL = "https://api.abacatepay.com/v2/products/create";
-const ABACATEPAY_CHECKOUT_URL = "https://api.abacatepay.com/v2/checkouts/create";
+const ASAAS_API_URL = "https://api.asaas.com/v3";
 
 type OrderItem = {
   produto_id: string;
@@ -27,6 +26,7 @@ type CreateOrderInput = {
   card_holder?: string;
   card_expiry?: string;
   card_cvv?: string;
+  card_cpf?: string;
   coupon_id?: string | null;
   desconto?: number;
 };
@@ -148,48 +148,94 @@ export const createOrder = createServerFn({ method: "POST" })
       };
     }
 
-    // Cartão: cria produto temporário no AbacatePay e depois o checkout
-    const prodRes = await fetch(ABACATEPAY_PRODUCTS_URL, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({
-        externalId: order.id,
-        name: `Pedido ${order.id.slice(0, 8).toUpperCase()}`,
-        price: Math.round(data.total * 100),
-        currency: "BRL",
-      }),
-    });
-    if (!prodRes.ok) {
-      const err = await prodRes.text();
+    // Cartão: Asaas
+    const asaasKey = process.env["ASAAS_API_KEY"];
+    if (!asaasKey) {
       await supabaseAdmin.from("orders").delete().eq("id", order.id);
-      throw new Error(`AbacatePay produto: ${err}`);
+      throw new Error("ASAAS_API_KEY não configurada.");
     }
-    const prodData = await prodRes.json() as { data: { id: string } };
 
-    const checkoutRes = await fetch(ABACATEPAY_CHECKOUT_URL, {
+    const asaasHeaders = { "access_token": asaasKey, "Content-Type": "application/json" };
+
+    const custRes = await fetch(`${ASAAS_API_URL}/customers`, {
       method: "POST",
-      headers,
+      headers: asaasHeaders,
       body: JSON.stringify({
-        items: [{ id: prodData.data.id, quantity: 1 }],
-        methods: ["CARD"],
-        externalId: order.id,
-        completionUrl: "https://www.solatto.com.br/pedidos",
-        metadata: { order_id: order.id },
+        name: `${profile.nome} ${profile.sobrenome}`.trim(),
+        cpfCnpj: (data.card_cpf ?? "").replace(/\D/g, ""),
+        email: profile.email,
+        externalReference: context.userId,
       }),
     });
-    if (!checkoutRes.ok) {
-      const err = await checkoutRes.text();
+    if (!custRes.ok) {
+      const err = await custRes.text();
       await supabaseAdmin.from("orders").delete().eq("id", order.id);
-      throw new Error(`AbacatePay checkout: ${err}`);
+      throw new Error(`Erro ao registrar cliente: ${err}`);
     }
-    const checkoutData = await checkoutRes.json() as { data: { id: string; url: string; status: string } };
-    await supabaseAdmin.from("orders").update({ payment_id: checkoutData.data.id }).eq("id", order.id);
+    const custData = await custRes.json() as { id: string };
+
+    const [expiryMonth, expiryYearRaw = ""] = (data.card_expiry ?? "").split("/");
+    const expiryYear = expiryYearRaw.length === 2 ? `20${expiryYearRaw}` : expiryYearRaw;
+
+    const payRes = await fetch(`${ASAAS_API_URL}/payments`, {
+      method: "POST",
+      headers: asaasHeaders,
+      body: JSON.stringify({
+        customer: custData.id,
+        billingType: "CREDIT_CARD",
+        value: data.total,
+        dueDate: new Date().toISOString().split("T")[0],
+        description: `Pedido ${order.id.slice(0, 8).toUpperCase()}`,
+        externalReference: order.id,
+        creditCard: {
+          holderName: data.card_holder,
+          number: (data.card_number ?? "").replace(/\s/g, ""),
+          expiryMonth,
+          expiryYear,
+          ccv: data.card_cvv,
+        },
+        creditCardHolderInfo: {
+          name: `${profile.nome} ${profile.sobrenome}`.trim(),
+          email: profile.email,
+          cpfCnpj: (data.card_cpf ?? "").replace(/\D/g, ""),
+          postalCode: (address.cep ?? "").replace(/\D/g, ""),
+          addressNumber: String(address.numero ?? ""),
+          phone: data.telefone || "",
+        },
+      }),
+    });
+
+    const payText = await payRes.text();
+    if (!payRes.ok) {
+      await supabaseAdmin.from("orders").delete().eq("id", order.id);
+      let msg = "Pagamento recusado.";
+      try {
+        const errJson = JSON.parse(payText) as { errors?: { description: string }[] };
+        if (errJson.errors?.[0]?.description) msg = errJson.errors[0].description;
+      } catch { /* empty */ }
+      throw new Error(msg);
+    }
+
+    const payData = JSON.parse(payText) as { id: string; status: string };
+    await supabaseAdmin.from("orders").update({ payment_id: payData.id }).eq("id", order.id);
+
+    const confirmed = payData.status === "CONFIRMED" || payData.status === "RECEIVED";
+    if (confirmed) {
+      await supabaseAdmin.from("orders").update({ status: "pago" }).eq("id", order.id);
+      const { data: orderItems } = await supabaseAdmin
+        .from("order_items")
+        .select("variacao_id, quantidade")
+        .eq("pedido_id", order.id);
+      for (const item of orderItems ?? []) {
+        if (!item.variacao_id) continue;
+        await supabaseAdmin.rpc("decrement_stock", { p_variacao_id: item.variacao_id, p_quantidade: item.quantidade });
+      }
+    }
 
     return {
       order_id: order.id,
       payment_method: "cartao",
-      checkout_url: checkoutData.data.url,
-      status: checkoutData.data.status,
+      status: confirmed ? "pago" : payData.status.toLowerCase(),
     };
   });
 
