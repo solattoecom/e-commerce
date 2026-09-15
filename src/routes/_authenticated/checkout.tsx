@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, ArrowRight, Check, Copy, CreditCard, MapPin, QrCode, Truck } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Copy, CreditCard, MapPin, Pencil, QrCode, Trash2, Truck } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -339,9 +339,9 @@ function CheckoutPage() {
                         <p className="text-muted-foreground">{addr.bairro} — {addr.cidade}/{addr.estado} — CEP {addr.cep.slice(0, 5)}-{addr.cep.slice(5)}</p>
                         {addr.padrao && <span className="text-xs text-muted-foreground">Padrão</span>}
                       </button>
-                      <div className="absolute right-3 top-3 flex gap-2">
-                        <button type="button" onClick={() => { setEditAddr({ rua: addr.rua, numero: addr.numero, complemento: addr.complemento ?? "", bairro: addr.bairro, cidade: addr.cidade, estado: addr.estado }); setEditingAddr(addr.id); }} className="text-xs text-muted-foreground underline underline-offset-4">Editar</button>
-                        <button type="button" onClick={async () => { if (selectedAddressId === addr.id) setSelectedAddressId(null); const msg = await removeAddress(addr.id); if (msg) setErro(msg); }} className="text-xs text-foreground underline underline-offset-4">Remover</button>
+                      <div className="absolute right-2 top-2 flex gap-1">
+                        <button type="button" onClick={() => { setEditAddr({ rua: addr.rua, numero: addr.numero, complemento: addr.complemento ?? "", bairro: addr.bairro, cidade: addr.cidade, estado: addr.estado }); setEditingAddr(addr.id); }} className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" aria-label="Editar endereço"><Pencil size={15} /></button>
+                        <button type="button" onClick={async () => { if (selectedAddressId === addr.id) setSelectedAddressId(null); const msg = await removeAddress(addr.id); if (msg) setErro(msg); }} className="p-1.5 rounded text-muted-foreground hover:text-destructive hover:bg-muted transition-colors" aria-label="Remover endereço"><Trash2 size={15} /></button>
                       </div>
                     </div>
                   )}
