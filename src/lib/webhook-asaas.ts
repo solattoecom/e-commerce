@@ -12,6 +12,12 @@ type AsaasWebhookBody = {
 
 export async function handleAsaasWebhook(request: Request): Promise<Response> {
   try {
+    const token = process.env["ASAAS_WEBHOOK_TOKEN"];
+    if (token) {
+      const received = request.headers.get("asaas-access-token");
+      if (received !== token) return new Response("unauthorized", { status: 401 });
+    }
+
     const body = await request.json() as AsaasWebhookBody;
     const { event, payment } = body;
 
