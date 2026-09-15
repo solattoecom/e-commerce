@@ -322,13 +322,13 @@ function ProductPage() {
               if (Math.abs(diff) > 40) setFoto((f) => (f + (diff > 0 ? 1 : -1) + imagens.length) % imagens.length);
             }}
           >
-            <div className="aspect-square overflow-hidden">
+            <div className="aspect-square">
               {imagens.map((img, i) => (
                 <img
                   key={img.url}
                   src={img.url}
                   alt={`${produto.nome} — foto ${i + 1}`}
-                  className={`absolute inset-0 h-full w-full object-contain transition-all duration-300 hover:scale-150 ${
+                  className={`absolute inset-0 h-full w-full object-contain transition-opacity duration-300 ${
                     i === foto ? "opacity-100" : "opacity-0"
                   }`}
                 />
