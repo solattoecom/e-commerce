@@ -17,7 +17,7 @@ type CreateOrderInput = {
   shipping_option_id: string;
   shipping_valor: number;
   shipping_nome: string;
-  payment_method: "pix" | "cartao";
+  payment_method: "pix" | "cartao" | "boleto";
   telefone: string;
   items: OrderItem[];
   subtotal: number;
@@ -28,17 +28,18 @@ type CreateOrderInput = {
   card_cvv?: string;
   card_cpf?: string;
   card_parcelas?: number;
+  boleto_cpf?: string;
   coupon_id?: string | null;
   desconto?: number;
 };
 
 export type CreateOrderResult = {
   order_id: string;
-  payment_method: "pix" | "cartao";
+  payment_method: "pix" | "cartao" | "boleto";
   pix_qr?: string;
   pix_qr_code?: string;
   pix_expiration?: string;
-  checkout_url?: string;
+  boleto_url?: string;
   status: string;
 };
 
@@ -146,6 +147,72 @@ export const createOrder = createServerFn({ method: "POST" })
         pix_qr_code: pixData.data.brCodeBase64,
         pix_expiration: pixData.data.expiresAt,
         status: pixData.data.status,
+      };
+    }
+
+    // Boleto: Asaas
+    if (data.payment_method === "boleto") {
+      const asaasKey = process.env["ASAAS_API_KEY"];
+      if (!asaasKey) {
+        await supabaseAdmin.from("orders").delete().eq("id", order.id);
+        throw new Error("ASAAS_API_KEY não configurada.");
+      }
+
+      const asaasHeaders = { "access_token": asaasKey, "Content-Type": "application/json" };
+
+      const custRes = await fetch(`${ASAAS_API_URL}/customers`, {
+        method: "POST",
+        headers: asaasHeaders,
+        body: JSON.stringify({
+          name: `${profile.nome} ${profile.sobrenome}`.trim(),
+          cpfCnpj: (data.boleto_cpf ?? "").replace(/\D/g, ""),
+          email: profile.email,
+          externalReference: context.userId,
+        }),
+      });
+      if (!custRes.ok) {
+        const err = await custRes.text();
+        await supabaseAdmin.from("orders").delete().eq("id", order.id);
+        throw new Error(`Erro ao registrar cliente: ${err}`);
+      }
+      const custData = await custRes.json() as { id: string };
+
+      const dueDate = new Date();
+      dueDate.setDate(dueDate.getDate() + 3);
+      const dueDateStr = dueDate.toISOString().split("T")[0];
+
+      const payRes = await fetch(`${ASAAS_API_URL}/payments`, {
+        method: "POST",
+        headers: asaasHeaders,
+        body: JSON.stringify({
+          customer: custData.id,
+          billingType: "BOLETO",
+          value: data.total,
+          dueDate: dueDateStr,
+          description: `Pedido ${order.id.slice(0, 8).toUpperCase()}`,
+          externalReference: order.id,
+        }),
+      });
+
+      const payText = await payRes.text();
+      if (!payRes.ok) {
+        await supabaseAdmin.from("orders").delete().eq("id", order.id);
+        let msg = "Erro ao gerar boleto.";
+        try {
+          const errJson = JSON.parse(payText) as { errors?: { description: string }[] };
+          if (errJson.errors?.[0]?.description) msg = errJson.errors[0].description;
+        } catch { /* empty */ }
+        throw new Error(msg);
+      }
+
+      const payData = JSON.parse(payText) as { id: string; bankSlipUrl: string; status: string };
+      await supabaseAdmin.from("orders").update({ payment_id: payData.id }).eq("id", order.id);
+
+      return {
+        order_id: order.id,
+        payment_method: "boleto",
+        boleto_url: payData.bankSlipUrl,
+        status: "pendente",
       };
     }
 

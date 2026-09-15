@@ -43,9 +43,11 @@ function CheckoutPage() {
   const [desconto, setDesconto] = useState<DiscountResult | null>(null);
   const [shippingLoading, setShippingLoading] = useState(false);
 
-  const [paymentMethod, setPaymentMethod] = useState<"pix" | "cartao">("pix");
+  const [paymentMethod, setPaymentMethod] = useState<"pix" | "cartao" | "boleto">("pix");
   const [telefone, setTelefone] = useState("");
   const [card, setCard] = useState({ number: "", holder: "", expiry: "", cvv: "", cpf: "", parcelas: "1" });
+  const [boletoCpf, setBoletoCpf] = useState("");
+  const [boletoUrl, setBoletoUrl] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [orderId, setOrderId] = useState<string | null>(null);
@@ -165,6 +167,7 @@ function CheckoutPage() {
             card_cpf: card.cpf,
             card_parcelas: Number(card.parcelas),
           }),
+          ...(paymentMethod === "boleto" && { boleto_cpf: boletoCpf }),
         },
       });
 
@@ -178,6 +181,12 @@ function CheckoutPage() {
         } else {
           setErro("Pagamento não confirmado. Verifique os dados do cartão e tente novamente.");
         }
+        return;
+      }
+
+      if (paymentMethod === "boleto") {
+        await clearCart();
+        setBoletoUrl(result.boleto_url ?? null);
         return;
       }
 
@@ -380,10 +389,10 @@ function CheckoutPage() {
           <h2 className="flex items-center gap-2 text-lg font-semibold"><CreditCard className="h-5 w-5" /> Pagamento</h2>
           <CouponInput subtotal={total} onApply={setDesconto} />
           <div className="flex gap-2">
-            {(["pix", "cartao"] as const).map((m) => (
+            {(["pix", "cartao", "boleto"] as const).map((m) => (
               <button key={m} type="button" onClick={() => setPaymentMethod(m)}
                 className={`flex-1 rounded-lg border p-3 text-sm font-medium transition-colors ${paymentMethod === m ? "border-foreground bg-muted" : "border-border hover:bg-muted/50"}`}>
-                {m === "pix" ? "Pix" : "Cartão de crédito"}
+                {m === "pix" ? "Pix" : m === "cartao" ? "Cartão de crédito" : "Boleto"}
               </button>
             ))}
           </div>
@@ -489,11 +498,48 @@ function CheckoutPage() {
             </div>
           )}
 
+          {paymentMethod === "boleto" && (
+            boletoUrl ? (
+              <div className="space-y-3 rounded-lg border bg-muted/30 p-4 text-sm">
+                <p className="font-medium">Boleto gerado com sucesso!</p>
+                <p className="text-muted-foreground">Vencimento em 3 dias. O pedido será confirmado após a compensação bancária (até 2 dias úteis após o pagamento).</p>
+                <a
+                  href={boletoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex w-full items-center justify-center gap-2 rounded-md bg-foreground px-4 py-2.5 text-sm font-medium text-background hover:bg-foreground/90"
+                >
+                  Ver / imprimir boleto
+                </a>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="grid gap-2">
+                  <Label htmlFor="boleto_cpf">CPF do pagador</Label>
+                  <Input
+                    id="boleto_cpf"
+                    placeholder="000.000.000-00"
+                    maxLength={14}
+                    value={boletoCpf}
+                    onChange={(e) => {
+                      const v = e.target.value.replace(/\D/g, "").slice(0, 11);
+                      const fmt = v.replace(/(\d{3})(\d{3})(\d{3})(\d{0,2})/, (_, a, b, c, d) => d ? `${a}.${b}.${c}-${d}` : c ? `${a}.${b}.${c}` : b ? `${a}.${b}` : a);
+                      setBoletoCpf(fmt);
+                    }}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">Vencimento em 3 dias corridos. Compensação em até 2 dias úteis após o pagamento.</p>
+              </div>
+            )
+          )}
+
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setStep("entrega")}><ArrowLeft className="mr-2 h-4 w-4" /> Voltar</Button>
-            <Button type="button" className="flex-1 bg-foreground text-background hover:bg-foreground/90" disabled={busy} onClick={handlePay}>
-              {busy ? "Processando..." : `Pagar R$ ${totalEfetivo.toFixed(2).replace(".", ",")}`}
-            </Button>
+            {!boletoUrl && (
+              <Button type="button" className="flex-1 bg-foreground text-background hover:bg-foreground/90" disabled={busy} onClick={handlePay}>
+                {busy ? "Processando..." : `Pagar R$ ${totalEfetivo.toFixed(2).replace(".", ",")}`}
+              </Button>
+            )}
           </div>
         </div>
       )}
