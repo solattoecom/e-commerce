@@ -1,9 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Package, ChevronDown, ChevronUp, MapPin, CreditCard, Truck, Hash, Check } from "lucide-react";
+import { ArrowLeft, Package, ChevronDown, ChevronUp, MapPin, CreditCard, Truck, Hash, Check, Copy, QrCode } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/external";
 import { useAuth } from "@/hooks/useAuth";
+import { retryPixPayment, getOrderStatus } from "@/lib/checkout.functions";
 
 export const Route = createFileRoute("/_authenticated/pedidos")({
   component: PedidosPage,
@@ -93,12 +94,16 @@ function OrderTimeline({ status }: { status: OrderStatus }) {
   );
 }
 
+type PixState = { qr: string; qrCode: string; secondsLeft: number };
+
 function PedidosPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [pixByOrder, setPixByOrder] = useState<Record<string, PixState>>({});
+  const [pixBusy, setPixBusy] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -119,6 +124,47 @@ function PedidosPage() {
       setLoading(false);
     })();
   }, [user?.id]);
+
+  useEffect(() => {
+    const ids = Object.keys(pixByOrder);
+    if (ids.length === 0) return;
+    const tick = setInterval(() => {
+      setPixByOrder((prev) => {
+        const next = { ...prev };
+        for (const id of ids) {
+          if (next[id]) next[id] = { ...next[id], secondsLeft: Math.max(0, next[id].secondsLeft - 1) };
+        }
+        return next;
+      });
+    }, 1000);
+    return () => clearInterval(tick);
+  }, [Object.keys(pixByOrder).join(",")]);
+
+  async function handleRetryPix(orderId: string) {
+    setPixBusy(orderId);
+    try {
+      const result = await retryPixPayment({ data: { order_id: orderId } });
+      setPixByOrder((prev) => ({ ...prev, [orderId]: { qr: result.pix_qr, qrCode: result.pix_qr_code, secondsLeft: 3600 } }));
+
+      let retries = 0;
+      const interval = setInterval(async () => {
+        try {
+          const s = await getOrderStatus({ data: { order_id: orderId } });
+          retries = 0;
+          if (s.status === "pago") {
+            clearInterval(interval);
+            setPixByOrder((prev) => { const n = { ...prev }; delete n[orderId]; return n; });
+            setOrders((prev) => prev.map((o) => o.id === orderId ? { ...o, status: "pago" as OrderStatus } : o));
+          }
+        } catch { if (++retries >= 5) clearInterval(interval); }
+      }, 3000);
+      setTimeout(() => clearInterval(interval), 10 * 60 * 1000);
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Erro ao gerar PIX.");
+    } finally {
+      setPixBusy(null);
+    }
+  }
 
   if (loading) return (
     <div className="flex min-h-screen items-center justify-center">
@@ -193,6 +239,56 @@ function PedidosPage() {
 
                     {/* Timeline de status */}
                     <OrderTimeline status={order.status} />
+
+                    {/* Retry PIX para pedidos pendentes */}
+                    {order.status === "pendente" && order.payment_method === "pix" && (() => {
+                      const pix = pixByOrder[order.id];
+                      return (
+                        <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-3">
+                          {pix ? (
+                            <>
+                              <p className="flex items-center gap-2 text-sm font-semibold"><QrCode className="size-4" /> QR Code Pix</p>
+                              {pix.qrCode && <img src={pix.qrCode} alt="QR Code Pix" className="mx-auto h-44 w-44" />}
+                              <p className="break-all font-mono text-xs text-muted-foreground">{pix.qr}</p>
+                              <button
+                                type="button"
+                                onClick={() => navigator.clipboard.writeText(pix.qr).then(() => {
+                                  const el = document.getElementById(`pix-copy-${order.id}`);
+                                  if (el) { el.textContent = "Copiado!"; setTimeout(() => { el.textContent = "Copiar código Pix"; }, 2000); }
+                                })}
+                                className="flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-background py-2 text-sm font-medium hover:bg-muted"
+                              >
+                                <Copy className="size-4" />
+                                <span id={`pix-copy-${order.id}`}>Copiar código Pix</span>
+                              </button>
+                              {pix.secondsLeft > 0 ? (
+                                <div className="space-y-1">
+                                  <div className="flex justify-between text-xs text-muted-foreground">
+                                    <span>Expira em</span>
+                                    <span className="font-mono">{String(Math.floor(pix.secondsLeft / 60)).padStart(2, "0")}:{String(pix.secondsLeft % 60).padStart(2, "0")}</span>
+                                  </div>
+                                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                                    <div className="h-full rounded-full bg-foreground transition-all duration-1000" style={{ width: `${(pix.secondsLeft / 3600) * 100}%` }} />
+                                  </div>
+                                </div>
+                              ) : (
+                                <p className="text-center text-xs font-medium text-destructive">QR Code expirado.</p>
+                              )}
+                            </>
+                          ) : (
+                            <button
+                              type="button"
+                              disabled={pixBusy === order.id}
+                              onClick={() => handleRetryPix(order.id)}
+                              className="flex w-full items-center justify-center gap-2 rounded-lg bg-foreground py-2.5 text-sm font-semibold text-background transition-colors hover:bg-foreground/90 disabled:opacity-60"
+                            >
+                              <QrCode className="size-4" />
+                              {pixBusy === order.id ? "Gerando..." : "Pagar com Pix"}
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })()}
 
                     {/* ID completo */}
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">

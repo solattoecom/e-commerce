@@ -246,3 +246,62 @@ export const getOrderStatus = createServerFn({ method: "GET" })
 
     return { status: order.status, payment_id: order.payment_id };
   });
+
+export const retryPixPayment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { order_id: string }) => input)
+  .handler(async ({ data, context }): Promise<{ pix_qr: string; pix_qr_code: string; pix_expiration: string }> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/external.server");
+    const apiKey = process.env["ABACATEPAY_API_KEY"];
+    if (!apiKey) throw new Error("ABACATEPAY_API_KEY não configurada.");
+
+    const { data: order } = await supabaseAdmin
+      .from("orders")
+      .select("id, total, status")
+      .eq("id", data.order_id)
+      .eq("usuario_id", context.userId)
+      .single();
+
+    if (!order) throw new Error("Pedido não encontrado.");
+    if (order.status !== "pendente") throw new Error("Este pedido não está mais pendente.");
+
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("nome, sobrenome, email")
+      .eq("id", context.userId)
+      .single();
+
+    const pixRes = await fetch(ABACATEPAY_PIX_URL, {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        method: "PIX",
+        data: {
+          amount: Math.round(order.total * 100),
+          description: `Pedido ${order.id.slice(0, 8).toUpperCase()}`,
+          expiresIn: 3600,
+          externalId: order.id,
+          customer: {
+            name: `${profile?.nome ?? ""} ${profile?.sobrenome ?? ""}`.trim(),
+            email: profile?.email ?? "",
+            cellphone: "00000000000",
+            taxId: "",
+          },
+        },
+      }),
+    });
+
+    if (!pixRes.ok) {
+      const err = await pixRes.text();
+      throw new Error(`AbacatePay: ${err}`);
+    }
+
+    const pixData = await pixRes.json() as { data: { id: string; brCode: string; brCodeBase64: string; expiresAt: string } };
+    await supabaseAdmin.from("orders").update({ payment_id: pixData.data.id }).eq("id", order.id);
+
+    return {
+      pix_qr: pixData.data.brCode,
+      pix_qr_code: pixData.data.brCodeBase64,
+      pix_expiration: pixData.data.expiresAt,
+    };
+  });
