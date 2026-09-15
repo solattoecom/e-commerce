@@ -126,6 +126,7 @@ function AdminPanel() {
   const [ocupado, setOcupado] = useState<string | null>(null);
   const [nfePorPedido, setNfePorPedido] = useState<Record<string, string>>({});
   const [rastreioPorPedido, setRastreioPorPedido] = useState<Record<string, string>>({});
+  const [statusPorPedido, setStatusPorPedido] = useState<Record<string, string>>({});
   const [expandido, setExpandido] = useState<string | null>(null);
   const [cupons, setCupons] = useState<Cupom[]>([]);
   const [novoCupom, setNovoCupom] = useState({
@@ -213,6 +214,7 @@ function AdminPanel() {
         }
       }
       setNfePorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; return next; });
+      setStatusPorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; return next; });
       if (pedido.profiles?.email) {
         void enviarEmailStatusPedido({
           email: pedido.profiles.email,
@@ -462,7 +464,7 @@ function AdminPanel() {
           ) : null}
           <ul className="divide-y divide-border">
             {pedidos.filter((p) => filtroStatus === "todos" || p.status === filtroStatus).map((p) => {
-              const statusSelecionado = p.status;
+              const statusSelecionado = statusPorPedido[p.id] ?? p.status;
               const nfeAtual = nfePorPedido[p.id] ?? "";
               const rastreioAtual = rastreioPorPedido[p.id] ?? "";
               const isOpen = expandido === p.id;
@@ -566,12 +568,7 @@ function AdminPanel() {
                             value={statusSelecionado}
                             disabled={ocupado === p.id}
                             onChange={(event) => {
-                              const novoStatus = event.target.value;
-                              setPedidos((prev) =>
-                                prev.map((item) =>
-                                  item.id === p.id ? { ...item, status: novoStatus } : item,
-                                ),
-                              );
+                              setStatusPorPedido((prev) => ({ ...prev, [p.id]: event.target.value }));
                             }}
                             className="cursor-pointer rounded-full border border-border bg-background px-3 py-2 text-xs capitalize"
                           >
@@ -579,7 +576,7 @@ function AdminPanel() {
                               <option key={status} value={status}>{status}</option>
                             ))}
                           </select>
-                          {statusSelecionado !== p.status && statusSelecionado !== "enviado" && (
+                          {statusPorPedido[p.id] && statusPorPedido[p.id] !== p.status && statusPorPedido[p.id] !== "enviado" && (
                             <button
                               type="button"
                               disabled={ocupado === p.id}
