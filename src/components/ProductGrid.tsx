@@ -237,21 +237,27 @@ export function ProductGrid({
                     </div>
                   </div>
                 ) : null}
-                <button
-                  type="button"
-                  onClick={() => {
-                    const escolhido = sizeByProduct[product.id] ?? null;
-                    if (signedIn && product.product_variants.length > 0 && !escolhido) {
-                      setSizeError(product.id);
-                      return;
-                    }
-                    setSizeError(null);
-                    onAdd?.(product.id, escolhido);
-                  }}
-                  className="mt-3 w-full cursor-pointer rounded-full bg-foreground px-4 py-2.5 text-sm font-semibold text-background transition-colors hover:bg-foreground/90"
-                >
-                  {signedIn ? "Adicionar à sacola" : "Entrar para comprar"}
-                </button>
+                {product.product_variants.length > 0 && product.product_variants.every((v) => v.estoque <= 0) ? (
+                  <div className="mt-3 w-full rounded-full border border-border px-4 py-2.5 text-center text-sm font-semibold text-muted-foreground">
+                    Esgotado
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const escolhido = sizeByProduct[product.id] ?? null;
+                      if (signedIn && product.product_variants.length > 0 && !escolhido) {
+                        setSizeError(product.id);
+                        return;
+                      }
+                      setSizeError(null);
+                      onAdd?.(product.id, escolhido);
+                    }}
+                    className="mt-3 w-full cursor-pointer rounded-full bg-foreground px-4 py-2.5 text-sm font-semibold text-background transition-colors hover:bg-foreground/90"
+                  >
+                    {signedIn ? "Adicionar à sacola" : "Entrar para comprar"}
+                  </button>
+                )}
                 {sizeError === product.id ? (
                   <p className="mt-2 text-xs text-destructive">Escolha a numeração antes de adicionar.</p>
                 ) : null}
