@@ -567,15 +567,11 @@ function AdminPanel() {
                             disabled={ocupado === p.id}
                             onChange={(event) => {
                               const novoStatus = event.target.value;
-                              if (novoStatus !== "enviado") {
-                                void mudarStatus(p, novoStatus);
-                              } else {
-                                setPedidos((prev) =>
-                                  prev.map((item) =>
-                                    item.id === p.id ? { ...item, status: novoStatus } : item,
-                                  ),
-                                );
-                              }
+                              setPedidos((prev) =>
+                                prev.map((item) =>
+                                  item.id === p.id ? { ...item, status: novoStatus } : item,
+                                ),
+                              );
                             }}
                             className="cursor-pointer rounded-full border border-border bg-background px-3 py-2 text-xs capitalize"
                           >
@@ -583,6 +579,16 @@ function AdminPanel() {
                               <option key={status} value={status}>{status}</option>
                             ))}
                           </select>
+                          {statusSelecionado !== p.status && statusSelecionado !== "enviado" && (
+                            <button
+                              type="button"
+                              disabled={ocupado === p.id}
+                              onClick={() => mudarStatus(p, statusSelecionado)}
+                              className="cursor-pointer rounded-full bg-foreground px-3 py-2 text-xs font-medium text-background transition-colors hover:bg-foreground/85 disabled:opacity-60"
+                            >
+                              Salvar
+                            </button>
+                          )}
                           {statusSelecionado === "enviado" && (
                             <>
                               <input
