@@ -383,15 +383,23 @@ function PedidosPage() {
                         <p className="mb-2 flex items-center gap-1.5 font-semibold">
                           <Truck className="size-4" /> Rastreamento
                         </p>
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-wrap items-center gap-3">
                           <p className="font-mono text-muted-foreground">{order["codigo_rastreio"]}</p>
                           <a
-                            href={`https://www.linketrack.com/trace/${order["codigo_rastreio"]}`}
+                            href={`https://rastreamento.correios.com.br/app/index.php?objeto=${order["codigo_rastreio"]}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="rounded-full bg-foreground px-3 py-1 text-xs font-semibold text-background hover:bg-foreground/85"
                           >
-                            Rastrear
+                            Correios
+                          </a>
+                          <a
+                            href={`https://www.linketrack.com/trace/${order["codigo_rastreio"]}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="rounded-full border border-border px-3 py-1 text-xs font-semibold hover:bg-muted"
+                          >
+                            Linketrack
                           </a>
                         </div>
                       </div>

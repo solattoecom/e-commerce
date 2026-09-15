@@ -60,5 +60,16 @@ export function useAddresses(userId: string | null) {
     return null;
   }, [userId, refresh]);
 
-  return { addresses, loading, refresh, addAddress, setDefault, removeAddress };
+  const updateAddress = useCallback(async (id: string, addr: Partial<NewAddress>): Promise<string | null> => {
+    if (!userId) return null;
+    if (addr.padrao) {
+      await supabase.from("addresses").update({ padrao: false }).eq("user_id", userId);
+    }
+    const { error } = await supabase.from("addresses").update(addr).eq("id", id).eq("user_id", userId);
+    if (error) return "Erro ao atualizar endereço.";
+    await refresh();
+    return null;
+  }, [userId, refresh]);
+
+  return { addresses, loading, refresh, addAddress, setDefault, removeAddress, updateAddress };
 }

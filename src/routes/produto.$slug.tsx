@@ -693,7 +693,7 @@ function ProductPage() {
                   {reviews.length > 0 && (
                     <div className="mt-0.5 flex items-center gap-0.5">
                       {[1,2,3,4,5].map((n) => (
-                        <span key={n} className={`text-xs ${n <= Math.round(media) ? "text-yellow-400" : "text-muted-foreground/30"}`}>★</span>
+                        <span key={n} className={`text-xs ${n <= Math.round(media) ? "text-foreground" : "text-muted-foreground/30"}`}>★</span>
                       ))}
                       <span className="text-xs text-muted-foreground">({reviews.length})</span>
                     </div>

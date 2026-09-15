@@ -21,7 +21,7 @@ function Stars({ media, count }: { media: number; count: number }) {
   return (
     <div className="flex items-center gap-1">
       {[1, 2, 3, 4, 5].map((n) => (
-        <span key={n} className={`text-sm ${n <= Math.round(media) ? "text-yellow-400" : "text-muted-foreground/30"}`}>★</span>
+        <span key={n} className={`text-sm ${n <= Math.round(media) ? "text-foreground" : "text-muted-foreground/30"}`}>★</span>
       ))}
       <span className="text-xs text-muted-foreground">({count})</span>
     </div>

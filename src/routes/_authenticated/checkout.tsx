@@ -23,7 +23,9 @@ function CheckoutPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { items, total, loading: cartLoading, refresh: refreshCart, clearCart } = useCart(user?.id ?? null);
-  const { addresses, loading: addrLoading, addAddress, removeAddress } = useAddresses(user?.id ?? null);
+  const { addresses, loading: addrLoading, addAddress, removeAddress, updateAddress } = useAddresses(user?.id ?? null);
+  const [editingAddr, setEditingAddr] = useState<string | null>(null);
+  const [editAddr, setEditAddr] = useState<Partial<NewAddress>>({});
 
   const [paid, setPaid] = useState(false);
 
@@ -296,19 +298,53 @@ function CheckoutPage() {
           ) : (
             <div className="space-y-2">
               {addresses.map((addr) => (
-                <div key={addr.id} className={`relative rounded-lg border text-sm transition-colors ${selectedAddressId === addr.id ? "border-foreground bg-muted" : "border-border"}`}>
-                  <button type="button" onClick={() => setSelectedAddressId(addr.id)} className="w-full p-4 text-left">
-                    <p className="font-medium">{addr.rua}, {addr.numero}{addr.complemento ? `, ${addr.complemento}` : ""}</p>
-                    <p className="text-muted-foreground">{addr.bairro} — {addr.cidade}/{addr.estado} — CEP {addr.cep.slice(0, 5)}-{addr.cep.slice(5)}</p>
-                    {addr.padrao && <span className="text-xs text-muted-foreground">Padrão</span>}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={async () => { if (selectedAddressId === addr.id) setSelectedAddressId(null); const msg = await removeAddress(addr.id); if (msg) setErro(msg); }}
-                    className="absolute right-3 top-3 text-xs text-foreground"
-                  >
-                    Remover
-                  </button>
+                <div key={addr.id} className={`rounded-lg border text-sm transition-colors ${selectedAddressId === addr.id ? "border-foreground bg-muted" : "border-border"}`}>
+                  {editingAddr === addr.id ? (
+                    <div className="space-y-3 p-4">
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="col-span-2 grid gap-1">
+                          <Label htmlFor={`edit-rua-${addr.id}`}>Rua *</Label>
+                          <Input id={`edit-rua-${addr.id}`} value={editAddr.rua ?? ""} onChange={(e) => setEditAddr((p) => ({ ...p, rua: e.target.value }))} />
+                        </div>
+                        <div className="grid gap-1">
+                          <Label>Número *</Label>
+                          <Input value={editAddr.numero ?? ""} onChange={(e) => setEditAddr((p) => ({ ...p, numero: e.target.value }))} />
+                        </div>
+                        <div className="grid gap-1">
+                          <Label>Complemento</Label>
+                          <Input value={editAddr.complemento ?? ""} onChange={(e) => setEditAddr((p) => ({ ...p, complemento: e.target.value }))} />
+                        </div>
+                        <div className="grid gap-1">
+                          <Label>Bairro *</Label>
+                          <Input value={editAddr.bairro ?? ""} onChange={(e) => setEditAddr((p) => ({ ...p, bairro: e.target.value }))} />
+                        </div>
+                        <div className="grid gap-1">
+                          <Label>Cidade *</Label>
+                          <Input value={editAddr.cidade ?? ""} onChange={(e) => setEditAddr((p) => ({ ...p, cidade: e.target.value }))} />
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button size="sm" className="bg-foreground text-background hover:bg-foreground/90" onClick={async () => {
+                          const msg = await updateAddress(addr.id, editAddr);
+                          if (msg) setErro(msg);
+                          else setEditingAddr(null);
+                        }}>Salvar</Button>
+                        <Button size="sm" variant="ghost" onClick={() => setEditingAddr(null)}>Cancelar</Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="relative">
+                      <button type="button" onClick={() => setSelectedAddressId(addr.id)} className="w-full p-4 text-left">
+                        <p className="font-medium">{addr.rua}, {addr.numero}{addr.complemento ? `, ${addr.complemento}` : ""}</p>
+                        <p className="text-muted-foreground">{addr.bairro} — {addr.cidade}/{addr.estado} — CEP {addr.cep.slice(0, 5)}-{addr.cep.slice(5)}</p>
+                        {addr.padrao && <span className="text-xs text-muted-foreground">Padrão</span>}
+                      </button>
+                      <div className="absolute right-3 top-3 flex gap-2">
+                        <button type="button" onClick={() => { setEditAddr({ rua: addr.rua, numero: addr.numero, complemento: addr.complemento ?? "", bairro: addr.bairro, cidade: addr.cidade, estado: addr.estado }); setEditingAddr(addr.id); }} className="text-xs text-muted-foreground underline underline-offset-4">Editar</button>
+                        <button type="button" onClick={async () => { if (selectedAddressId === addr.id) setSelectedAddressId(null); const msg = await removeAddress(addr.id); if (msg) setErro(msg); }} className="text-xs text-foreground underline underline-offset-4">Remover</button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
