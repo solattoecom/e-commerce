@@ -174,10 +174,14 @@ function CheckoutPage() {
 
       setOrderId(result.order_id);
 
-      if (paymentMethod === "cartao" && result.checkout_url) {
-        setPaid(true);
-        await clearCart();
-        window.location.href = result.checkout_url;
+      if (paymentMethod === "cartao") {
+        if (result.status === "pago") {
+          setPaid(true);
+          await clearCart();
+          setStep("sucesso");
+        } else {
+          setErro("Pagamento não confirmado. Verifique os dados do cartão e tente novamente.");
+        }
         return;
       }
 
