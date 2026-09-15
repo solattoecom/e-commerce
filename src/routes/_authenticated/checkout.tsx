@@ -464,7 +464,11 @@ function CheckoutPage() {
               <div className="grid grid-cols-2 gap-2">
                 <div className="grid gap-2">
                   <Label htmlFor="card_expiry">Validade</Label>
-                  <Input id="card_expiry" placeholder="MM/AA" maxLength={5} value={card.expiry} onChange={(e) => setCard((c) => ({ ...c, expiry: e.target.value }))} />
+                  <Input id="card_expiry" placeholder="MM/AA" maxLength={5} value={card.expiry} onChange={(e) => {
+                    const v = e.target.value.replace(/\D/g, "").slice(0, 4);
+                    const fmt = v.length > 2 ? `${v.slice(0, 2)}/${v.slice(2)}` : v;
+                    setCard((c) => ({ ...c, expiry: fmt }));
+                  }} />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="card_cvv">CVV</Label>
