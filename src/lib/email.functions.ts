@@ -170,6 +170,54 @@ export async function enviarStatusPedido(data: StatusInput) {
   });
 }
 
+type AvaliacaoInput = {
+  email: string;
+  nome: string;
+  pedido_id: string;
+  itens: { nome: string; slug: string }[];
+};
+
+export async function enviarEmailAvaliacao(data: AvaliacaoInput) {
+  const resend = getResend();
+
+  const itensHtml = data.itens.map((item) => `
+    <tr>
+      <td style="padding:10px 0;border-bottom:1px solid #f0f0f0;">
+        <p style="margin:0;font-size:14px;font-weight:600;">${item.nome}</p>
+      </td>
+      <td style="padding:10px 0;border-bottom:1px solid #f0f0f0;text-align:right;">
+        <a href="https://www.solatto.com.br/produto/${item.slug}"
+           style="display:inline-block;background:#000;color:#fff;text-decoration:none;padding:7px 16px;border-radius:20px;font-size:12px;font-weight:600;">
+          Avaliar
+        </a>
+      </td>
+    </tr>
+  `).join("");
+
+  const html = baseTemplate(`
+    <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;">Como foi sua experiência?</h1>
+    <p style="margin:0 0 24px;font-size:15px;color:#555;">
+      Olá, ${data.nome}! Seu pedido foi entregue. Que tal deixar uma avaliação dos produtos?
+      Sua opinião ajuda outros clientes a escolherem melhor.
+    </p>
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+      ${itensHtml}
+    </table>
+
+    <p style="margin:0;font-size:13px;color:#999;">
+      Obrigado por comprar na Solatto!
+    </p>
+  `);
+
+  await resend.emails.send({
+    from: FROM,
+    to: data.email,
+    subject: `Como foi seu pedido #${data.pedido_id.slice(0, 8).toUpperCase()}? Avalie seus produtos · Solatto`,
+    html,
+  });
+}
+
 export const enviarEmailConfirmacaoPedido = createServerFn({ method: "POST" })
   .inputValidator((input: ConfirmacaoInput) => input)
   .handler(async ({ data }) => { await enviarConfirmacaoPedido(data); });

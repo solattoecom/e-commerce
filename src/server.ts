@@ -3,6 +3,7 @@ import "./lib/error-capture";
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 import { handleAbacatePayWebhook } from "./lib/webhook-abacatepay";
+import { runTrackingCron } from "./lib/tracking-cron";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -51,6 +52,15 @@ export default {
       const url = new URL(request.url);
       if (url.pathname === "/api/webhook/abacatepay" && request.method === "POST") {
         return await handleAbacatePayWebhook(request);
+      }
+
+      if (url.pathname === "/api/cron/check-deliveries" && request.method === "GET") {
+        const secret = process.env["CRON_SECRET"];
+        const auth = request.headers.get("authorization");
+        if (secret && auth !== `Bearer ${secret}`) {
+          return new Response("unauthorized", { status: 401 });
+        }
+        return await runTrackingCron();
       }
 
       const handler = await getServerEntry();

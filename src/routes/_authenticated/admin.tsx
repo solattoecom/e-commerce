@@ -9,7 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useAdminExists } from "@/hooks/useAdminExists";
 import { claimFirstAdmin } from "@/lib/admin.functions";
-import { enviarEmailStatusPedido } from "@/lib/email.functions";
+import { enviarEmailStatusPedido, enviarEmailAvaliacao } from "@/lib/email.functions";
 import { incrementCouponUsage } from "@/lib/coupon.functions";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -53,7 +53,7 @@ type PedidoItem = {
   quantidade: number;
   preco_unitario: number;
   subtotal: number;
-  products: { nome: string; product_images: { url: string }[] } | null;
+  products: { nome: string; slug: string; product_images: { url: string }[] } | null;
   product_variants: { tamanho: string } | null;
 };
 
@@ -147,7 +147,7 @@ function AdminPanel() {
       supabase
         .from("orders")
         .select(
-          "id, status, subtotal, frete, total, coupon_id, payment_method, nota_fiscal, codigo_rastreio, criado_em, usuario_id, endereco, profiles(nome, sobrenome, email), order_items(id, quantidade, preco_unitario, subtotal, products(nome, product_images(url)), product_variants(tamanho))",
+          "id, status, subtotal, frete, total, coupon_id, payment_method, nota_fiscal, codigo_rastreio, criado_em, usuario_id, endereco, profiles(nome, sobrenome, email), order_items(id, quantidade, preco_unitario, subtotal, products(nome, slug, product_images(url)), product_variants(tamanho))",
         )
         .order("criado_em", { ascending: false }),
     ]);
@@ -221,6 +221,20 @@ function AdminPanel() {
           status,
           codigo_rastreio: rastreio?.trim() || null,
         }).catch(() => {});
+
+        if (status === "entregue") {
+          void enviarEmailAvaliacao({
+            email: pedido.profiles.email,
+            nome: pedido.profiles.nome,
+            pedido_id: pedido.id,
+            itens: pedido.order_items
+              .filter((i) => i.products)
+              .map((i) => ({
+                nome: i.products!.nome,
+                slug: (i.products as { nome: string; slug?: string }).slug ?? "",
+              })),
+          }).catch(() => {});
+        }
       }
       await carregar();
     }
