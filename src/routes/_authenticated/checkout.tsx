@@ -45,7 +45,7 @@ function CheckoutPage() {
 
   const [paymentMethod, setPaymentMethod] = useState<"pix" | "cartao" | "boleto">("pix");
   const [telefone, setTelefone] = useState("");
-  const [card, setCard] = useState({ number: "", holder: "", expiry: "", cvv: "", cpf: "", parcelas: "1" });
+  const [card, setCard] = useState({ number: "", holder: "", expiry: "", cvv: "", cpf: "", telefone: "", parcelas: "1" });
   const [boletoCpf, setBoletoCpf] = useState("");
   const [boletoUrl, setBoletoUrl] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -165,6 +165,7 @@ function CheckoutPage() {
             card_expiry: card.expiry,
             card_cvv: card.cvv,
             card_cpf: card.cpf,
+            card_telefone: card.telefone.replace(/\D/g, ""),
             card_parcelas: Number(card.parcelas),
           }),
           ...(paymentMethod === "boleto" && { boleto_cpf: boletoCpf }),
@@ -449,6 +450,16 @@ function CheckoutPage() {
               <div className="grid gap-2">
                 <Label htmlFor="card_holder">Nome no cartão</Label>
                 <Input id="card_holder" placeholder="NOME SOBRENOME" value={card.holder} onChange={(e) => setCard((c) => ({ ...c, holder: e.target.value.toUpperCase() }))} />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="card_telefone">Telefone do titular (com DDD)</Label>
+                <Input id="card_telefone" placeholder="(11) 99999-9999" maxLength={15} value={card.telefone} onChange={(e) => {
+                  const v = e.target.value.replace(/\D/g, "").slice(0, 11);
+                  const fmt = v.length <= 10
+                    ? v.replace(/(\d{2})(\d{4})(\d{0,4})/, (_, a, b, c) => c ? `(${a}) ${b}-${c}` : b ? `(${a}) ${b}` : a)
+                    : v.replace(/(\d{2})(\d{5})(\d{0,4})/, (_, a, b, c) => c ? `(${a}) ${b}-${c}` : b ? `(${a}) ${b}` : a);
+                  setCard((c) => ({ ...c, telefone: fmt }));
+                }} />
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div className="grid gap-2">

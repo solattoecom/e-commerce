@@ -27,6 +27,7 @@ type CreateOrderInput = {
   card_expiry?: string;
   card_cvv?: string;
   card_cpf?: string;
+  card_telefone?: string;
   card_parcelas?: number;
   boleto_cpf?: string;
   coupon_id?: string | null;
@@ -275,7 +276,7 @@ export const createOrder = createServerFn({ method: "POST" })
           cpfCnpj: (data.card_cpf ?? "").replace(/\D/g, ""),
           postalCode: (address.cep ?? "").replace(/\D/g, ""),
           addressNumber: String(address.numero ?? ""),
-          phone: data.telefone || "",
+          phone: data.card_telefone || data.telefone || "",
         },
       }),
     });
