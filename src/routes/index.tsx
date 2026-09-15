@@ -897,10 +897,16 @@ function Index() {
                   </span>
                 </div>
               ) : null}
-              <div className="mb-3 mt-2 flex items-center justify-between text-sm">
+              <div className="mb-1 mt-2 flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Total</span>
                 <span className="text-lg font-semibold">
                   {Number(cart.total - (desconto?.discount_amount ?? 0) + (frete?.valor ?? 0)).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                </span>
+              </div>
+              <div className="mb-3 flex items-center justify-between text-sm">
+                <span className="text-green-600 font-medium">No PIX (10% off)</span>
+                <span className="text-green-600 font-semibold">
+                  {Number((cart.total - (desconto?.discount_amount ?? 0) + (frete?.valor ?? 0)) * 0.9).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                 </span>
               </div>
               <Button
