@@ -108,7 +108,7 @@ export function ProductGrid({
   }
 
   return (
-    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
       {visiveis.map((product) => {
         const imagens = [...product.product_images].sort((a, b) => a.ordem - b.ordem);
         const total = imagens.length;

@@ -319,79 +319,42 @@ function AdminPanel() {
 
   const pendentes = solicitacoes.filter((s) => s.status === "pendente");
 
-  const navItems = [
-    ["dashboard", "Dashboard"],
-    ["solicitacoes", `Solicitações${pendentes.length ? ` (${pendentes.length})` : ""}`],
-    ["pedidos", `Pedidos${pedidos.length ? ` (${pedidos.length})` : ""}`],
-    ["produtos", "Produtos"],
-    ["cupons", "Cupons"],
-  ] as const;
-
-  const abaLabels: Record<typeof aba, string> = {
-    dashboard: "Dashboard",
-    solicitacoes: "Solicitações",
-    pedidos: "Pedidos",
-    produtos: "Produtos",
-    cupons: "Cupons",
-  };
-
   return (
-    <main className="flex min-h-screen w-full bg-background">
-      {/* Sidebar desktop */}
-      <aside className="hidden lg:flex lg:w-56 lg:shrink-0 lg:flex-col lg:border-r lg:border-border">
-        <div className="px-5 py-6">
-          <p className="text-base font-bold tracking-widest">SOLATTO</p>
-          <p className="text-xs text-muted-foreground">Painel administrativo</p>
+    <main className="mx-auto min-h-screen w-full max-w-[1100px] px-4 py-10 sm:px-6">
+      <header className="mb-8 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold sm:text-3xl">Painel administrativo</h1>
+          <p className="text-sm text-muted-foreground">Aprovações de conta e pedidos da loja.</p>
         </div>
-        <nav className="flex-1 space-y-0.5 px-3">
-          {navItems.map(([chave, rotulo]) => (
-            <button
-              key={chave}
-              type="button"
-              onClick={() => setAba(chave)}
-              className={`w-full cursor-pointer rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-colors ${
-                aba === chave ? "bg-foreground text-background" : "text-foreground hover:bg-muted"
-              }`}
-            >
-              {rotulo}
-            </button>
-          ))}
-        </nav>
-        <div className="border-t border-border px-5 py-4">
-          <Link to="/" className="text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground">
-            ← Voltar para a loja
-          </Link>
-        </div>
-      </aside>
+        <Link to="/" className="cursor-pointer text-sm underline underline-offset-4">
+          Voltar para a loja
+        </Link>
+      </header>
 
-      {/* Conteúdo principal */}
-      <div className="flex min-w-0 flex-1 flex-col px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-        {/* Header mobile */}
-        <header className="mb-6 flex flex-wrap items-center justify-between gap-3 lg:hidden">
-          <div>
-            <h1 className="text-xl font-semibold">Painel administrativo</h1>
-          </div>
-          <Link to="/" className="text-sm underline underline-offset-4">Voltar para a loja</Link>
-        </header>
-
-        {/* Tabs mobile */}
-        <div className="mb-6 flex flex-wrap gap-2 lg:hidden">
-          {navItems.map(([chave, rotulo]) => (
-            <button
-              key={chave}
-              type="button"
-              onClick={() => setAba(chave)}
-              className={`cursor-pointer rounded-full px-4 py-2 text-sm transition-colors ${
-                aba === chave ? "bg-foreground text-background" : "bg-muted text-foreground hover:bg-muted/70"
-              }`}
-            >
-              {rotulo}
-            </button>
-          ))}
-        </div>
-
-        {/* Título da aba (desktop) */}
-        <h2 className="mb-6 hidden text-2xl font-semibold lg:block">{abaLabels[aba]}</h2>
+      <div className="mb-6 flex flex-wrap gap-2">
+        {(
+          [
+            ["dashboard", "Dashboard"],
+            ["solicitacoes", `Solicitações${pendentes.length ? ` (${pendentes.length})` : ""}`],
+            ["pedidos", `Pedidos${pedidos.length ? ` (${pedidos.length})` : ""}`],
+            ["produtos", "Produtos"],
+            ["cupons", "Cupons"],
+          ] as const
+        ).map(([chave, rotulo]) => (
+          <button
+            key={chave}
+            type="button"
+            onClick={() => setAba(chave)}
+            className={`cursor-pointer rounded-full px-4 py-2 text-sm transition-colors ${
+              aba === chave
+                ? "bg-foreground text-background"
+                : "bg-muted text-foreground hover:bg-muted/70"
+            }`}
+          >
+            {rotulo}
+          </button>
+        ))}
+      </div>
 
       {erro ? <p className="mb-4 text-sm text-destructive">{erro}</p> : null}
       {carregandoDados ? <p className="text-sm text-muted-foreground">Carregando...</p> : null}
@@ -826,7 +789,6 @@ function AdminPanel() {
           </div>
         </section>
       ) : null}
-      </div>
     </main>
   );
 }

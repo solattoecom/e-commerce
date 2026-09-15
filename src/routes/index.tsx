@@ -160,7 +160,7 @@ function StickyHeader({
         visible ? "translate-y-0" : "-translate-y-full"
       }`}
     >
-      <div className="mx-auto grid w-full max-w-[1920px] grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 px-4 py-3 sm:grid-cols-[auto_minmax(180px,1fr)_auto] sm:gap-x-4 sm:px-5 xl:flex">
+      <div className="mx-auto grid w-full max-w-[1180px] grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 px-4 py-3 sm:grid-cols-[auto_minmax(180px,1fr)_auto] sm:gap-x-4 sm:px-5 xl:flex">
         <a href="#inicio" className="min-w-0 truncate cursor-pointer text-lg font-bold uppercase tracking-[0.18em] sm:shrink-0 sm:text-xl sm:tracking-[0.22em]">
           Solatto
         </a>
@@ -292,7 +292,7 @@ function StickyHeader({
       </div>
 
       <div className="border-t border-border/70">
-        <div className="mx-auto flex w-full max-w-[1920px] items-center gap-5 overflow-x-auto px-4 py-2 text-sm [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-6 sm:px-5">
+        <div className="mx-auto flex w-full max-w-[1180px] items-center gap-5 overflow-x-auto px-4 py-2 text-sm [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-6 sm:px-5">
           {headerCategories.map(({ label, href }) => (
             <a
               key={label}
@@ -978,7 +978,7 @@ function Index() {
             src={heroVideo.url}
           />
           <div className="absolute inset-0 bg-foreground/45" />
-          <div className="relative z-10 grid w-full max-w-[1920px] items-center md:grid-cols-[0.95fr_1.05fr]">
+          <div className="relative z-10 grid w-full max-w-[1100px] items-center md:grid-cols-[0.95fr_1.05fr]">
             <div className="access-panel max-w-md text-primary-foreground">
               <p className="mb-8 text-2xl font-bold uppercase tracking-[0.24em]">Solatto</p>
 
@@ -1156,7 +1156,7 @@ function Index() {
 
 
         <section id="categorias" className="scroll-mt-28 py-20">
-          <div className="mx-auto w-full max-w-[1920px] px-5 md:px-8">
+          <div className="mx-auto w-full max-w-[1440px] px-5 md:px-8">
             <div className="mb-10 flex items-end justify-between gap-5">
               <div><p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-foreground/60">Escolha o seu estilo</p><h2 className="text-3xl font-semibold sm:text-4xl">Feito para a vida em movimento.</h2></div>
               <a href="#novidades" className="hidden border-b border-foreground pb-1 text-sm md:block">Ver todos</a>
@@ -1171,7 +1171,7 @@ function Index() {
 
         {tamanhos.length > 0 ? (
           <section className="border-y border-border bg-muted/30 py-12">
-            <div className="mx-auto w-full max-w-[1920px] px-5 md:px-8">
+            <div className="mx-auto w-full max-w-[1440px] px-5 md:px-8">
               <div className="mb-6 text-center">
                 <p className="text-xs font-bold uppercase tracking-[0.2em] text-foreground/60">Encontre o seu</p>
                 <h2 className="mt-2 text-2xl font-semibold sm:text-3xl">Compre por tamanho</h2>
@@ -1209,7 +1209,7 @@ function Index() {
         ) : null}
 
         <section id="novidades" className="scroll-mt-28 bg-background py-16">
-          <div className="mx-auto w-full max-w-[1920px] px-5 md:px-8">
+          <div className="mx-auto w-full max-w-[1440px] px-5 md:px-8">
             <div className="mb-10 text-center">
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-foreground/60">Solatto essencial</p>
               <h2 className="mx-auto mt-4 max-w-2xl text-3xl font-medium leading-tight sm:text-5xl">
@@ -1234,7 +1234,7 @@ function Index() {
         </section>
 
         <section id="faq" className="scroll-mt-28 py-20 max-[900px]:py-[60px]">
-          <div className="mx-auto grid w-full max-w-[1920px] grid-cols-[1.6fr_1fr] items-stretch gap-[30px] px-5 max-[900px]:grid-cols-1 max-[900px]:gap-[60px]">
+          <div className="mx-auto grid w-full max-w-[1100px] grid-cols-[1.6fr_1fr] items-stretch gap-[30px] px-5 max-[900px]:grid-cols-1 max-[900px]:gap-[60px]">
             <div className="c5-animated-gradient flex flex-col items-center justify-center rounded-[24px] px-10 py-20 text-center text-primary-foreground shadow-[0_10px_30px_rgba(0,0,0,0.05)]">
               <h2 className="mb-[15px] text-[clamp(2.5rem,6vw,3.5rem)] font-normal leading-[1.1] tracking-normal">Seu próximo par<br />começa aqui.</h2>
               <p className="mb-[30px] text-[0.9rem] font-normal opacity-85">Novos caminhos pedem conforto de verdade.</p>
@@ -1256,7 +1256,7 @@ function Index() {
       </main>
 
       <footer className="border-t border-border bg-background pt-16">
-        <div className="mx-auto w-full max-w-[1920px] px-5">
+        <div className="mx-auto w-full max-w-[1100px] px-5">
           <div className="mb-[50px] grid grid-cols-[2fr_1fr_1fr_2fr] gap-10 max-[900px]:grid-cols-2 max-[480px]:grid-cols-1">
             <div><p className="text-xl font-bold uppercase tracking-[0.24em]">Solatto</p><p className="mt-5 max-w-xs text-sm leading-6 text-muted-foreground">Calçados criados para levar conforto, personalidade e confiança a cada destino.</p></div>
             <div><h3 className="mb-4 text-sm font-semibold">Navegação</h3><ul className="space-y-3 text-sm text-muted-foreground"><li><a href="#inicio">Início</a></li><li><a href="#categorias">Calçados</a></li><li><a href="#novidades">Novidades</a></li><li><a href="#faq">Dúvidas</a></li></ul></div>
