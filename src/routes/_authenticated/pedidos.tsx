@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Package, ChevronDown, ChevronUp, MapPin, CreditCard, Truck, Hash } from "lucide-react";
+import { ArrowLeft, Package, ChevronDown, ChevronUp, MapPin, CreditCard, Truck, Hash, Check } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/external";
 import { useAuth } from "@/hooks/useAuth";
@@ -47,6 +47,51 @@ type Order = {
 };
 
 const brl = (v: number) => Number(v).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+const TIMELINE_STEPS: { status: OrderStatus; label: string }[] = [
+  { status: "pendente",  label: "Pedido feito" },
+  { status: "pago",      label: "Pagamento confirmado" },
+  { status: "separando", label: "Separando" },
+  { status: "enviado",   label: "Enviado" },
+  { status: "entregue",  label: "Entregue" },
+];
+
+function OrderTimeline({ status }: { status: OrderStatus }) {
+  if (status === "cancelado") {
+    return (
+      <div className="rounded-lg bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+        Pedido cancelado
+      </div>
+    );
+  }
+
+  const currentIndex = TIMELINE_STEPS.findIndex((s) => s.status === status);
+
+  return (
+    <div className="relative flex items-start justify-between gap-1">
+      {TIMELINE_STEPS.map((step, i) => {
+        const done = i < currentIndex;
+        const active = i === currentIndex;
+        return (
+          <div key={step.status} className="relative flex flex-1 flex-col items-center gap-1.5">
+            {i < TIMELINE_STEPS.length - 1 && (
+              <div className={`absolute left-1/2 top-3.5 h-px w-full -translate-y-1/2 ${i < currentIndex ? "bg-foreground" : "bg-border"}`} />
+            )}
+            <div className={`relative z-10 flex h-7 w-7 items-center justify-center rounded-full border-2 text-xs font-bold transition-colors
+              ${done ? "border-foreground bg-foreground text-background"
+                : active ? "border-foreground bg-background text-foreground"
+                : "border-border bg-background text-muted-foreground"}`}>
+              {done ? <Check className="h-3.5 w-3.5" /> : i + 1}
+            </div>
+            <p className={`text-center text-[10px] leading-tight ${active ? "font-semibold text-foreground" : done ? "text-foreground" : "text-muted-foreground"}`}>
+              {step.label}
+            </p>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 function PedidosPage() {
   const { user } = useAuth();
@@ -145,6 +190,9 @@ function PedidosPage() {
                 {/* Detalhes expandidos */}
                 {isOpen && (
                   <div className="space-y-5 border-t border-border px-4 pb-5 pt-4 text-sm">
+
+                    {/* Timeline de status */}
+                    <OrderTimeline status={order.status} />
 
                     {/* ID completo */}
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
