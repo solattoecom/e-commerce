@@ -117,7 +117,8 @@ function AdminPanel() {
   const { user, loading: carregandoUsuario } = useAuth();
   const { isAdmin, loading: carregandoPapel } = useIsAdmin(user?.id);
   const { existe: jaTemAdmin } = useAdminExists();
-  const [aba, setAba] = useState<"dashboard" | "solicitacoes" | "pedidos" | "produtos" | "cupons">("dashboard");
+  const [aba, setAba] = useState<"dashboard" | "solicitacoes" | "pedidos" | "produtos" | "cupons" | "relatorios">("dashboard");
+  const [periodoRelatorio, setPeriodoRelatorio] = useState<7 | 30 | 90 | 365>(30);
   const [filtroStatus, setFiltroStatus] = useState<string>("todos");
   const [solicitacoes, setSolicitacoes] = useState<Solicitacao[]>([]);
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
@@ -337,6 +338,7 @@ function AdminPanel() {
             ["pedidos", `Pedidos${pedidos.length ? ` (${pedidos.length})` : ""}`],
             ["produtos", "Produtos"],
             ["cupons", "Cupons"],
+            ["relatorios", "Relatórios"],
           ] as const
         ).map(([chave, rotulo]) => (
           <button
@@ -787,7 +789,130 @@ function AdminPanel() {
             )}
           </div>
         </section>
-      ) : null}
+      ) : aba === "relatorios" ? (() => {
+        const agora = new Date();
+        const inicio = new Date(agora.getTime() - periodoRelatorio * 24 * 60 * 60 * 1000);
+        const pedidosFiltrados = pedidos.filter(
+          (p) => !["pendente", "cancelado"].includes(p.status) && new Date(p.criado_em) >= inicio,
+        );
+        const faturamento = pedidosFiltrados.reduce((s, p) => s + Number(p.total), 0);
+        const ticketMedio = pedidosFiltrados.length > 0 ? faturamento / pedidosFiltrados.length : 0;
+
+        const porMetodo: Record<string, { count: number; total: number }> = {};
+        for (const p of pedidosFiltrados) {
+          const m = p.payment_method ?? "outro";
+          if (!porMetodo[m]) porMetodo[m] = { count: 0, total: 0 };
+          porMetodo[m].count++;
+          porMetodo[m].total += Number(p.total);
+        }
+
+        const porProduto: Record<string, { nome: string; quantidade: number; total: number }> = {};
+        for (const p of pedidosFiltrados) {
+          for (const item of p.order_items) {
+            const nome = item.products?.nome ?? "Produto removido";
+            if (!porProduto[nome]) porProduto[nome] = { nome, quantidade: 0, total: 0 };
+            porProduto[nome].quantidade += item.quantidade;
+            porProduto[nome].total += Number(item.subtotal);
+          }
+        }
+        const topProdutos = Object.values(porProduto)
+          .sort((a, b) => b.quantidade - a.quantidade)
+          .slice(0, 10);
+
+        const metodoLabel: Record<string, string> = { pix: "PIX", cartao: "Cartão", boleto: "Boleto" };
+
+        return (
+          <div className="space-y-8">
+            <div className="flex flex-wrap gap-2">
+              {([7, 30, 90, 365] as const).map((d) => (
+                <button
+                  key={d}
+                  type="button"
+                  onClick={() => setPeriodoRelatorio(d)}
+                  className={`cursor-pointer rounded-full px-4 py-1.5 text-sm transition-colors ${
+                    periodoRelatorio === d ? "bg-foreground text-background" : "bg-muted hover:bg-muted/70"
+                  }`}
+                >
+                  {d === 7 ? "7 dias" : d === 30 ? "30 dias" : d === 90 ? "90 dias" : "1 ano"}
+                </button>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              {[
+                { label: "Faturamento", value: brl(faturamento) },
+                { label: "Pedidos", value: String(pedidosFiltrados.length) },
+                { label: "Ticket médio", value: brl(ticketMedio) },
+              ].map((c) => (
+                <div key={c.label} className="rounded-2xl border border-border bg-background p-5 space-y-1">
+                  <p className="text-xs text-muted-foreground">{c.label}</p>
+                  <p className="text-2xl font-bold">{c.value}</p>
+                </div>
+              ))}
+            </div>
+
+            <section>
+              <h2 className="mb-4 text-base font-semibold">Por método de pagamento</h2>
+              <div className="overflow-hidden rounded-2xl border border-border">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/30">
+                      <th className="px-4 py-3 text-left font-medium">Método</th>
+                      <th className="px-4 py-3 text-right font-medium">Pedidos</th>
+                      <th className="px-4 py-3 text-right font-medium">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {Object.entries(porMetodo).length === 0 ? (
+                      <tr><td colSpan={3} className="px-4 py-4 text-center text-muted-foreground">Nenhum pedido no período.</td></tr>
+                    ) : (
+                      Object.entries(porMetodo)
+                        .sort(([, a], [, b]) => b.total - a.total)
+                        .map(([m, v]) => (
+                          <tr key={m}>
+                            <td className="px-4 py-3">{metodoLabel[m] ?? m}</td>
+                            <td className="px-4 py-3 text-right">{v.count}</td>
+                            <td className="px-4 py-3 text-right font-medium">{brl(v.total)}</td>
+                          </tr>
+                        ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <section>
+              <h2 className="mb-4 text-base font-semibold">Produtos mais vendidos</h2>
+              <div className="overflow-hidden rounded-2xl border border-border">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/30">
+                      <th className="px-4 py-3 text-left font-medium">#</th>
+                      <th className="px-4 py-3 text-left font-medium">Produto</th>
+                      <th className="px-4 py-3 text-right font-medium">Qtd.</th>
+                      <th className="px-4 py-3 text-right font-medium">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {topProdutos.length === 0 ? (
+                      <tr><td colSpan={4} className="px-4 py-4 text-center text-muted-foreground">Nenhum produto vendido no período.</td></tr>
+                    ) : (
+                      topProdutos.map((p, i) => (
+                        <tr key={p.nome}>
+                          <td className="px-4 py-3 text-muted-foreground">{i + 1}</td>
+                          <td className="px-4 py-3 font-medium">{p.nome}</td>
+                          <td className="px-4 py-3 text-right">{p.quantidade}</td>
+                          <td className="px-4 py-3 text-right">{brl(p.total)}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+        );
+      })() : null}
     </main>
   );
 }

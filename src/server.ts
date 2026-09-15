@@ -5,6 +5,7 @@ import { renderErrorPage } from "./lib/error-page";
 import { handleAbacatePayWebhook } from "./lib/webhook-abacatepay";
 import { handleAsaasWebhook } from "./lib/webhook-asaas";
 import { runTrackingCron } from "./lib/tracking-cron";
+import { runLowStockCron } from "./lib/low-stock-cron";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -47,6 +48,56 @@ function isH3SwallowedErrorBody(body: string): boolean {
   }
 }
 
+async function generateSitemap(): Promise<Response> {
+  try {
+    const { supabaseAdmin } = await import("./integrations/supabase/external.server");
+    const { data: products } = await supabaseAdmin
+      .from("products")
+      .select("slug, criado_em")
+      .eq("ativo", true)
+      .order("criado_em", { ascending: false });
+
+    const base = "https://solatto.com.br";
+    const staticPages = [
+      { url: base, priority: "1.0", changefreq: "daily" },
+      { url: `${base}/login`, priority: "0.3", changefreq: "yearly" },
+    ];
+
+    const productUrls = (products ?? []).map((p: { slug: string; criado_em: string }) => ({
+      url: `${base}/produto/${p.slug}`,
+      priority: "0.8",
+      changefreq: "weekly",
+      lastmod: p.criado_em.slice(0, 10),
+    }));
+
+    const allUrls = [...staticPages, ...productUrls];
+
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${allUrls
+  .map(
+    (u) => `  <url>
+    <loc>${u.url}</loc>
+    ${"lastmod" in u ? `<lastmod>${u.lastmod}</lastmod>\n    ` : ""}<changefreq>${u.changefreq}</changefreq>
+    <priority>${u.priority}</priority>
+  </url>`,
+  )
+  .join("\n")}
+</urlset>`;
+
+    return new Response(xml, {
+      status: 200,
+      headers: {
+        "content-type": "application/xml; charset=utf-8",
+        "cache-control": "public, max-age=3600",
+      },
+    });
+  } catch (err) {
+    console.error("sitemap error:", err);
+    return new Response("error generating sitemap", { status: 500 });
+  }
+}
+
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
@@ -66,6 +117,19 @@ export default {
           return new Response("unauthorized", { status: 401 });
         }
         return await runTrackingCron();
+      }
+
+      if (url.pathname === "/api/cron/check-low-stock" && request.method === "GET") {
+        const secret = process.env["CRON_SECRET"];
+        const auth = request.headers.get("authorization");
+        if (secret && auth !== `Bearer ${secret}`) {
+          return new Response("unauthorized", { status: 401 });
+        }
+        return await runLowStockCron();
+      }
+
+      if (url.pathname === "/sitemap.xml" && request.method === "GET") {
+        return await generateSitemap();
       }
 
       const handler = await getServerEntry();
