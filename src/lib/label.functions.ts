@@ -7,7 +7,6 @@ const ME_FROM = {
   name: "SOLATTO COMERCIO DE CALCADOS ROUPAS E ACESSORIOS LTDA",
   phone: "16999136670",
   email: "solattoecom@gmail.com",
-  document: "51987195000146",
   company_document: "51987195000146",
   address: "R ROMUALDO MAGALHAES PIRRO",
   number: "1050",
@@ -94,6 +93,7 @@ export const generateLabel = createServerFn({ method: "POST" })
         postal_code: endereco.cep.replace(/\D/g, ""),
       },
       volumes: [{ height: 15, width: 22, length: 35, weight: pesoKg }],
+      options: { insurance_value: 0, receipt: false, own_hand: false, non_commercial: true },
     };
 
     const cartRes = await fetch(`${ME_BASE}/cart`, {
