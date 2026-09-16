@@ -28,8 +28,11 @@ async function consultarME(meOrderId: string): Promise<{ entregue: boolean; even
         signal: AbortSignal.timeout(8000),
       },
     );
-    if (!res.ok) return { entregue: false, evento: null };
-    const data = (await res.json()) as METrackingResposta;
+    const contentType = res.headers.get("content-type") ?? "";
+    const body = await res.text();
+    console.log(`[ME tracking] status=${res.status} content-type=${contentType} body=${body.slice(0, 300)}`);
+    if (!res.ok || !contentType.includes("application/json")) return { entregue: false, evento: null };
+    const data = JSON.parse(body) as METrackingResposta;
     const item = data[meOrderId];
     if (!item) return { entregue: false, evento: null };
 
