@@ -33,16 +33,19 @@ export const generateLabel = createServerFn({ method: "POST" })
     // Busca pedido com itens
     const { data: order } = await supabaseAdmin
       .from("orders")
-      .select("id, status, me_service_id, usuario_id, endereco, order_items(quantidade)")
+      .select("id, status, me_service_id, me_order_id, usuario_id, endereco, order_items(quantidade)")
       .eq("id", data.order_id)
       .single();
 
     if (!order) throw new Error("Pedido não encontrado.");
-    if (!["pago", "processando"].includes(order.status)) {
-      throw new Error("O pedido precisa estar com status 'pago' ou 'processando'.");
+    if (!["pago", "separando"].includes(order.status)) {
+      throw new Error("O pedido precisa estar com status 'pago' ou 'separando'.");
     }
     if (!order.me_service_id) {
       throw new Error("Este pedido não possui serviço Melhor Envio associado.");
+    }
+    if (order.me_order_id) {
+      throw new Error("Etiqueta já gerada para este pedido.");
     }
 
     // Busca perfil do cliente

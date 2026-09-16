@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/external-auth-middleware";
 
 export type TrackingEvent = {
   descricao: string;
@@ -22,6 +23,7 @@ type METrackingResponse = Record<string, METrackingItem>;
 type GetTrackingInput = { me_order_id: string };
 
 export const getTrackingEvents = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: GetTrackingInput) => input)
   .handler(async ({ data }): Promise<TrackingEvent[]> => {
     const token = process.env["MELHOR_ENVIO_TOKEN"];
