@@ -118,7 +118,6 @@ async function cotarMelhorEnvio(
     to: { postal_code: cep },
     package: { height: 15, width: 22, length: 35, weight: pesoKg },
     options: { receipt: false, own_hand: false },
-    services: "",
   };
 
   let res: Response;
@@ -201,7 +200,7 @@ async function cotarMelhorEnvio(
 // ── server function pública ───────────────────────────────────────────────────
 
 export const quoteShipping = createServerFn({ method: "POST" })
-  .validator((input: QuoteInput) => input)
+  .inputValidator((input: QuoteInput) => input)
   .handler(async ({ data }): Promise<ShippingQuote> => {
     const cep = String(data.cep ?? "").replace(/\D/g, "");
     if (cep.length !== 8) throw new Error("CEP inválido. Digite os 8 números.");
