@@ -138,16 +138,25 @@ async function cotarMelhorEnvio(
     return null;
   }
 
-  if (!res.ok) return null;
+  if (!res.ok) {
+    console.error("[ME] HTTP error", res.status, await res.text().catch(() => ""));
+    return null;
+  }
 
   const servicos = (await res.json()) as MEServico[];
-  if (!Array.isArray(servicos)) return null;
+  if (!Array.isArray(servicos)) {
+    console.error("[ME] resposta não é array:", JSON.stringify(servicos).slice(0, 300));
+    return null;
+  }
 
   const validos = servicos
     .filter((s) => s.error === null && s.price !== null)
     .sort((a, b) => Number(a.price) - Number(b.price));
 
-  if (validos.length === 0) return null;
+  if (validos.length === 0) {
+    console.error("[ME] nenhum serviço válido. erros:", JSON.stringify(servicos.map((s) => ({ id: s.id, error: s.error, price: s.price }))));
+    return null;
+  }
 
   // Busca cidade/bairro via ViaCEP para preencher o retorno
   let cidade = "";
