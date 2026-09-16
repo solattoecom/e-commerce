@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/external-auth-middleware";
 import { quoteShipping } from "@/lib/shipping.functions";
+import { isValidCpf, assertInputLimits } from "@/lib/validate";
 
 const ABACATEPAY_PIX_URL = "https://api.abacatepay.com/v2/transparents/create";
 const ABACATEPAY_PRODUCTS_URL = "https://api.abacatepay.com/v2/products/create";
@@ -47,6 +48,21 @@ export const createOrder = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: CreateOrderInput) => input)
   .handler(async ({ data, context }): Promise<CreateOrderResult> => {
+    // Validação de tamanho dos inputs
+    assertInputLimits(data as unknown as Record<string, unknown>, {
+      telefone: 20, card_holder: 100, card_number: 19,
+      card_expiry: 7, card_cvv: 4, card_cpf: 14,
+      card_telefone: 20, boleto_cpf: 14, shipping_nome: 100,
+    });
+
+    // Validação de CPF
+    if (data.payment_method === "cartao" && data.card_cpf) {
+      if (!isValidCpf(data.card_cpf)) throw new Error("CPF do cartão inválido.");
+    }
+    if (data.payment_method === "boleto" && data.boleto_cpf) {
+      if (!isValidCpf(data.boleto_cpf)) throw new Error("CPF do boleto inválido.");
+    }
+
     const { supabaseAdmin } = await import("@/integrations/supabase/external.server");
     const apiKey = process.env["ABACATEPAY_API_KEY"];
     if (!apiKey) throw new Error("ABACATEPAY_API_KEY não configurada.");

@@ -1,5 +1,6 @@
 import { enviarConfirmacaoPedido } from "@/lib/email.functions";
 import { verifyHmacSha256, validateTimestamp } from "@/lib/webhook-verify";
+import { logger } from "@/lib/logger";
 
 export async function handleAbacatePayWebhook(request: Request): Promise<Response> {
   try {
@@ -13,9 +14,9 @@ export async function handleAbacatePayWebhook(request: Request): Promise<Respons
 
     // Valida assinatura HMAC-SHA256
     const signature = request.headers.get("x-abacatepay-hmac-sha256") ?? "";
-    if (!signature) return new Response("missing signature", { status: 401 });
+    if (!signature) { logger.warn("webhook-abacatepay", "assinatura ausente"); return new Response("missing signature", { status: 401 }); }
     const valid = await verifyHmacSha256(rawBody, secret, signature);
-    if (!valid) return new Response("invalid signature", { status: 401 });
+    if (!valid) { logger.warn("webhook-abacatepay", "assinatura inválida"); return new Response("invalid signature", { status: 401 }); }
 
     // Valida atualidade (rejeita payloads com mais de 5 min)
     const tsHeader = request.headers.get("x-abacatepay-timestamp");
@@ -38,7 +39,7 @@ export async function handleAbacatePayWebhook(request: Request): Promise<Respons
       status === "PAID" ||
       status === "COMPLETED";
 
-    if (!isPaid) return new Response("ignored", { status: 200 });
+    if (!isPaid) { logger.info("webhook-abacatepay", "evento ignorado", { event, status }); return new Response("ignored", { status: 200 }); }
 
     const metadata = billing?.["metadata"] as Record<string, unknown> | undefined;
     const orderId =
@@ -58,8 +59,8 @@ export async function handleAbacatePayWebhook(request: Request): Promise<Respons
       ? await query.eq("id", orderId).single()
       : await query.eq("payment_id", paymentId!).single();
 
-    if (!order) return new Response("order not found", { status: 404 });
-    if (order.status === "pago") return new Response("already paid", { status: 200 });
+    if (!order) { logger.warn("webhook-abacatepay", "pedido não encontrado", { orderId, paymentId }); return new Response("order not found", { status: 404 }); }
+    if (order.status === "pago") { logger.info("webhook-abacatepay", "pedido já pago", { orderId: order.id }); return new Response("already paid", { status: 200 }); }
 
     const { data: updated } = await supabaseAdmin
       .from("orders")
@@ -67,7 +68,8 @@ export async function handleAbacatePayWebhook(request: Request): Promise<Respons
       .eq("id", order.id)
       .eq("status", "pendente")
       .select("id");
-    if (!updated?.length) return new Response("already paid", { status: 200 });
+    if (!updated?.length) { logger.info("webhook-abacatepay", "race condition detectada", { orderId: order.id }); return new Response("already paid", { status: 200 }); }
+    logger.info("webhook-abacatepay", "pedido marcado como pago", { orderId: order.id });
 
     const { data: paidOrder } = await supabaseAdmin
       .from("orders")
@@ -120,7 +122,7 @@ export async function handleAbacatePayWebhook(request: Request): Promise<Respons
 
     return new Response("ok", { status: 200 });
   } catch (err) {
-    console.error("[webhook-abacatepay] erro:", err);
+    logger.error("webhook-abacatepay", "erro inesperado", { error: String(err) });
     return new Response("error", { status: 500 });
   }
 }

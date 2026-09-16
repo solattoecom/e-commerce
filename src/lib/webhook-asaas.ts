@@ -1,3 +1,5 @@
+import { logger } from "@/lib/logger";
+
 type AsaasPayment = {
   id: string;
   externalReference?: string;
@@ -20,6 +22,7 @@ export async function handleAsaasWebhook(request: Request): Promise<Response> {
 
     const received = request.headers.get("asaas-access-token");
     if (!received || received !== token) {
+      logger.warn("webhook-asaas", "token inválido");
       return new Response("unauthorized", { status: 401 });
     }
 
@@ -41,7 +44,8 @@ export async function handleAsaasWebhook(request: Request): Promise<Response> {
       .eq("id", orderId)
       .single();
 
-    if (!order || order.status === "pago") return new Response("ok", { status: 200 });
+    if (!order) { logger.warn("webhook-asaas", "pedido não encontrado", { orderId }); return new Response("ok", { status: 200 }); }
+    if (order.status === "pago") { logger.info("webhook-asaas", "pedido já pago", { orderId }); return new Response("ok", { status: 200 }); }
 
     await supabaseAdmin.from("orders").update({ status: "pago" }).eq("id", orderId);
 
@@ -60,7 +64,7 @@ export async function handleAsaasWebhook(request: Request): Promise<Response> {
 
     return new Response("ok", { status: 200 });
   } catch (err) {
-    console.error("[webhook-asaas]", err);
+    logger.error("webhook-asaas", "erro inesperado", { error: String(err) });
     return new Response("error", { status: 500 });
   }
 }
