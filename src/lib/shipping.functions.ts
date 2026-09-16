@@ -149,6 +149,10 @@ async function cotarMelhorEnvio(
     return null;
   }
 
+  console.log("[ME] todos os serviços:", JSON.stringify(servicos.map((s) => ({
+    id: s.id, name: s.name, company: s.company.name, price: s.price, error: s.error,
+  }))));
+
   const validos = servicos
     .filter((s) => !s.error && s.price !== null)
     .sort((a, b) => Number(a.price) - Number(b.price));
