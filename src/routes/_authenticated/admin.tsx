@@ -10,6 +10,7 @@ import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useAdminExists } from "@/hooks/useAdminExists";
 import { claimFirstAdmin } from "@/lib/admin.functions";
 import { notificarMudancaStatus } from "@/lib/email.functions";
+import { generateLabel } from "@/lib/label.functions";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminPanel,
@@ -66,6 +67,8 @@ type Pedido = {
   payment_method: string | null;
   nota_fiscal: string | null;
   codigo_rastreio: string | null;
+  me_service_id: number | null;
+  me_order_id: string | null;
   criado_em: string;
   usuario_id: string;
   endereco: Record<string, string>;
@@ -140,6 +143,9 @@ function AdminPanel() {
   const [cupomSucesso, setCupomSucesso] = useState<string | null>(null);
   const [editandoCupom, setEditandoCupom] = useState<string | null>(null);
   const [editCupom, setEditCupom] = useState({ expires_at: "", max_uses: "" });
+  const [labelPorPedido, setLabelPorPedido] = useState<Record<string, { pdf_url: string; codigo_rastreio: string }>>({});
+  const [labelErroPorPedido, setLabelErroPorPedido] = useState<Record<string, string>>({});
+  const [labelOcupado, setLabelOcupado] = useState<string | null>(null);
 
   const carregar = useCallback(async () => {
     setCarregandoDados(true);
@@ -149,7 +155,7 @@ function AdminPanel() {
       supabase
         .from("orders")
         .select(
-          "id, status, subtotal, frete, total, coupon_id, payment_method, nota_fiscal, codigo_rastreio, criado_em, usuario_id, endereco, profiles(nome, sobrenome, email), order_items(id, quantidade, preco_unitario, subtotal, products(nome, slug, product_images(url)), product_variants(tamanho))",
+          "id, status, subtotal, frete, total, coupon_id, payment_method, nota_fiscal, codigo_rastreio, me_service_id, me_order_id, criado_em, usuario_id, endereco, profiles(nome, sobrenome, email), order_items(id, quantidade, preco_unitario, subtotal, products(nome, slug, product_images(url)), product_variants(tamanho))",
         )
         .order("criado_em", { ascending: false }),
     ]);
@@ -266,6 +272,23 @@ setNfePorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; re
     } : c));
     setEditandoCupom(null);
   };
+
+  async function handleGenerateLabel(pedidoId: string) {
+    setLabelOcupado(pedidoId);
+    setLabelErroPorPedido((prev) => { const next = { ...prev }; delete next[pedidoId]; return next; });
+    try {
+      const result = await generateLabel({ data: { order_id: pedidoId } });
+      setLabelPorPedido((prev) => ({ ...prev, [pedidoId]: result }));
+      await carregar();
+    } catch (e) {
+      setLabelErroPorPedido((prev) => ({
+        ...prev,
+        [pedidoId]: e instanceof Error ? e.message : "Erro ao gerar etiqueta.",
+      }));
+    } finally {
+      setLabelOcupado(null);
+    }
+  }
 
   async function virarAdmin() {
     setOcupado("claim");
@@ -596,6 +619,44 @@ setNfePorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; re
                           )}
                         </div>
                       </div>
+                      {/* Gerar etiqueta Melhor Envio */}
+                      {(p.status === "pago" || p.status === "processando") && p.me_service_id !== null && (() => {
+                        const label = labelPorPedido[p.id];
+                        return (
+                        <div>
+                          <p className="font-semibold mb-2">Etiqueta de envio</p>
+                          {label ? (
+                            <div className="space-y-2">
+                              <a
+                                href={label.pdf_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1.5 rounded-full bg-foreground px-4 py-2 text-xs font-semibold text-background hover:bg-foreground/85"
+                              >
+                                Imprimir Etiqueta
+                              </a>
+                              {label.codigo_rastreio && (
+                                <p className="text-xs text-muted-foreground font-mono">
+                                  Rastreio: {label.codigo_rastreio}
+                                </p>
+                              )}
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              disabled={labelOcupado === p.id}
+                              onClick={() => handleGenerateLabel(p.id)}
+                              className="cursor-pointer rounded-full bg-foreground px-4 py-2 text-xs font-semibold text-background transition-colors hover:bg-foreground/85 disabled:opacity-60"
+                            >
+                              {labelOcupado === p.id ? "Gerando..." : "Gerar Etiqueta"}
+                            </button>
+                          )}
+                          {labelErroPorPedido[p.id] && (
+                            <p className="mt-1 text-xs text-destructive">{labelErroPorPedido[p.id]}</p>
+                          )}
+                        </div>
+                        );
+                      })()}
                     </div>
                   )}
                 </li>
