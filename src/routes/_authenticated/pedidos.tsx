@@ -44,6 +44,7 @@ type Order = {
   nota_fiscal: string | null;
   codigo_rastreio: string | null;
   me_order_id: string | null;
+  ultimo_evento_rastreio: string | null;
   criado_em: string;
   endereco: Record<string, string>;
   coupons: { code: string; type: string; value: number } | null;
@@ -51,6 +52,18 @@ type Order = {
 };
 
 const brl = (v: number) => Number(v).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+const ME_STATUS: Record<string, string> = {
+  posted: "Objeto postado",
+  in_transit: "Em trânsito",
+  delivered: "Entregue ao destinatário",
+  undelivered: "Tentativa de entrega não realizada",
+  canceled: "Envio cancelado",
+  expired: "Envio expirado",
+};
+function traduzirStatusME(status: string): string {
+  return ME_STATUS[status.toLowerCase()] ?? status;
+}
 
 const TIMELINE_STEPS: { status: OrderStatus; label: string }[] = [
   { status: "pendente",  label: "Pedido feito" },
@@ -126,7 +139,7 @@ function PedidosPage() {
       const { data } = await supabase
         .from("orders")
         .select(`
-          id, status, subtotal, frete, total, desconto, payment_method, nota_fiscal, codigo_rastreio, me_order_id, criado_em, endereco,
+          id, status, subtotal, frete, total, desconto, payment_method, nota_fiscal, codigo_rastreio, me_order_id, ultimo_evento_rastreio, criado_em, endereco,
           coupons(code, type, value),
           order_items(id, quantidade, preco_unitario, subtotal,
             products(nome, product_images(url)),
@@ -491,6 +504,17 @@ function PedidosPage() {
                               </li>
                             ))}
                           </ol>
+                        ) : order.ultimo_evento_rastreio ? (
+                          <ol className="space-y-3">
+                            <li className="flex gap-3">
+                              <div className="mt-0.5 flex flex-col items-center">
+                                <div className="size-2.5 rounded-full bg-foreground shrink-0" />
+                              </div>
+                              <div className="min-w-0 pb-3">
+                                <p className="text-sm font-medium leading-snug">{traduzirStatusME(order.ultimo_evento_rastreio)}</p>
+                              </div>
+                            </li>
+                          </ol>
                         ) : (
                           <p className="text-sm text-muted-foreground">Nenhum evento de rastreio ainda.</p>
                         )}
@@ -523,7 +547,20 @@ function PedidosPage() {
                             ))}
                           </ol>
                         ) : trackingCodeEventsByOrder[order.id] !== undefined ? (
-                          <p className="text-sm text-muted-foreground">Nenhum evento encontrado ainda.</p>
+                          order.ultimo_evento_rastreio ? (
+                            <ol className="space-y-3">
+                              <li className="flex gap-3">
+                                <div className="mt-0.5 flex flex-col items-center">
+                                  <div className="size-2.5 rounded-full bg-foreground shrink-0" />
+                                </div>
+                                <div className="min-w-0 pb-3">
+                                  <p className="text-sm font-medium leading-snug">{traduzirStatusME(order.ultimo_evento_rastreio)}</p>
+                                </div>
+                              </li>
+                            </ol>
+                          ) : (
+                            <p className="text-sm text-muted-foreground">Nenhum evento encontrado ainda.</p>
+                          )
                         ) : null}
                       </div>
                     ) : null}
