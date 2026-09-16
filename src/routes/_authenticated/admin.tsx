@@ -68,6 +68,7 @@ type Pedido = {
   card_parcelas: number | null;
   nota_fiscal: string | null;
   codigo_rastreio: string | null;
+  label_pdf_url: string | null;
   me_service_id: number | null;
   me_order_id: string | null;
   criado_em: string;
@@ -167,7 +168,7 @@ function AdminPanel() {
       supabase
         .from("orders")
         .select(
-          "id, status, subtotal, frete, total, coupon_id, payment_method, card_parcelas, nota_fiscal, codigo_rastreio, me_service_id, me_order_id, criado_em, usuario_id, endereco, profiles(nome, sobrenome, email), order_items(id, quantidade, preco_unitario, subtotal, products(nome, slug, product_images(url)), product_variants(tamanho))",
+          "id, status, subtotal, frete, total, coupon_id, payment_method, card_parcelas, nota_fiscal, codigo_rastreio, label_pdf_url, me_service_id, me_order_id, criado_em, usuario_id, endereco, profiles(nome, sobrenome, email), order_items(id, quantidade, preco_unitario, subtotal, products(nome, slug, product_images(url)), product_variants(tamanho))",
         )
         .order("criado_em", { ascending: false }),
     ]);
@@ -645,64 +646,71 @@ setNfePorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; re
                           )}
                         </div>
                       </div>
-                      {/* Gerar etiqueta Melhor Envio */}
-                      {(p.status === "pago" || p.status === "processando") && p.me_service_id !== null && (() => {
-                        const label = labelPorPedido[p.id];
+                      {/* Etiqueta Melhor Envio */}
+                      {p.me_service_id !== null && (() => {
+                        const labelSessao = labelPorPedido[p.id];
+                        const pdfUrl = labelSessao?.pdf_url ?? p.label_pdf_url;
+                        const rastreio = labelSessao?.codigo_rastreio ?? p.codigo_rastreio;
+                        const podeGerar = !p.me_order_id && (p.status === "pago" || p.status === "separando");
                         return (
-                        <div>
-                          <p className="font-semibold mb-2">Etiqueta de envio</p>
-                          {!label && Number(p.frete) > 0 && (
-                            <div className="mb-3 rounded-xl border border-border bg-muted/20 p-3 text-xs space-y-1">
-                              <div className="flex justify-between">
-                                <span className="text-muted-foreground">Custo estimado da etiqueta</span>
-                                <span className="font-semibold">{brl(Number(p.frete))}</span>
+                          <div>
+                            <p className="font-semibold mb-2">Etiqueta de envio</p>
+                            {pdfUrl ? (
+                              <div className="space-y-2">
+                                <a
+                                  href={pdfUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1.5 rounded-full bg-foreground px-4 py-2 text-xs font-semibold text-background hover:bg-foreground/85"
+                                >
+                                  Imprimir Etiqueta
+                                </a>
+                                {rastreio && (
+                                  <p className="text-xs text-muted-foreground font-mono">Rastreio: {rastreio}</p>
+                                )}
                               </div>
-                              {saldoME !== null && (
-                                <>
-                                  <div className="flex justify-between text-muted-foreground">
-                                    <span>Saldo atual (ME)</span>
-                                    <span className={saldoME < Number(p.frete) ? "text-destructive font-semibold" : ""}>{brl(saldoME)}</span>
+                            ) : podeGerar ? (
+                              <>
+                                {Number(p.frete) > 0 && (
+                                  <div className="mb-3 rounded-xl border border-border bg-muted/20 p-3 text-xs space-y-1">
+                                    <div className="flex justify-between">
+                                      <span className="text-muted-foreground">Custo estimado da etiqueta</span>
+                                      <span className="font-semibold">{brl(Number(p.frete))}</span>
+                                    </div>
+                                    {saldoME !== null && (
+                                      <>
+                                        <div className="flex justify-between text-muted-foreground">
+                                          <span>Saldo atual (ME)</span>
+                                          <span className={saldoME < Number(p.frete) ? "text-destructive font-semibold" : ""}>{brl(saldoME)}</span>
+                                        </div>
+                                        <div className="flex justify-between border-t border-border pt-1">
+                                          <span className="text-muted-foreground">Saldo após gerar</span>
+                                          <span className={saldoME - Number(p.frete) < 0 ? "text-destructive font-semibold" : "font-semibold"}>
+                                            {brl(saldoME - Number(p.frete))}
+                                          </span>
+                                        </div>
+                                      </>
+                                    )}
                                   </div>
-                                  <div className="flex justify-between border-t border-border pt-1">
-                                    <span className="text-muted-foreground">Saldo após gerar</span>
-                                    <span className={saldoME - Number(p.frete) < 0 ? "text-destructive font-semibold" : "font-semibold"}>
-                                      {brl(saldoME - Number(p.frete))}
-                                    </span>
-                                  </div>
-                                </>
-                              )}
-                            </div>
-                          )}
-                          {label ? (
-                            <div className="space-y-2">
-                              <a
-                                href={label.pdf_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1.5 rounded-full bg-foreground px-4 py-2 text-xs font-semibold text-background hover:bg-foreground/85"
-                              >
-                                Imprimir Etiqueta
-                              </a>
-                              {label.codigo_rastreio && (
-                                <p className="text-xs text-muted-foreground font-mono">
-                                  Rastreio: {label.codigo_rastreio}
-                                </p>
-                              )}
-                            </div>
-                          ) : (
-                            <button
-                              type="button"
-                              disabled={labelOcupado === p.id}
-                              onClick={() => handleGenerateLabel(p.id)}
-                              className="cursor-pointer rounded-full bg-foreground px-4 py-2 text-xs font-semibold text-background transition-colors hover:bg-foreground/85 disabled:opacity-60"
-                            >
-                              {labelOcupado === p.id ? "Gerando..." : "Gerar Etiqueta"}
-                            </button>
-                          )}
-                          {labelErroPorPedido[p.id] && (
-                            <p className="mt-1 text-xs text-destructive">{labelErroPorPedido[p.id]}</p>
-                          )}
-                        </div>
+                                )}
+                                <button
+                                  type="button"
+                                  disabled={labelOcupado === p.id}
+                                  onClick={() => handleGenerateLabel(p.id)}
+                                  className="cursor-pointer rounded-full bg-foreground px-4 py-2 text-xs font-semibold text-background transition-colors hover:bg-foreground/85 disabled:opacity-60"
+                                >
+                                  {labelOcupado === p.id ? "Gerando..." : "Gerar Etiqueta"}
+                                </button>
+                              </>
+                            ) : (
+                              <p className="text-xs text-muted-foreground">
+                                {p.me_order_id ? "Etiqueta gerada — PDF não disponível." : "Pedido não está pago."}
+                              </p>
+                            )}
+                            {labelErroPorPedido[p.id] && (
+                              <p className="mt-1 text-xs text-destructive">{labelErroPorPedido[p.id]}</p>
+                            )}
+                          </div>
                         );
                       })()}
                     </div>

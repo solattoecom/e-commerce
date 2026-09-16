@@ -1,6 +1,7 @@
 import { enviarConfirmacaoPedido } from "@/lib/email.functions";
 import { verifyHmacSha256, validateTimestamp } from "@/lib/webhook-verify";
 import { logger } from "@/lib/logger";
+import { gerarEtiquetaCore } from "@/lib/label.functions";
 
 export async function handleAbacatePayWebhook(request: Request): Promise<Response> {
   try {
@@ -106,6 +107,23 @@ export async function handleAbacatePayWebhook(request: Request): Promise<Respons
         })),
       }).catch(() => {});
     }
+
+    // Gera etiqueta automaticamente se o pedido usa Melhor Envio
+    void (async () => {
+      try {
+        const { data: pedido } = await supabaseAdmin
+          .from("orders")
+          .select("me_service_id, me_order_id")
+          .eq("id", order.id)
+          .single();
+        if (pedido?.me_service_id && !pedido.me_order_id) {
+          await gerarEtiquetaCore(order.id, supabaseAdmin);
+          logger.info("webhook-abacatepay", "etiqueta gerada automaticamente", { orderId: order.id });
+        }
+      } catch (e) {
+        logger.warn("webhook-abacatepay", "falha ao gerar etiqueta automática", { orderId: order.id, error: String(e) });
+      }
+    })();
 
     return new Response("ok", { status: 200 });
   } catch (err) {

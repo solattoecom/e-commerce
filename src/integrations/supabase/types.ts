@@ -287,6 +287,7 @@ export type Database = {
           atualizado_em: string
           card_parcelas: number | null
           codigo_rastreio: string | null
+          label_pdf_url: string | null
           comissao_percent: number
           comissao_valor: number
           coupon_id: string | null
@@ -310,6 +311,7 @@ export type Database = {
           atualizado_em?: string
           card_parcelas?: number | null
           codigo_rastreio?: string | null
+          label_pdf_url?: string | null
           comissao_percent?: number
           comissao_valor?: number
           coupon_id?: string | null
@@ -333,6 +335,7 @@ export type Database = {
           atualizado_em?: string
           card_parcelas?: number | null
           codigo_rastreio?: string | null
+          label_pdf_url?: string | null
           comissao_percent?: number
           comissao_valor?: number
           coupon_id?: string | null

@@ -1,4 +1,5 @@
 import { logger } from "@/lib/logger";
+import { gerarEtiquetaCore } from "@/lib/label.functions";
 
 type AsaasPayment = {
   id: string;
@@ -48,6 +49,23 @@ export async function handleAsaasWebhook(request: Request): Promise<Response> {
     if (order.status === "pago") { logger.info("webhook-asaas", "pedido já pago", { orderId }); return new Response("ok", { status: 200 }); }
 
     await supabaseAdmin.from("orders").update({ status: "pago" }).eq("id", orderId);
+
+    // Gera etiqueta automaticamente se o pedido usa Melhor Envio
+    void (async () => {
+      try {
+        const { data: pedido } = await supabaseAdmin
+          .from("orders")
+          .select("me_service_id, me_order_id")
+          .eq("id", orderId)
+          .single();
+        if (pedido?.me_service_id && !pedido.me_order_id) {
+          await gerarEtiquetaCore(orderId, supabaseAdmin);
+          logger.info("webhook-asaas", "etiqueta gerada automaticamente", { orderId });
+        }
+      } catch (e) {
+        logger.warn("webhook-asaas", "falha ao gerar etiqueta automática", { orderId, error: String(e) });
+      }
+    })();
 
     return new Response("ok", { status: 200 });
   } catch (err) {
