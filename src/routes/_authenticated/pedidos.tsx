@@ -5,6 +5,7 @@ import { ArrowLeft, Package, ChevronDown, ChevronUp, MapPin, CreditCard, Truck, 
 import { supabase } from "@/integrations/supabase/external";
 import { useAuth } from "@/hooks/useAuth";
 import { retryPixPayment, getOrderStatus, cancelOrder } from "@/lib/checkout.functions";
+import { getTrackingEvents, type TrackingEvent } from "@/lib/tracking.functions";
 
 export const Route = createFileRoute("/_authenticated/pedidos")({
   component: PedidosPage,
@@ -42,6 +43,7 @@ type Order = {
   payment_method: string | null;
   nota_fiscal: string | null;
   codigo_rastreio: string | null;
+  me_order_id: string | null;
   criado_em: string;
   endereco: Record<string, string>;
   coupons: { code: string; type: string; value: number } | null;
@@ -113,6 +115,8 @@ function PedidosPage() {
   const [pixByOrder, setPixByOrder] = useState<Record<string, PixState>>({});
   const [pixBusy, setPixBusy] = useState<string | null>(null);
   const [cancelBusy, setCancelBusy] = useState<string | null>(null);
+  const [trackingEventsByOrder, setTrackingEventsByOrder] = useState<Record<string, TrackingEvent[]>>({});
+  const [trackingLoadingByOrder, setTrackingLoadingByOrder] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (!user?.id) return;
@@ -120,7 +124,7 @@ function PedidosPage() {
       const { data } = await supabase
         .from("orders")
         .select(`
-          id, status, subtotal, frete, total, desconto, payment_method, nota_fiscal, codigo_rastreio, criado_em, endereco,
+          id, status, subtotal, frete, total, desconto, payment_method, nota_fiscal, codigo_rastreio, me_order_id, criado_em, endereco,
           coupons(code, type, value),
           order_items(id, quantidade, preco_unitario, subtotal,
             products(nome, product_images(url)),
@@ -175,6 +179,19 @@ function PedidosPage() {
     }
   }
 
+  async function handleLoadTracking(orderId: string, meOrderId: string) {
+    if (trackingEventsByOrder[orderId] !== undefined) return;
+    setTrackingLoadingByOrder((prev) => ({ ...prev, [orderId]: true }));
+    try {
+      const events = await getTrackingEvents({ data: { me_order_id: meOrderId } });
+      setTrackingEventsByOrder((prev) => ({ ...prev, [orderId]: events }));
+    } catch {
+      setTrackingEventsByOrder((prev) => ({ ...prev, [orderId]: [] }));
+    } finally {
+      setTrackingLoadingByOrder((prev) => { const next = { ...prev }; delete next[orderId]; return next; });
+    }
+  }
+
   async function handleCancelOrder(orderId: string) {
     if (!confirm("Tem certeza que deseja cancelar este pedido?")) return;
     setCancelBusy(orderId);
@@ -225,7 +242,13 @@ function PedidosPage() {
                 {/* Cabeçalho clicável */}
                 <button
                   type="button"
-                  onClick={() => setExpanded(isOpen ? null : order.id)}
+                  onClick={() => {
+                    const next = isOpen ? null : order.id;
+                    setExpanded(next);
+                    if (next && order.me_order_id) {
+                      void handleLoadTracking(order.id, order.me_order_id);
+                    }
+                  }}
                   className="flex w-full items-center gap-4 p-4 text-left transition-colors hover:bg-muted/30"
                 >
                   <div className="size-14 shrink-0 overflow-hidden rounded-lg border border-border bg-muted">
@@ -425,7 +448,37 @@ function PedidosPage() {
                     ) : null}
 
                     {/* Rastreio */}
-                    {order.codigo_rastreio ? (
+                    {order.me_order_id ? (
+                      <div>
+                        <p className="mb-3 flex items-center gap-1.5 font-semibold">
+                          <Truck className="size-4" /> Rastreamento
+                        </p>
+                        {trackingLoadingByOrder[order.id] ? (
+                          <p className="text-sm text-muted-foreground">Carregando eventos...</p>
+                        ) : trackingEventsByOrder[order.id]?.length ? (
+                          <ol className="space-y-3">
+                            {trackingEventsByOrder[order.id]!.map((evento, idx) => (
+                              <li key={idx} className="flex gap-3">
+                                <div className="mt-0.5 flex flex-col items-center">
+                                  <div className="size-2.5 rounded-full bg-foreground shrink-0" />
+                                  {idx < trackingEventsByOrder[order.id]!.length - 1 && (
+                                    <div className="mt-1 w-px flex-1 bg-border" />
+                                  )}
+                                </div>
+                                <div className="min-w-0 pb-3">
+                                  <p className="text-sm font-medium leading-snug">{evento.descricao}</p>
+                                  <p className="mt-0.5 text-xs text-muted-foreground">
+                                    {evento.data}{evento.local ? ` — ${evento.local}` : ""}
+                                  </p>
+                                </div>
+                              </li>
+                            ))}
+                          </ol>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">Nenhum evento de rastreio ainda.</p>
+                        )}
+                      </div>
+                    ) : order.codigo_rastreio ? (
                       <div>
                         <p className="mb-2 flex items-center gap-1.5 font-semibold">
                           <Truck className="size-4" /> Rastreamento
