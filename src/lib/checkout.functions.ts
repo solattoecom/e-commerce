@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/external-auth-middleware";
+import { quoteShipping } from "@/lib/shipping.functions";
 
 const ABACATEPAY_PIX_URL = "https://api.abacatepay.com/v2/transparents/create";
 const ABACATEPAY_PRODUCTS_URL = "https://api.abacatepay.com/v2/products/create";
@@ -11,19 +12,15 @@ type OrderItem = {
   variacao_id: string | null;
   nome: string;
   quantidade: number;
-  preco_unitario: number;
 };
 
 type CreateOrderInput = {
   address_id: string;
   shipping_option_id: string;
-  shipping_valor: number;
   shipping_nome: string;
   payment_method: "pix" | "cartao" | "boleto";
   telefone: string;
   items: OrderItem[];
-  subtotal: number;
-  total: number;
   card_number?: string;
   card_holder?: string;
   card_expiry?: string;
@@ -33,17 +30,16 @@ type CreateOrderInput = {
   card_parcelas?: number;
   boleto_cpf?: string;
   coupon_id?: string | null;
-  desconto?: number;
 };
 
 export type CreateOrderResult = {
   order_id: string;
   payment_method: "pix" | "cartao" | "boleto";
-  pix_qr?: string;
-  pix_qr_code?: string;
-  pix_expiration?: string;
-  checkout_url?: string;
-  boleto_url?: string;
+  pix_qr?: string | undefined;
+  pix_qr_code?: string | undefined;
+  pix_expiration?: string | undefined;
+  checkout_url?: string | undefined;
+  boleto_url?: string | undefined;
   status: string;
 };
 
@@ -55,9 +51,29 @@ export const createOrder = createServerFn({ method: "POST" })
     const apiKey = process.env["ABACATEPAY_API_KEY"];
     if (!apiKey) throw new Error("ABACATEPAY_API_KEY não configurada.");
 
+    // Busca tipo de cliente do usuário
+    const { data: clientTypeRow } = await supabaseAdmin
+      .from("user_client_types")
+      .select("tipo")
+      .eq("user_id", context.userId)
+      .single();
+    const clientType = clientTypeRow?.tipo ?? "varejo";
+
+    // Busca preços server-side para cada produto
+    const produtoIds = data.items.map((i) => i.produto_id);
+    const { data: prices } = await supabaseAdmin
+      .from("product_prices")
+      .select("produto_id, preco")
+      .in("produto_id", produtoIds)
+      .eq("tipo", clientType);
+
+    const priceMap = new Map((prices ?? []).map((p) => [p.produto_id, p.preco]));
+
+    // Valida estoque e monta itens com preço real
     for (const item of data.items) {
+      if (!priceMap.has(item.produto_id)) throw new Error(`Preço não encontrado para "${item.nome}".`);
       if (item.variacao_id) {
-        const { data: variacao, error: variacaoError } = await supabaseAdmin
+        const { data: variacao } = await supabaseAdmin
           .from("product_variants")
           .select("estoque")
           .eq("id", item.variacao_id)
@@ -68,6 +84,31 @@ export const createOrder = createServerFn({ method: "POST" })
       }
     }
 
+    const itemsComPreco = data.items.map((item) => ({
+      ...item,
+      preco_unitario: priceMap.get(item.produto_id)!,
+    }));
+
+    const subtotal = Math.round(itemsComPreco.reduce((acc, i) => acc + i.preco_unitario * i.quantidade, 0) * 100) / 100;
+
+    // Valida e calcula desconto do cupom server-side
+    let desconto = 0;
+    if (data.coupon_id) {
+      const { data: coupon } = await supabaseAdmin
+        .from("coupons")
+        .select("type, value, expires_at, max_uses, used_count, active")
+        .eq("id", data.coupon_id)
+        .single();
+      if (coupon && coupon.active &&
+        !(coupon.expires_at && new Date(coupon.expires_at) < new Date()) &&
+        !(coupon.max_uses !== null && coupon.used_count >= coupon.max_uses)) {
+        desconto = coupon.type === "percent"
+          ? Math.round(subtotal * (coupon.value / 100) * 100) / 100
+          : Math.min(coupon.value, subtotal);
+      }
+    }
+
+    // Calcula frete server-side
     const { data: address } = await supabaseAdmin
       .from("addresses")
       .select("*")
@@ -75,6 +116,13 @@ export const createOrder = createServerFn({ method: "POST" })
       .eq("user_id", context.userId)
       .single();
     if (!address) throw new Error("Endereço não encontrado.");
+
+    const shippingQuote = await quoteShipping({ cep: address.cep, itens: data.items.length, subtotal });
+    const shippingOption = shippingQuote.opcoes.find((o) => o.id === data.shipping_option_id);
+    if (!shippingOption) throw new Error("Opção de frete inválida.");
+    const shippingValor = shippingOption.valor;
+
+    const total = Math.round((subtotal - desconto + shippingValor) * 100) / 100;
 
     const { data: profile } = await supabaseAdmin
       .from("profiles")
@@ -88,21 +136,21 @@ export const createOrder = createServerFn({ method: "POST" })
       .insert({
         usuario_id: context.userId,
         status: "pendente",
-        subtotal: data.subtotal,
-        frete: data.shipping_valor,
-        total: data.total,
+        subtotal,
+        frete: shippingValor,
+        total,
         endereco: address,
         payment_method: data.payment_method,
         address_id: data.address_id,
         coupon_id: data.coupon_id ?? null,
-        desconto: data.desconto ?? 0,
+        desconto,
       })
       .select("id")
       .single();
     if (orderError || !order) throw new Error("Erro ao criar pedido.");
 
     await supabaseAdmin.from("order_items").insert(
-      data.items.map((item) => ({
+      itemsComPreco.map((item) => ({
         pedido_id: order.id,
         produto_id: item.produto_id,
         variacao_id: item.variacao_id,
@@ -121,7 +169,7 @@ export const createOrder = createServerFn({ method: "POST" })
       const pixBody = {
         method: "PIX",
         data: {
-          amount: Math.round(data.total * 100),
+          amount: Math.round(total * 100),
           description: `Pedido ${order.id.slice(0, 8).toUpperCase()}`,
           expiresIn: 3600,
           externalId: order.id,
@@ -191,7 +239,7 @@ export const createOrder = createServerFn({ method: "POST" })
         body: JSON.stringify({
           customer: custData.id,
           billingType: "BOLETO",
-          value: data.total,
+          value: total,
           dueDate: dueDateStr,
           description: `Pedido ${order.id.slice(0, 8).toUpperCase()}`,
           externalReference: order.id,
@@ -255,16 +303,16 @@ export const createOrder = createServerFn({ method: "POST" })
       body: JSON.stringify({
         customer: custData.id,
         billingType: "CREDIT_CARD",
-        value: data.total,
+        value: total,
         dueDate: new Date().toISOString().split("T")[0],
         description: `Pedido ${order.id.slice(0, 8).toUpperCase()}`,
         externalReference: order.id,
         installmentCount: data.card_parcelas && data.card_parcelas > 1 ? data.card_parcelas : undefined,
         installmentValue: data.card_parcelas && data.card_parcelas > 1 ? (() => {
           const n = data.card_parcelas!;
-          if (n <= 10) return Number((data.total / n).toFixed(2));
+          if (n <= 10) return Number((total / n).toFixed(2));
           const taxa = 0.0199;
-          return Number((data.total * (taxa * Math.pow(1 + taxa, n)) / (Math.pow(1 + taxa, n) - 1)).toFixed(2));
+          return Number((total * (taxa * Math.pow(1 + taxa, n)) / (Math.pow(1 + taxa, n) - 1)).toFixed(2));
         })() : undefined,
         creditCard: {
           holderName: data.card_holder,

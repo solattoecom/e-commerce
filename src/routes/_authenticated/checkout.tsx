@@ -146,7 +146,6 @@ function CheckoutPage() {
         data: {
           address_id: selectedAddressId,
           shipping_option_id: selectedShipping.id,
-          shipping_valor: selectedShipping.valor,
           shipping_nome: selectedShipping.nome,
           payment_method: paymentMethod,
           telefone: telefone.replace(/\D/g, ""),
@@ -155,12 +154,8 @@ function CheckoutPage() {
             variacao_id: item.variacao_id,
             nome: item.products?.nome ?? "",
             quantidade: item.quantidade,
-            preco_unitario: item.products?.product_prices?.[0]?.preco ?? 0,
           })),
-          subtotal: total,
-          total: totalEfetivo,
           coupon_id: desconto?.coupon_id ?? null,
-          desconto: desconto?.discount_amount ?? 0,
           ...(paymentMethod === "cartao" && {
             card_number: card.number,
             card_holder: card.holder,
