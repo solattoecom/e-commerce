@@ -260,14 +260,15 @@ function CheckoutPage() {
         <ArrowLeft className="size-4" />
         Voltar
       </button>
-      <div className="mb-8 flex items-center gap-2">
+      <div className="mb-8 flex items-start">
         {steps.map((s, i) => (
-          <div key={s.id} className="flex flex-1 items-center gap-2">
-            <div className={`grid h-7 w-7 shrink-0 place-items-center rounded-full text-xs font-medium ${i <= stepIndex ? "bg-foreground text-background" : "bg-muted text-muted-foreground"}`}>
+          <div key={s.id} className="relative flex flex-1 flex-col items-center">
+            {i > 0 && <div className={`absolute top-3.5 right-1/2 left-0 h-px ${i <= stepIndex ? "bg-foreground" : "bg-border"}`} />}
+            {i < steps.length - 1 && <div className={`absolute top-3.5 left-1/2 right-0 h-px ${i < stepIndex ? "bg-foreground" : "bg-border"}`} />}
+            <div className={`relative z-10 grid h-7 w-7 shrink-0 place-items-center rounded-full text-xs font-medium ${i <= stepIndex ? "bg-foreground text-background" : "bg-muted text-muted-foreground"}`}>
               {i < stepIndex ? <Check className="h-3.5 w-3.5" /> : i + 1}
             </div>
-            <span className={`text-sm ${i <= stepIndex ? "font-medium" : "text-muted-foreground"}`}>{s.label}</span>
-            {i < steps.length - 1 && <div className={`h-px flex-1 ${i < stepIndex ? "bg-foreground" : "bg-border"}`} />}
+            <span className={`mt-1.5 text-xs ${i <= stepIndex ? "font-medium" : "text-muted-foreground"}`}>{s.label}</span>
           </div>
         ))}
       </div>
