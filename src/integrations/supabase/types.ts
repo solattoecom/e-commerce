@@ -294,6 +294,8 @@ export type Database = {
           endereco: Json
           frete: number
           id: string
+          me_order_id: string | null
+          me_service_id: number | null
           nota_fiscal: string | null
           payment_id: string | null
           payment_method: string | null
@@ -314,6 +316,8 @@ export type Database = {
           endereco?: Json
           frete?: number
           id?: string
+          me_order_id?: string | null
+          me_service_id?: number | null
           nota_fiscal?: string | null
           payment_id?: string | null
           payment_method?: string | null
@@ -334,6 +338,8 @@ export type Database = {
           endereco?: Json
           frete?: number
           id?: string
+          me_order_id?: string | null
+          me_service_id?: number | null
           nota_fiscal?: string | null
           payment_id?: string | null
           payment_method?: string | null
