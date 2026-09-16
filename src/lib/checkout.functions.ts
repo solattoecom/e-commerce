@@ -132,7 +132,7 @@ export const createOrder = createServerFn({ method: "POST" })
       .single();
     if (!address) throw new Error("Endereço não encontrado.");
 
-    const shippingQuote = await quoteShipping({ cep: address.cep, itens: data.items.length, subtotal });
+    const shippingQuote = await quoteShipping({ data: { cep: address.cep, itens: data.items.length, subtotal, clientTipo: clientType as "varejo" | "atacado" | "dropshipping" } });
     const shippingOption = shippingQuote.opcoes.find((o) => o.id === data.shipping_option_id);
     if (!shippingOption) throw new Error("Opção de frete inválida.");
     const shippingValor = shippingOption.valor;
