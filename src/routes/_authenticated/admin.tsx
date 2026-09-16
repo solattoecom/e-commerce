@@ -10,7 +10,7 @@ import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useAdminExists } from "@/hooks/useAdminExists";
 import { claimFirstAdmin } from "@/lib/admin.functions";
 import { notificarMudancaStatus } from "@/lib/email.functions";
-import { generateLabel } from "@/lib/label.functions";
+import { generateLabel, getMelhorEnvioSaldo } from "@/lib/label.functions";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminPanel,
@@ -157,6 +157,7 @@ function AdminPanel() {
   const [labelPorPedido, setLabelPorPedido] = useState<Record<string, { pdf_url: string; codigo_rastreio: string }>>({});
   const [labelErroPorPedido, setLabelErroPorPedido] = useState<Record<string, string>>({});
   const [labelOcupado, setLabelOcupado] = useState<string | null>(null);
+  const [saldoME, setSaldoME] = useState<number | null>(null);
 
   const carregar = useCallback(async () => {
     setCarregandoDados(true);
@@ -178,6 +179,7 @@ function AdminPanel() {
       .select("id, code, type, value, expires_at, max_uses, used_count, active, criado_em")
       .order("criado_em", { ascending: false })
       .then(({ data }) => setCupons((data as Cupom[]) ?? []));
+    getMelhorEnvioSaldo().then(({ saldo }) => setSaldoME(saldo)).catch(() => {});
     setCarregandoDados(false);
   }, []);
 
@@ -290,6 +292,7 @@ setNfePorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; re
     try {
       const result = await generateLabel({ data: { order_id: pedidoId } });
       setLabelPorPedido((prev) => ({ ...prev, [pedidoId]: result }));
+      getMelhorEnvioSaldo().then(({ saldo }) => setSaldoME(saldo)).catch(() => {});
       await carregar();
     } catch (e) {
       setLabelErroPorPedido((prev) => ({
@@ -649,10 +652,26 @@ setNfePorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; re
                         <div>
                           <p className="font-semibold mb-2">Etiqueta de envio</p>
                           {!label && Number(p.frete) > 0 && (
-                            <p className="mb-2 text-xs text-muted-foreground">
-                              Custo estimado da etiqueta: <span className="font-semibold text-foreground">{brl(Number(p.frete))}</span>
-                              {" "}(pode variar conforme seguro)
-                            </p>
+                            <div className="mb-3 rounded-xl border border-border bg-muted/20 p-3 text-xs space-y-1">
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">Custo estimado da etiqueta</span>
+                                <span className="font-semibold">{brl(Number(p.frete))}</span>
+                              </div>
+                              {saldoME !== null && (
+                                <>
+                                  <div className="flex justify-between text-muted-foreground">
+                                    <span>Saldo atual (ME)</span>
+                                    <span className={saldoME < Number(p.frete) ? "text-destructive font-semibold" : ""}>{brl(saldoME)}</span>
+                                  </div>
+                                  <div className="flex justify-between border-t border-border pt-1">
+                                    <span className="text-muted-foreground">Saldo após gerar</span>
+                                    <span className={saldoME - Number(p.frete) < 0 ? "text-destructive font-semibold" : "font-semibold"}>
+                                      {brl(saldoME - Number(p.frete))}
+                                    </span>
+                                  </div>
+                                </>
+                              )}
+                            </div>
                           )}
                           {label ? (
                             <div className="space-y-2">

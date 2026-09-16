@@ -16,6 +16,25 @@ const ME_FROM = {
   postal_code: "14402130",
 };
 
+export const getMelhorEnvioSaldo = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async (): Promise<{ saldo: number }> => {
+    const token = process.env["MELHOR_ENVIO_TOKEN"];
+    if (!token) throw new Error("MELHOR_ENVIO_TOKEN não configurado.");
+
+    const res = await fetch(`${ME_BASE}/balance`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+        "User-Agent": "solatto/1.0 (solattoecom@gmail.com)",
+      },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) throw new Error(`ME Saldo: ${res.status}`);
+    const data = (await res.json()) as { balance: string | number };
+    return { saldo: Number(data.balance) };
+  });
+
 type GenerateLabelInput = { order_id: string };
 
 type GenerateLabelResult = { pdf_url: string; codigo_rastreio: string };
