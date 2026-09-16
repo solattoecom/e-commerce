@@ -21,6 +21,7 @@ async function consultarME(meOrderId: string): Promise<{ entregue: boolean; even
       {
         headers: {
           Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
           Accept: "application/json",
           "User-Agent": "solatto/1.0 (solattoecom@gmail.com)",
         },
