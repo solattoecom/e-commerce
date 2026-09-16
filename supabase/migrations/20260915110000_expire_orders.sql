@@ -17,7 +17,7 @@ BEGIN
     FROM public.orders
     WHERE status = 'pendente'
       AND (
-        (payment_method = 'pix'    AND criado_em < NOW() - INTERVAL '2 hours')
+        (payment_method = 'pix'    AND criado_em < NOW() - INTERVAL '1 hour')
         OR
         (payment_method = 'boleto' AND criado_em < NOW() - INTERVAL '4 days')
         OR
