@@ -114,19 +114,25 @@ export async function gerarEtiquetaCore(
   const trackingCode = generateData[meId]?.tracking ?? "";
 
   // 4. URL do PDF
-  const printRes = await fetch(`${ME_BASE}/shipment/print?orders[]=${meId}`, {
-    headers: { ...meHeaders, "Content-Type": "application/json" },
+  const printRes = await fetch(`${ME_BASE}/shipment/print`, {
+    method: "POST",
+    headers: meHeaders,
+    body: JSON.stringify({ orders: [meId] }),
     signal: AbortSignal.timeout(15000),
   });
-  if (!printRes.ok) throw new Error(`ME Impressão: ${await printRes.text()}`);
+  const printContentType = printRes.headers.get("content-type") ?? "";
+  if (!printRes.ok || printContentType.includes("text/html")) {
+    throw new Error(`ME Impressão: resposta inválida (${printRes.status})`);
+  }
   const printText = await printRes.text();
   let pdfUrl: string;
   try {
     const parsed = JSON.parse(printText) as { url?: string } | string;
-    pdfUrl = typeof parsed === "string" ? parsed : (parsed.url ?? printText.trim());
+    pdfUrl = typeof parsed === "string" ? parsed : (parsed.url ?? "");
   } catch {
     pdfUrl = printText.trim().replace(/^"|"$/g, "");
   }
+  if (!pdfUrl.startsWith("https://")) throw new Error("ME Impressão: URL do PDF inválida.");
 
   // 5. Salvar no banco
   await supabaseAdmin
@@ -134,12 +140,12 @@ export async function gerarEtiquetaCore(
     .update({
       me_order_id: meId,
       codigo_rastreio: trackingCode || null,
-      label_pdf_url: pdfUrl || null,
+      label_pdf_url: pdfUrl,
       status: "enviado",
     })
     .eq("id", orderId);
 
-  return { pdf_url: pdfUrl, codigo_rastreio: trackingCode };
+  return { pdf_url: pdfUrl, codigo_rastreio: trackingCode, me_order_id: meId };
 }
 
 export const getMelhorEnvioSaldo = createServerFn({ method: "GET" })
@@ -161,7 +167,7 @@ export const getMelhorEnvioSaldo = createServerFn({ method: "GET" })
   });
 
 type GenerateLabelInput = { order_id: string };
-type GenerateLabelResult = { pdf_url: string; codigo_rastreio: string };
+type GenerateLabelResult = { pdf_url: string; codigo_rastreio: string; me_order_id: string };
 
 export const generateLabel = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

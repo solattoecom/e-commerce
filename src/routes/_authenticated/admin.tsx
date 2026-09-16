@@ -337,7 +337,9 @@ setNfePorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; re
       const result = await generateLabel({ data: { order_id: pedidoId } });
       setLabelPorPedido((prev) => ({ ...prev, [pedidoId]: result }));
       getMelhorEnvioSaldo().then(({ saldo }) => setSaldoME(saldo)).catch(() => {});
+      setTrackingEventsByOrder((prev) => { const n = { ...prev }; delete n[pedidoId]; return n; });
       await carregar();
+      if (result.me_order_id) void handleLoadTracking(pedidoId, result.me_order_id);
     } catch (e) {
       setLabelErroPorPedido((prev) => ({
         ...prev,
