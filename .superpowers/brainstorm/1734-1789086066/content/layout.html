@@ -1,0 +1,52 @@
+<h2>Como organizar a página "Sobre"?</h2>
+<p class="subtitle">Escolha o layout que mais combina com a Solatto</p>
+
+<div class="cards">
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#f5f5f5;padding:16px;font-family:sans-serif">
+      <div style="background:#222;color:#fff;padding:8px 12px;font-size:11px;font-weight:700;letter-spacing:2px;text-align:center;border-radius:4px 4px 0 0">SOLATTO</div>
+      <div style="background:#e8e8e8;height:80px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#888;margin-bottom:8px">📍 NOSSA HISTÓRIA</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+        <div style="background:#d0d0d0;height:70px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:9px;color:#666">Texto da história</div>
+        <div style="background:#c8c8c8;height:70px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:9px;color:#666">📷 Foto</div>
+      </div>
+      <div style="background:#bbb;height:55px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:9px;color:#555">🗺️ Google Maps (largura total)</div>
+    </div>
+    <div class="card-body">
+      <h3>A — Clássico</h3>
+      <p>História + foto lado a lado, mapa embaixo. Layout limpo e direto ao ponto.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#f5f5f5;padding:16px;font-family:sans-serif">
+      <div style="background:#222;color:#fff;padding:8px 12px;font-size:11px;font-weight:700;letter-spacing:2px;text-align:center;border-radius:4px 4px 0 0">SOLATTO</div>
+      <div style="background:#c8c8c8;height:60px;display:flex;align-items:center;justify-content:center;font-size:9px;color:#555;margin-bottom:8px;border-radius:4px">📷 Foto hero da empresa (banner largo)</div>
+      <div style="background:#e0e0e0;height:50px;border-radius:4px;padding:8px;display:flex;align-items:center;font-size:9px;color:#666;margin-bottom:8px">Texto da história da empresa centralizado</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div style="background:#d0d0d0;height:55px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:9px;color:#666">Valores / missão</div>
+        <div style="background:#bbb;height:55px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:9px;color:#555">🗺️ Mapa</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Editorial</h3>
+      <p>Foto grande no topo (hero), texto centralizado, depois valores e mapa lado a lado.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#f5f5f5;padding:16px;font-family:sans-serif">
+      <div style="background:#222;color:#fff;padding:8px 12px;font-size:11px;font-weight:700;letter-spacing:2px;text-align:center;border-radius:4px 4px 0 0">SOLATTO</div>
+      <div style="background:#e8e8e8;height:40px;display:flex;align-items:center;justify-content:center;font-size:9px;color:#888;margin-bottom:6px;border-radius:4px">"Nossa história começa em..."</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px">
+        <div style="background:#bbb;height:80px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:9px;color:#555">🗺️ Mapa</div>
+        <div style="background:#d0d0d0;height:80px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:9px;color:#666">Texto + endereço</div>
+      </div>
+      <div style="background:#c8c8c8;height:40px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:9px;color:#555">📷 Foto (largura total, final)</div>
+    </div>
+    <div class="card-body">
+      <h3>C — Mapa em destaque</h3>
+      <p>História no topo, mapa + endereço no meio em destaque, foto ao final.</p>
+    </div>
+  </div>
+</div>
