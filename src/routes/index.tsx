@@ -612,6 +612,8 @@ function Index() {
     if (v) setBloqueadoAte(Number(v));
   }, []);
   const [aviso, setAviso] = useState<string | null>(null);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmailSent, setResetEmailSent] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [scrolled, setScrolled] = useState(false);
   const [busca, setBusca] = useState("");
@@ -786,6 +788,24 @@ function Index() {
       } else {
         setErro(traduzErro(msg));
       }
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.email.trim()) return;
+    setBusy(true);
+    setErro(null);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(form.email.trim(), {
+        redirectTo: "https://solatto.com.br/redefinir-senha",
+      });
+      if (error) throw error;
+      setResetEmailSent(true);
+    } catch {
+      setErro("Não foi possível enviar o e-mail. Tente novamente.");
     } finally {
       setBusy(false);
     }
@@ -1032,23 +1052,47 @@ function Index() {
                 </>
               ) : showLogin ? (
                 <>
-                  <Button variant="link" className="mb-3 h-auto px-0 text-xs text-primary-foreground/80 hover:text-primary-foreground" onClick={() => setShowLogin(false)}>
+                  <Button variant="link" className="mb-3 h-auto px-0 text-xs text-primary-foreground/80 hover:text-primary-foreground" onClick={() => { setShowLogin(false); setShowForgotPassword(false); setResetEmailSent(false); setErro(null); }}>
                     <ArrowLeft className="size-3" /> Voltar
                   </Button>
-                  <h1 className="mb-2 text-3xl font-semibold leading-tight sm:text-4xl">Entrar na sua conta</h1>
-                  <p className="mb-7 max-w-sm text-sm leading-6 opacity-85">Use seu e-mail e senha para continuar.</p>
-                  <form className="grid gap-3" onSubmit={handleSignIn}>
-                    <Input required type="email" aria-label="E-mail" placeholder="E-mail" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} maxLength={255} className="h-12 border-border/70 bg-background/75 text-foreground backdrop-blur-sm placeholder:text-muted-foreground hover:border-border focus-visible:border-border focus-visible:ring-foreground/20" />
-                    <Input required type="password" aria-label="Senha" placeholder="Senha" value={form.senha} onChange={(e) => setForm({ ...form, senha: e.target.value })} minLength={8} maxLength={72} className="h-12 border-border/70 bg-background/75 text-foreground backdrop-blur-sm placeholder:text-muted-foreground hover:border-border focus-visible:border-border focus-visible:ring-foreground/20" />
-                    {aviso ? <p className="text-sm font-medium text-primary-foreground">{aviso}</p> : null}
-                    {erro ? <p className="text-sm text-primary-foreground">{erro}</p> : null}
-                    {emailNaoConfirmado ? (
-                      <button type="button" disabled={busy} onClick={reenviarConfirmacao} className="text-sm underline underline-offset-4 text-primary-foreground/80 hover:text-primary-foreground disabled:opacity-60">
-                        Reenviar e-mail de confirmação
-                      </button>
-                    ) : null}
-                    <Button type="submit" disabled={busy} className="h-12 rounded-md bg-background text-foreground shadow-none hover:bg-background/90 hover:text-foreground">{busy ? "Entrando…" : "Entrar"}</Button>
-                  </form>
+                  {showForgotPassword ? (
+                    resetEmailSent ? (
+                      <>
+                        <h1 className="mb-2 text-3xl font-semibold leading-tight sm:text-4xl">E-mail enviado</h1>
+                        <p className="mb-7 max-w-sm text-sm leading-6 opacity-85">Se este e-mail estiver cadastrado, você receberá um link para redefinir sua senha em breve.</p>
+                        <Button type="button" className="h-12 rounded-md bg-background text-foreground shadow-none hover:bg-background/90 hover:text-foreground" onClick={() => { setShowForgotPassword(false); setResetEmailSent(false); setErro(null); }}>Voltar ao login</Button>
+                      </>
+                    ) : (
+                      <>
+                        <h1 className="mb-2 text-3xl font-semibold leading-tight sm:text-4xl">Esqueci minha senha</h1>
+                        <p className="mb-7 max-w-sm text-sm leading-6 opacity-85">Digite seu e-mail e enviaremos um link para você criar uma nova senha.</p>
+                        <form className="grid gap-3" onSubmit={handleForgotPassword}>
+                          <Input required type="email" aria-label="E-mail" placeholder="E-mail" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} maxLength={255} className="h-12 border-border/70 bg-background/75 text-foreground backdrop-blur-sm placeholder:text-muted-foreground hover:border-border focus-visible:border-border focus-visible:ring-foreground/20" />
+                          {erro ? <p className="text-sm text-primary-foreground">{erro}</p> : null}
+                          <Button type="submit" disabled={busy} className="h-12 rounded-md bg-background text-foreground shadow-none hover:bg-background/90 hover:text-foreground">{busy ? "Enviando…" : "Enviar link"}</Button>
+                        </form>
+                        <button type="button" className="mt-3 text-xs text-primary-foreground/80 underline underline-offset-4 hover:text-primary-foreground" onClick={() => { setShowForgotPassword(false); setErro(null); }}>Voltar ao login</button>
+                      </>
+                    )
+                  ) : (
+                    <>
+                      <h1 className="mb-2 text-3xl font-semibold leading-tight sm:text-4xl">Entrar na sua conta</h1>
+                      <p className="mb-7 max-w-sm text-sm leading-6 opacity-85">Use seu e-mail e senha para continuar.</p>
+                      <form className="grid gap-3" onSubmit={handleSignIn}>
+                        <Input required type="email" aria-label="E-mail" placeholder="E-mail" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} maxLength={255} className="h-12 border-border/70 bg-background/75 text-foreground backdrop-blur-sm placeholder:text-muted-foreground hover:border-border focus-visible:border-border focus-visible:ring-foreground/20" />
+                        <Input required type="password" aria-label="Senha" placeholder="Senha" value={form.senha} onChange={(e) => setForm({ ...form, senha: e.target.value })} minLength={8} maxLength={72} className="h-12 border-border/70 bg-background/75 text-foreground backdrop-blur-sm placeholder:text-muted-foreground hover:border-border focus-visible:border-border focus-visible:ring-foreground/20" />
+                        {aviso ? <p className="text-sm font-medium text-primary-foreground">{aviso}</p> : null}
+                        {erro ? <p className="text-sm text-primary-foreground">{erro}</p> : null}
+                        {emailNaoConfirmado ? (
+                          <button type="button" disabled={busy} onClick={reenviarConfirmacao} className="text-sm underline underline-offset-4 text-primary-foreground/80 hover:text-primary-foreground disabled:opacity-60">
+                            Reenviar e-mail de confirmação
+                          </button>
+                        ) : null}
+                        <Button type="submit" disabled={busy} className="h-12 rounded-md bg-background text-foreground shadow-none hover:bg-background/90 hover:text-foreground">{busy ? "Entrando…" : "Entrar"}</Button>
+                        <button type="button" className="text-xs text-primary-foreground/80 underline underline-offset-4 hover:text-primary-foreground" onClick={() => { setShowForgotPassword(true); setErro(null); }}>Esqueci minha senha</button>
+                      </form>
+                    </>
+                  )}
                 </>
               ) : accountType ? (
                 <>
