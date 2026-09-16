@@ -71,6 +71,7 @@ type Pedido = {
   label_pdf_url: string | null;
   me_service_id: number | null;
   me_order_id: string | null;
+  ultimo_evento_rastreio: string | null;
   criado_em: string;
   usuario_id: string;
   endereco: Record<string, string>;
@@ -104,6 +105,16 @@ const brl = (valor: number) =>
 
 const dataCurta = (iso: string) =>
   new Date(iso).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+
+const ME_STATUS: Record<string, string> = {
+  posted: "Objeto postado",
+  in_transit: "Em trânsito",
+  delivered: "Entregue ao destinatário",
+  undelivered: "Tentativa de entrega não realizada",
+  canceled: "Envio cancelado",
+  expired: "Envio expirado",
+};
+const traduzirStatusME = (s: string) => ME_STATUS[s.toLowerCase()] ?? s;
 
 function totalCobrado(p: Pedido): number {
   if (p.card_parcelas && p.card_parcelas >= 11) {
@@ -168,7 +179,7 @@ function AdminPanel() {
       supabase
         .from("orders")
         .select(
-          "id, status, subtotal, frete, total, coupon_id, payment_method, card_parcelas, nota_fiscal, codigo_rastreio, label_pdf_url, me_service_id, me_order_id, criado_em, usuario_id, endereco, profiles(nome, sobrenome, email), order_items(id, quantidade, preco_unitario, subtotal, products(nome, slug, product_images(url)), product_variants(tamanho))",
+          "id, status, subtotal, frete, total, coupon_id, payment_method, card_parcelas, nota_fiscal, codigo_rastreio, label_pdf_url, me_service_id, me_order_id, ultimo_evento_rastreio, criado_em, usuario_id, endereco, profiles(nome, sobrenome, email), order_items(id, quantidade, preco_unitario, subtotal, products(nome, slug, product_images(url)), product_variants(tamanho))",
         )
         .order("criado_em", { ascending: false }),
     ]);
@@ -714,6 +725,21 @@ setNfePorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; re
                           </div>
                         );
                       })()}
+
+                      {/* Status de rastreio */}
+                      {p.status === "enviado" && p.codigo_rastreio && (
+                        <div>
+                          <p className="font-semibold mb-1">Status de rastreio</p>
+                          {p.ultimo_evento_rastreio ? (
+                            <p className="text-xs text-muted-foreground">
+                              {traduzirStatusME(p.ultimo_evento_rastreio)}
+                            </p>
+                          ) : (
+                            <p className="text-xs text-muted-foreground">Aguardando atualização do cron…</p>
+                          )}
+                          <p className="mt-0.5 font-mono text-xs text-muted-foreground">{p.codigo_rastreio}</p>
+                        </div>
+                      )}
                     </div>
                   )}
                 </li>
