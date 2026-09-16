@@ -72,6 +72,7 @@ export const generateLabel = createServerFn({ method: "POST" })
       quantity: i.quantidade,
       unitary_value: Number(i.preco_unitario),
     }));
+    const insuranceValue = Math.max(1, itens.reduce((s, i) => s + Number(i.preco_unitario) * i.quantidade, 0));
 
     const meHeaders = {
       Authorization: `Bearer ${token}`,
@@ -99,7 +100,7 @@ export const generateLabel = createServerFn({ method: "POST" })
       },
       products,
       volumes: [{ height: 15, width: 22, length: 35, weight: pesoKg }],
-      options: { insurance_value: 0, receipt: false, own_hand: false },
+      options: { insurance_value: insuranceValue, receipt: false, own_hand: false },
     };
 
     const cartRes = await fetch(`${ME_BASE}/cart`, {
