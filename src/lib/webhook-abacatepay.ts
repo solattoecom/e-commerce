@@ -1,16 +1,37 @@
 import { enviarConfirmacaoPedido } from "@/lib/email.functions";
+import { verifyHmacSha256, validateTimestamp } from "@/lib/webhook-verify";
 
 export async function handleAbacatePayWebhook(request: Request): Promise<Response> {
   try {
+    const secret = process.env["ABACATEPAY_WEBHOOK_SECRET"];
+    if (!secret) {
+      console.error("[webhook-abacatepay] ABACATEPAY_WEBHOOK_SECRET não configurado");
+      return new Response("misconfigured", { status: 500 });
+    }
+
+    const rawBody = await request.text();
+
+    // Valida assinatura HMAC-SHA256
+    const signature = request.headers.get("x-abacatepay-hmac-sha256") ?? "";
+    if (!signature) return new Response("missing signature", { status: 401 });
+    const valid = await verifyHmacSha256(rawBody, secret, signature);
+    if (!valid) return new Response("invalid signature", { status: 401 });
+
+    // Valida atualidade (rejeita payloads com mais de 5 min)
+    const tsHeader = request.headers.get("x-abacatepay-timestamp");
+    if (tsHeader) {
+      const ts = Number(tsHeader);
+      if (!validateTimestamp(ts)) return new Response("timestamp expired", { status: 401 });
+    }
+
+    const body = JSON.parse(rawBody) as Record<string, unknown>;
     const { supabaseAdmin } = await import("@/integrations/supabase/external.server");
 
-    const body = await request.json() as Record<string, unknown>;
+    const event = body["event"] as string | undefined;
+    const bodyData = body["data"] as Record<string, unknown> | undefined;
 
-    const event = body.event as string | undefined;
-    const bodyData = body.data as Record<string, unknown> | undefined;
-
-    const billing = (bodyData?.pixQrCode ?? bodyData?.billing ?? bodyData?.checkout ?? bodyData) as Record<string, unknown> | undefined;
-    const status = (billing?.status as string | undefined)?.toUpperCase();
+    const billing = (bodyData?.["pixQrCode"] ?? bodyData?.["billing"] ?? bodyData?.["checkout"] ?? bodyData) as Record<string, unknown> | undefined;
+    const status = (billing?.["status"] as string | undefined)?.toUpperCase();
     const isPaid =
       event === "billing.paid" ||
       event === "checkout.completed" ||
@@ -19,13 +40,13 @@ export async function handleAbacatePayWebhook(request: Request): Promise<Respons
 
     if (!isPaid) return new Response("ignored", { status: 200 });
 
-    const metadata = billing?.metadata as Record<string, unknown> | undefined;
+    const metadata = billing?.["metadata"] as Record<string, unknown> | undefined;
     const orderId =
-      (metadata?.order_id as string | undefined) ??
-      (billing?.externalId as string | undefined) ??
-      (billing?.external_id as string | undefined);
+      (metadata?.["order_id"] as string | undefined) ??
+      (billing?.["externalId"] as string | undefined) ??
+      (billing?.["external_id"] as string | undefined);
 
-    const paymentId = billing?.id as string | undefined;
+    const paymentId = billing?.["id"] as string | undefined;
 
     if (!orderId && !paymentId) return new Response("missing ids", { status: 400 });
 
@@ -93,7 +114,7 @@ export async function handleAbacatePayWebhook(request: Request): Promise<Respons
 
     return new Response("ok", { status: 200 });
   } catch (err) {
-    console.error("[webhook] erro:", err);
+    console.error("[webhook-abacatepay] erro:", err);
     return new Response("error", { status: 500 });
   }
 }
