@@ -17,14 +17,16 @@ async function consultarME(meOrderId: string): Promise<{ entregue: boolean; even
   if (!token || !meOrderId) return { entregue: false, evento: null };
   try {
     const res = await fetch(
-      `https://melhorenvio.com.br/api/v2/me/shipment/tracking?orders[]=${encodeURIComponent(meOrderId)}`,
+      `https://melhorenvio.com.br/api/v2/me/shipment/tracking`,
       {
+        method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
           Accept: "application/json",
           "User-Agent": "solatto/1.0 (solattoecom@gmail.com)",
         },
+        body: JSON.stringify({ orders: [meOrderId] }),
         signal: AbortSignal.timeout(8000),
       },
     );
