@@ -32,7 +32,7 @@ async function consultarME(meOrderId: string): Promise<{ entregue: boolean; even
     );
     const contentType = res.headers.get("content-type") ?? "";
     const body = await res.text();
-    console.log(`[ME tracking] status=${res.status} content-type=${contentType} body=${body.slice(0, 800)}`);
+    console.log(`[ME tracking] status=${res.status} content-type=${contentType} body=${body}`);
     if (!res.ok || !contentType.includes("application/json")) return { entregue: false, evento: null };
     const data = JSON.parse(body) as METrackingResposta;
     const item = data[meOrderId];
