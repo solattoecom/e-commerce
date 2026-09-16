@@ -1,3 +1,5 @@
+import { createServerFn } from "@tanstack/react-start";
+
 export type ShippingOption = {
   id: string;
   nome: string;
@@ -14,32 +16,41 @@ export type ShippingQuote = {
   opcoes: ShippingOption[];
 };
 
+type QuoteInput = {
+  cep: string;
+  itens: number;
+  subtotal: number;
+  clientTipo?: "varejo" | "atacado" | "dropshipping";
+};
+
+// ── tabela regional (atacado e fallback) ──────────────────────────────────────
+
 const regiao: Record<string, "SE" | "S" | "CO" | "NE" | "N"> = {
   SP: "SE", RJ: "SE", MG: "SE", ES: "SE",
-  PR: "S", SC: "S", RS: "S",
+  PR: "S",  SC: "S",  RS: "S",
   DF: "CO", GO: "CO", MT: "CO", MS: "CO",
-  BA: "NE", SE: "NE", AL: "NE", PE: "NE", PB: "NE", RN: "NE", CE: "NE", PI: "NE", MA: "NE",
-  AM: "N", PA: "N", AC: "N", RO: "N", RR: "N", AP: "N", TO: "N",
+  BA: "NE", SE: "NE", AL: "NE", PE: "NE", PB: "NE",
+  RN: "NE", CE: "NE", PI: "NE", MA: "NE",
+  AM: "N",  PA: "N",  AC: "N",  RO: "N",
+  RR: "N",  AP: "N",  TO: "N",
 };
 
-const tabela: Record<string, { base: number; prazo: number }> = {
-  SE: { base: 19.9, prazo: 3 },
-  S: { base: 24.9, prazo: 4 },
-  CO: { base: 29.9, prazo: 6 },
-  NE: { base: 34.9, prazo: 8 },
-  N: { base: 39.9, prazo: 10 },
+const tabela: Record<string, { base: number; prazo: number; extraKg: number }> = {
+  SE: { base: 19.9,  prazo: 3,  extraKg: 14 },
+  S:  { base: 24.9,  prazo: 4,  extraKg: 17 },
+  CO: { base: 29.9,  prazo: 6,  extraKg: 20 },
+  NE: { base: 34.9,  prazo: 8,  extraKg: 23 },
+  N:  { base: 39.9,  prazo: 10, extraKg: 26 },
 };
 
-export async function quoteShipping(input: { cep: string; itens: number; subtotal: number }): Promise<ShippingQuote> {
-  const cep = String(input.cep ?? "").replace(/\D/g, "");
-  if (cep.length !== 8) throw new Error("CEP inválido. Digite os 8 números.");
-
-  const itens = Math.max(1, Number(input.itens) || 1);
-  const subtotal = Math.max(0, Number(input.subtotal) || 0);
-
-  const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
-  if (!response.ok) throw new Error("Não foi possível consultar o CEP agora.");
-  const endereco = (await response.json()) as {
+async function cotarPorTabela(
+  cep: string,
+  itens: number,
+  subtotal: number,
+): Promise<ShippingQuote> {
+  const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+  if (!res.ok) throw new Error("Não foi possível consultar o CEP agora.");
+  const endereco = (await res.json()) as {
     erro?: boolean | string;
     localidade?: string;
     uf?: string;
@@ -50,11 +61,10 @@ export async function quoteShipping(input: { cep: string; itens: number; subtota
 
   const uf = endereco.uf;
   const faixa = tabela[regiao[uf] ?? "SE"]!;
-  const extra = (itens - 1) * 6.5;
+  const pesoKg = itens * 0.9;
+  const extraKg = Math.max(0, pesoKg - 1);
+  const extra = extraKg * faixa.extraKg;
   const gratis = subtotal >= 399.9;
-
-  const economico = Number((gratis ? 0 : faixa.base + extra).toFixed(2));
-  const expresso = Number((faixa.base * 1.85 + extra).toFixed(2));
 
   return {
     cep: `${cep.slice(0, 5)}-${cep.slice(5)}`,
@@ -67,14 +77,143 @@ export async function quoteShipping(input: { cep: string; itens: number; subtota
         id: "economico",
         nome: gratis ? "Entrega padrão (grátis)" : "Entrega padrão",
         prazo: `${faixa.prazo} a ${faixa.prazo + 3} dias úteis`,
-        valor: economico,
+        valor: Number((gratis ? 0 : faixa.base + extra).toFixed(2)),
       },
       {
         id: "expresso",
         nome: "Entrega expressa",
         prazo: `${Math.max(1, faixa.prazo - 2)} a ${faixa.prazo} dias úteis`,
-        valor: expresso,
+        valor: Number((faixa.base * 1.85 + extra).toFixed(2)),
       },
     ],
   };
 }
+
+// ── Melhor Envio ──────────────────────────────────────────────────────────────
+
+type MEServico = {
+  id: number;
+  name: string;
+  price: string | null;
+  custom_price: string | null;
+  delivery_time: number;
+  custom_delivery_range?: { min: number; max: number };
+  delivery_range?: { min: number; max: number };
+  company: { name: string };
+  error: string | null;
+};
+
+async function cotarMelhorEnvio(
+  cep: string,
+  itens: number,
+  subtotal: number,
+): Promise<ShippingQuote | null> {
+  const token = process.env["MELHOR_ENVIO_TOKEN"];
+  if (!token) return null;
+
+  const pesoKg = itens * 0.9;
+
+  const body = {
+    from: { postal_code: "14402130" },
+    to: { postal_code: cep },
+    package: { height: 15, width: 22, length: 35, weight: pesoKg },
+    options: { receipt: false, own_hand: false },
+    services: "",
+  };
+
+  let res: Response;
+  try {
+    res = await fetch("https://melhorenvio.com.br/api/v2/me/shipment/calculate", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        "User-Agent": "solatto/1.0 (solattoecom@gmail.com)",
+      },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(10000),
+    });
+  } catch {
+    return null;
+  }
+
+  if (!res.ok) return null;
+
+  const servicos = (await res.json()) as MEServico[];
+  if (!Array.isArray(servicos)) return null;
+
+  const validos = servicos
+    .filter((s) => s.error === null && s.price !== null)
+    .sort((a, b) => Number(a.price) - Number(b.price));
+
+  if (validos.length === 0) return null;
+
+  // Busca cidade/bairro via ViaCEP para preencher o retorno
+  let cidade = "";
+  let uf = "";
+  let bairro = "";
+  let logradouro = "";
+  try {
+    const vr = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+    if (vr.ok) {
+      const ve = (await vr.json()) as {
+        localidade?: string; uf?: string; bairro?: string; logradouro?: string;
+      };
+      cidade = ve.localidade ?? "";
+      uf = ve.uf ?? "";
+      bairro = ve.bairro ?? "";
+      logradouro = ve.logradouro ?? "";
+    }
+  } catch { /* ignora */ }
+
+  const gratis = subtotal >= 399.9;
+
+  const mapear = (s: MEServico, id: string): ShippingOption => {
+    const preco = Number(s.custom_price ?? s.price ?? 0);
+    const range = s.custom_delivery_range ?? s.delivery_range;
+    const prazo = range
+      ? `${range.min} a ${range.max} dias úteis`
+      : `${s.delivery_time} dias úteis`;
+    return {
+      id,
+      nome: id === "economico"
+        ? (gratis ? "Entrega padrão (grátis)" : `${s.company.name} — ${s.name}`)
+        : `${s.company.name} — ${s.name}`,
+      prazo,
+      valor: id === "economico" && gratis ? 0 : Number(preco.toFixed(2)),
+    };
+  };
+
+  const opcoes: ShippingOption[] = [mapear(validos[0]!, "economico")];
+  if (validos[1]) opcoes.push(mapear(validos[1], "expresso"));
+
+  return {
+    cep: `${cep.slice(0, 5)}-${cep.slice(5)}`,
+    cidade,
+    uf,
+    bairro,
+    logradouro,
+    opcoes,
+  };
+}
+
+// ── server function pública ───────────────────────────────────────────────────
+
+export const quoteShipping = createServerFn({ method: "POST" })
+  .validator((input: QuoteInput) => input)
+  .handler(async ({ data }): Promise<ShippingQuote> => {
+    const cep = String(data.cep ?? "").replace(/\D/g, "");
+    if (cep.length !== 8) throw new Error("CEP inválido. Digite os 8 números.");
+
+    const itens = Math.max(1, Number(data.itens) || 1);
+    const subtotal = Math.max(0, Number(data.subtotal) || 0);
+    const clientTipo = data.clientTipo ?? "varejo";
+
+    if (clientTipo !== "atacado") {
+      const resultado = await cotarMelhorEnvio(cep, itens, subtotal);
+      if (resultado) return resultado;
+    }
+
+    return cotarPorTabela(cep, itens, subtotal);
+  });
