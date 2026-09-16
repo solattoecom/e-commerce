@@ -260,14 +260,16 @@ function CheckoutPage() {
         <ArrowLeft className="size-4" />
         Voltar
       </button>
-      <div className="mb-8 flex items-center justify-center gap-2">
+      <div className="mb-8 flex items-center">
         {steps.map((s, i) => (
-          <div key={s.id} className="flex items-center gap-2">
-            <div className={`grid h-7 w-7 shrink-0 place-items-center rounded-full text-xs font-medium ${i <= stepIndex ? "bg-foreground text-background" : "bg-muted text-muted-foreground"}`}>
-              {i < stepIndex ? <Check className="h-3.5 w-3.5" /> : i + 1}
+          <div key={s.id} className="contents">
+            {i > 0 && <div className={`mx-3 h-px flex-1 ${i <= stepIndex ? "bg-foreground" : "bg-border"}`} />}
+            <div className="flex shrink-0 items-center gap-2">
+              <div className={`grid h-7 w-7 shrink-0 place-items-center rounded-full text-xs font-medium ${i <= stepIndex ? "bg-foreground text-background" : "bg-muted text-muted-foreground"}`}>
+                {i < stepIndex ? <Check className="h-3.5 w-3.5" /> : i + 1}
+              </div>
+              <span className={`text-sm ${i <= stepIndex ? "font-medium" : "text-muted-foreground"}`}>{s.label}</span>
             </div>
-            <span className={`text-sm ${i <= stepIndex ? "font-medium" : "text-muted-foreground"}`}>{s.label}</span>
-            {i < steps.length - 1 && <div className={`ml-2 h-px w-12 ${i < stepIndex ? "bg-foreground" : "bg-border"}`} />}
           </div>
         ))}
       </div>
