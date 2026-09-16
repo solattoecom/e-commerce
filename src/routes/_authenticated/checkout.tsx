@@ -12,6 +12,7 @@ import { quoteShipping, type ShippingOption } from "@/lib/shipping.functions";
 import { createOrder, getOrderStatus } from "@/lib/checkout.functions";
 import { CouponInput } from "@/components/CouponInput";
 import type { DiscountResult } from "@/lib/coupon.functions";
+import { supabase } from "@/integrations/supabase/external";
 
 export const Route = createFileRoute("/_authenticated/checkout")({
   component: CheckoutPage,
@@ -35,6 +36,18 @@ function CheckoutPage() {
       void navigate({ to: "/" });
     }
   }, [paid, cartLoading, items.length, navigate]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    void supabase
+      .from("user_client_types")
+      .select("tipo")
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.tipo) setClientTipo(data.tipo as "varejo" | "atacado" | "dropshipping");
+      });
+  }, [user?.id]);
   const [step, setStep] = useState<Step>("endereco");
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [showNewAddr, setShowNewAddr] = useState(false);
@@ -45,6 +58,7 @@ function CheckoutPage() {
   const [selectedShipping, setSelectedShipping] = useState<ShippingOption | null>(null);
   const [desconto, setDesconto] = useState<DiscountResult | null>(null);
   const [shippingLoading, setShippingLoading] = useState(false);
+  const [clientTipo, setClientTipo] = useState<"varejo" | "atacado" | "dropshipping">("varejo");
 
   const [paymentMethod, setPaymentMethod] = useState<"pix" | "cartao" | "boleto">("pix");
   const [telefone, setTelefone] = useState("");
@@ -118,7 +132,7 @@ function CheckoutPage() {
     setErro(null);
     setShippingLoading(true);
     try {
-      const quote = await quoteShipping({ cep: selectedAddress.cep, itens: itemCount, subtotal: total });
+      const quote = await quoteShipping({ data: { cep: selectedAddress.cep, itens: itemCount, subtotal: total, clientTipo } });
       setShippingOptions(quote.opcoes);
       setSelectedShipping(quote.opcoes[0] ?? null);
       setStep("entrega");
