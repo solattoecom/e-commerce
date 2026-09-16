@@ -32,7 +32,7 @@ export const generateLabel = createServerFn({ method: "POST" })
     // Busca pedido com itens
     const { data: order } = await supabaseAdmin
       .from("orders")
-      .select("id, status, me_service_id, me_order_id, usuario_id, endereco, order_items(quantidade)")
+      .select("id, status, me_service_id, me_order_id, usuario_id, endereco, order_items(quantidade, preco_unitario, products(nome))")
       .eq("id", data.order_id)
       .single();
 
@@ -64,9 +64,14 @@ export const generateLabel = createServerFn({ method: "POST" })
       cep: string;
     };
 
-    const totalItens = (order.order_items as { quantidade: number }[])
-      .reduce((soma, i) => soma + i.quantidade, 0);
+    const itens = order.order_items as { quantidade: number; preco_unitario: number; products: { nome: string } | null }[];
+    const totalItens = itens.reduce((soma, i) => soma + i.quantidade, 0);
     const pesoKg = Math.max(0.1, totalItens * 0.9);
+    const products = itens.map((i) => ({
+      name: i.products?.nome ?? "Calçado",
+      quantity: i.quantidade,
+      unitary_value: Number(i.preco_unitario),
+    }));
 
     const meHeaders = {
       Authorization: `Bearer ${token}`,
@@ -92,8 +97,9 @@ export const generateLabel = createServerFn({ method: "POST" })
         country_id: "BR",
         postal_code: endereco.cep.replace(/\D/g, ""),
       },
+      products,
       volumes: [{ height: 15, width: 22, length: 35, weight: pesoKg }],
-      options: { insurance_value: 0, receipt: false, own_hand: false, non_commercial: true },
+      options: { insurance_value: 0, receipt: false, own_hand: false },
     };
 
     const cartRes = await fetch(`${ME_BASE}/cart`, {
