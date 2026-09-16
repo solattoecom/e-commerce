@@ -26,7 +26,7 @@ export function ShippingCalculator({ itens, subtotal, onSelect }: Props) {
     setLoading(true);
     setError(null);
     try {
-      const result = await quoteShipping({ cep, itens, subtotal });
+      const result = await quoteShipping({ data: { cep, itens, subtotal } });
       setQuote(result);
       const first = result.opcoes[0] ?? null;
       setSelected(first?.id ?? null);

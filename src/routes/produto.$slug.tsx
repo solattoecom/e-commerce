@@ -522,7 +522,7 @@ function ProductPage() {
                       setCalculando(true);
                       setFreteErro(null);
                       try {
-                        const r = await quoteShipping({ cep, itens: 1, subtotal: preco ? Number(preco.preco) : 0 });
+                        const r = await quoteShipping({ data: { cep, itens: 1, subtotal: preco ? Number(preco.preco) : 0 } });
                         setFreteResultado(r);
                       } catch (err) {
                         setFreteErro((err as Error).message);
@@ -541,7 +541,7 @@ function ProductPage() {
                   setCalculando(true);
                   setFreteErro(null);
                   try {
-                    const r = await quoteShipping({ cep, itens: 1, subtotal: preco ? Number(preco.preco) : 0 });
+                    const r = await quoteShipping({ data: { cep, itens: 1, subtotal: preco ? Number(preco.preco) : 0 } });
                     setFreteResultado(r);
                   } catch (err) {
                     setFreteErro((err as Error).message);
