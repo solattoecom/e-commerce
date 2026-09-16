@@ -89,6 +89,7 @@ export const generateLabel = createServerFn({ method: "POST" })
         name: `${profile?.nome ?? ""} ${profile?.sobrenome ?? ""}`.trim() || "Cliente",
         phone: "00000000000",
         email: profile?.email ?? "",
+        document: "00000000000",
         address: endereco.rua,
         number: endereco.numero,
         complement: endereco.complemento ?? "",
