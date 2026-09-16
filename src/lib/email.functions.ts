@@ -178,6 +178,41 @@ type AvaliacaoInput = {
   itens: { nome: string; slug: string }[];
 };
 
+export async function enviarEmailAtualizacaoRastreio(data: {
+  email: string;
+  nome: string;
+  pedido_id: string;
+  evento: string;
+  codigo_rastreio: string;
+}) {
+  const resend = getResend();
+  const html = baseTemplate(`
+    <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;">Atualização do seu pedido</h1>
+    <p style="margin:0 0 24px;font-size:15px;color:#555;">
+      Olá, ${data.nome}! Há uma novidade no rastreio do seu pedido
+      <strong>#${data.pedido_id.slice(0, 8).toUpperCase()}</strong>.
+    </p>
+
+    <div style="background:#f8f8f8;border-radius:12px;padding:20px 24px;margin-bottom:24px;">
+      <p style="margin:0 0 6px;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:#999;">Último evento</p>
+      <p style="margin:0;font-size:15px;font-weight:600;">${data.evento}</p>
+      <p style="margin:4px 0 0;font-size:12px;color:#999;font-family:monospace;">${data.codigo_rastreio}</p>
+    </div>
+
+    <a href="https://www.solatto.com.br/pedidos"
+       style="display:inline-block;background:#000;color:#fff;text-decoration:none;padding:12px 28px;border-radius:24px;font-size:14px;font-weight:600;">
+      Acompanhar pedido
+    </a>
+  `);
+
+  await resend.emails.send({
+    from: FROM,
+    to: data.email,
+    subject: `Atualização do rastreio · Pedido #${data.pedido_id.slice(0, 8).toUpperCase()} · Solatto`,
+    html,
+  });
+}
+
 export async function enviarEmailAvaliacao(data: AvaliacaoInput) {
   const resend = getResend();
 

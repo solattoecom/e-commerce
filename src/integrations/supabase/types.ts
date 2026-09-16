@@ -288,6 +288,7 @@ export type Database = {
           card_parcelas: number | null
           codigo_rastreio: string | null
           label_pdf_url: string | null
+          ultimo_evento_rastreio: string | null
           comissao_percent: number
           comissao_valor: number
           coupon_id: string | null
@@ -312,6 +313,7 @@ export type Database = {
           card_parcelas?: number | null
           codigo_rastreio?: string | null
           label_pdf_url?: string | null
+          ultimo_evento_rastreio?: string | null
           comissao_percent?: number
           comissao_valor?: number
           coupon_id?: string | null
@@ -336,6 +338,7 @@ export type Database = {
           card_parcelas?: number | null
           codigo_rastreio?: string | null
           label_pdf_url?: string | null
+          ultimo_evento_rastreio?: string | null
           comissao_percent?: number
           comissao_valor?: number
           coupon_id?: string | null
