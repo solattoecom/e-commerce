@@ -149,10 +149,6 @@ async function cotarMelhorEnvio(
     return null;
   }
 
-  console.log("[ME] todos os serviços:", JSON.stringify(servicos.map((s) => ({
-    id: s.id, name: s.name, company: s.company.name, price: s.price, error: s.error,
-  }))));
-
   const validos = servicos
     .filter((s) => !s.error && s.price !== null)
     .sort((a, b) => Number(a.price) - Number(b.price));
@@ -182,25 +178,33 @@ async function cotarMelhorEnvio(
 
   const gratis = subtotal >= 399.9;
 
-  const mapear = (s: MEServico, id: string): ShippingOption => {
+  const mapear = (s: MEServico, label: "economico" | "expresso"): ShippingOption => {
     const preco = Number(s.custom_price ?? s.price ?? 0);
     const range = s.custom_delivery_range ?? s.delivery_range;
     const prazo = range
       ? `${range.min} a ${range.max} dias úteis`
       : `${s.delivery_time} dias úteis`;
+    const nomeBase = `${s.company.name} — ${s.name}`;
     return {
-      id,
-      nome: id === "economico"
-        ? (gratis ? "Entrega padrão (grátis)" : `${s.company.name} — ${s.name}`)
-        : `${s.company.name} — ${s.name}`,
+      id: label,
+      nome: label === "economico"
+        ? (gratis ? `${nomeBase} (grátis)` : nomeBase)
+        : nomeBase,
       prazo,
-      valor: id === "economico" && gratis ? 0 : Number(preco.toFixed(2)),
+      valor: label === "economico" && gratis ? 0 : Number(preco.toFixed(2)),
       me_service_id: s.id,
     };
   };
 
-  const opcoes: ShippingOption[] = [mapear(validos[0]!, "economico")];
-  if (validos[1]) opcoes.push(mapear(validos[1], "expresso"));
+  const maisBarato = validos[0]!;
+  const maisRapido = validos.reduce((melhor, s) => {
+    const prazoS = (s.custom_delivery_range ?? s.delivery_range)?.min ?? s.delivery_time;
+    const prazoM = (melhor.custom_delivery_range ?? melhor.delivery_range)?.min ?? melhor.delivery_time;
+    return prazoS < prazoM ? s : melhor;
+  });
+
+  const opcoes: ShippingOption[] = [mapear(maisBarato, "economico")];
+  if (maisRapido.id !== maisBarato.id) opcoes.push(mapear(maisRapido, "expresso"));
 
   return {
     cep: `${cep.slice(0, 5)}-${cep.slice(5)}`,
