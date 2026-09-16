@@ -85,20 +85,19 @@ export const createOrder = createServerFn({ method: "POST" })
 
     const priceMap = new Map((prices ?? []).map((p) => [p.produto_id, p.preco]));
 
-    // Valida estoque e monta itens com preço real
+    // Valida quantidade máxima por item
     for (const item of data.items) {
+      if (item.quantidade < 1 || item.quantidade > 20) throw new Error(`Quantidade inválida para "${item.nome}".`);
       if (!priceMap.has(item.produto_id)) throw new Error(`Preço não encontrado para "${item.nome}".`);
-      if (item.variacao_id) {
-        const { data: variacao } = await supabaseAdmin
-          .from("product_variants")
-          .select("estoque")
-          .eq("id", item.variacao_id)
-          .single();
-        if (!variacao || variacao.estoque < item.quantidade) {
-          throw new Error(`Estoque insuficiente para o produto "${item.nome}". (estoque=${variacao?.estoque ?? "null"} qtd=${item.quantidade})`);
-        }
-      }
     }
+
+    // Limite de pedidos pendentes por usuário (anti-bot)
+    const { count: pendingCount } = await supabaseAdmin
+      .from("orders")
+      .select("id", { count: "exact", head: true })
+      .eq("usuario_id", context.userId)
+      .eq("status", "pendente");
+    if ((pendingCount ?? 0) >= 5) throw new Error("Você já tem muitos pedidos pendentes. Conclua ou cancele antes de criar um novo.");
 
     const itemsComPreco = data.items.map((item) => ({
       ...item,
@@ -175,6 +174,20 @@ export const createOrder = createServerFn({ method: "POST" })
         subtotal: item.preco_unitario * item.quantidade,
       }))
     );
+
+    // Reserva estoque atomicamente — falha se insuficiente
+    for (const item of itemsComPreco) {
+      if (!item.variacao_id) continue;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error: stockErr } = await (supabaseAdmin.rpc as any)("reserve_stock", {
+        p_variacao_id: item.variacao_id,
+        p_quantidade: item.quantidade,
+      });
+      if (stockErr) {
+        await supabaseAdmin.from("orders").delete().eq("id", order.id);
+        throw new Error(`Estoque insuficiente para "${item.nome}".`);
+      }
+    }
 
     const headers = {
       "Authorization": `Bearer ${apiKey}`,
@@ -365,14 +378,6 @@ export const createOrder = createServerFn({ method: "POST" })
     const confirmed = payData.status === "CONFIRMED" || payData.status === "RECEIVED";
     if (confirmed) {
       await supabaseAdmin.from("orders").update({ status: "pago" }).eq("id", order.id);
-      const { data: orderItems } = await supabaseAdmin
-        .from("order_items")
-        .select("variacao_id, quantidade")
-        .eq("pedido_id", order.id);
-      for (const item of orderItems ?? []) {
-        if (!item.variacao_id) continue;
-        await supabaseAdmin.rpc("decrement_stock", { p_variacao_id: item.variacao_id, p_quantidade: item.quantidade });
-      }
     }
 
     return {
@@ -411,19 +416,6 @@ export const getOrderStatus = createServerFn({ method: "GET" })
             const abacateStatus = json.data?.status?.toUpperCase();
             if (abacateStatus === "PAID" || abacateStatus === "COMPLETED" || abacateStatus === "APPROVED") {
               await supabaseAdmin.from("orders").update({ status: "pago" }).eq("id", order.id);
-
-              const { data: items } = await supabaseAdmin
-                .from("order_items")
-                .select("variacao_id, quantidade")
-                .eq("pedido_id", order.id);
-              for (const item of items ?? []) {
-                if (!item.variacao_id) continue;
-                await supabaseAdmin.rpc("decrement_stock", {
-                  p_variacao_id: item.variacao_id,
-                  p_quantidade: item.quantidade,
-                });
-              }
-
               return { status: "pago", payment_id: order.payment_id };
             }
           }

@@ -81,19 +81,6 @@ export async function handleAbacatePayWebhook(request: Request): Promise<Respons
       await supabaseAdmin.rpc("increment_coupon_used_count", { p_coupon_id: paidOrder.coupon_id });
     }
 
-    const { data: items } = await supabaseAdmin
-      .from("order_items")
-      .select("variacao_id, quantidade")
-      .eq("pedido_id", order.id);
-
-    for (const item of items ?? []) {
-      if (!item.variacao_id) continue;
-      await supabaseAdmin.rpc("decrement_stock", {
-        p_variacao_id: item.variacao_id,
-        p_quantidade: item.quantidade,
-      });
-    }
-
     const { data: profile } = await supabaseAdmin
       .from("profiles")
       .select("nome, email")

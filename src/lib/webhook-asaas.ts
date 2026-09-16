@@ -49,19 +49,6 @@ export async function handleAsaasWebhook(request: Request): Promise<Response> {
 
     await supabaseAdmin.from("orders").update({ status: "pago" }).eq("id", orderId);
 
-    const { data: items } = await supabaseAdmin
-      .from("order_items")
-      .select("variacao_id, quantidade")
-      .eq("pedido_id", orderId);
-
-    for (const item of items ?? []) {
-      if (!item.variacao_id) continue;
-      await supabaseAdmin.rpc("decrement_stock", {
-        p_variacao_id: item.variacao_id,
-        p_quantidade: item.quantidade,
-      });
-    }
-
     return new Response("ok", { status: 200 });
   } catch (err) {
     logger.error("webhook-asaas", "erro inesperado", { error: String(err) });
