@@ -189,6 +189,19 @@ export const createOrder = createServerFn({ method: "POST" })
       }
     }
 
+    // Restaura estoque e deleta pedido se pagamento falhar
+    async function cancelarPedido() {
+      for (const item of itemsComPreco) {
+        if (!item.variacao_id) continue;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (supabaseAdmin.rpc as any)("restore_stock", {
+          p_variacao_id: item.variacao_id,
+          p_quantidade: item.quantidade,
+        });
+      }
+      await supabaseAdmin.from("orders").delete().eq("id", order.id);
+    }
+
     const headers = {
       "Authorization": `Bearer ${apiKey}`,
       "Content-Type": "application/json",
@@ -214,7 +227,7 @@ export const createOrder = createServerFn({ method: "POST" })
       const pixRes = await fetch(ABACATEPAY_PIX_URL, { method: "POST", headers, body: JSON.stringify(pixBody) });
       if (!pixRes.ok) {
         const err = await pixRes.text();
-        await supabaseAdmin.from("orders").delete().eq("id", order.id);
+        await cancelarPedido();
         throw new Error(`AbacatePay: ${err}`);
       }
 
@@ -235,7 +248,7 @@ export const createOrder = createServerFn({ method: "POST" })
     if (data.payment_method === "boleto") {
       const asaasKey = process.env["ASAAS_API_KEY"];
       if (!asaasKey) {
-        await supabaseAdmin.from("orders").delete().eq("id", order.id);
+        await cancelarPedido();
         throw new Error("ASAAS_API_KEY não configurada.");
       }
 
@@ -253,7 +266,7 @@ export const createOrder = createServerFn({ method: "POST" })
       });
       if (!custRes.ok) {
         const err = await custRes.text();
-        await supabaseAdmin.from("orders").delete().eq("id", order.id);
+        await cancelarPedido();
         throw new Error(`Erro ao registrar cliente: ${err}`);
       }
       const custData = await custRes.json() as { id: string };
@@ -277,7 +290,7 @@ export const createOrder = createServerFn({ method: "POST" })
 
       const payText = await payRes.text();
       if (!payRes.ok) {
-        await supabaseAdmin.from("orders").delete().eq("id", order.id);
+        await cancelarPedido();
         let msg = "Erro ao gerar boleto.";
         try {
           const errJson = JSON.parse(payText) as { errors?: { description: string }[] };
@@ -300,7 +313,7 @@ export const createOrder = createServerFn({ method: "POST" })
     // Cartão: Asaas
     const asaasKey = process.env["ASAAS_API_KEY"];
     if (!asaasKey) {
-      await supabaseAdmin.from("orders").delete().eq("id", order.id);
+      await cancelarPedido();
       throw new Error("ASAAS_API_KEY não configurada.");
     }
 
@@ -318,7 +331,7 @@ export const createOrder = createServerFn({ method: "POST" })
     });
     if (!custRes.ok) {
       const err = await custRes.text();
-      await supabaseAdmin.from("orders").delete().eq("id", order.id);
+      await cancelarPedido();
       throw new Error(`Erro ao registrar cliente: ${err}`);
     }
     const custData = await custRes.json() as { id: string };
@@ -363,7 +376,7 @@ export const createOrder = createServerFn({ method: "POST" })
 
     const payText = await payRes.text();
     if (!payRes.ok) {
-      await supabaseAdmin.from("orders").delete().eq("id", order.id);
+      await cancelarPedido();
       let msg = "Pagamento recusado.";
       try {
         const errJson = JSON.parse(payText) as { errors?: { description: string }[] };
