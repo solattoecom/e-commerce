@@ -196,15 +196,29 @@ async function cotarMelhorEnvio(
     };
   };
 
-  const maisBarato = validos[0]!;
-  const maisRapido = validos.reduce((melhor, s) => {
-    const prazoS = (s.custom_delivery_range ?? s.delivery_range)?.min ?? s.delivery_time;
-    const prazoM = (melhor.custom_delivery_range ?? melhor.delivery_range)?.min ?? melhor.delivery_time;
-    return prazoS < prazoM ? s : melhor;
-  });
+  const pac   = validos.find((s) => s.id === 1);  // PAC
+  const sedex = validos.find((s) => s.id === 2);  // SEDEX
 
-  const opcoes: ShippingOption[] = [mapear(maisBarato, "economico")];
-  if (maisRapido.id !== maisBarato.id) opcoes.push(mapear(maisRapido, "expresso"));
+  const correiosDisponiveis = pac || sedex;
+
+  let economico: MEServico;
+  let expresso: MEServico | undefined;
+
+  if (correiosDisponiveis) {
+    economico = pac ?? sedex!;
+    expresso  = pac && sedex ? sedex : undefined;
+  } else {
+    economico = validos[0]!;
+    const maisRapido = validos.reduce((melhor, s) => {
+      const prazoS = (s.custom_delivery_range ?? s.delivery_range)?.min ?? s.delivery_time;
+      const prazoM = (melhor.custom_delivery_range ?? melhor.delivery_range)?.min ?? melhor.delivery_time;
+      return prazoS < prazoM ? s : melhor;
+    });
+    if (maisRapido.id !== economico.id) expresso = maisRapido;
+  }
+
+  const opcoes: ShippingOption[] = [mapear(economico, "economico")];
+  if (expresso) opcoes.push(mapear(expresso, "expresso"));
 
   return {
     cep: `${cep.slice(0, 5)}-${cep.slice(5)}`,
