@@ -50,9 +50,13 @@ export const generateLabel = createServerFn({ method: "POST" })
     // Busca perfil do cliente
     const { data: profile } = await supabaseAdmin
       .from("profiles")
-      .select("nome, sobrenome, email")
+      .select("nome, sobrenome, email, cpf")
       .eq("id", order.usuario_id)
       .single();
+
+    if (!profile?.cpf) {
+      throw new Error("CPF do destinatário não cadastrado. O cliente precisa informar o CPF no perfil antes de gerar a etiqueta.");
+    }
 
     const endereco = order.endereco as {
       rua: string;
@@ -89,7 +93,7 @@ export const generateLabel = createServerFn({ method: "POST" })
         name: `${profile?.nome ?? ""} ${profile?.sobrenome ?? ""}`.trim() || "Cliente",
         phone: "00000000000",
         email: profile?.email ?? "",
-        document: "00000000000",
+        document: profile.cpf,
         address: endereco.rua,
         number: endereco.numero,
         complement: endereco.complemento ?? "",

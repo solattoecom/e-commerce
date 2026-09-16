@@ -556,6 +556,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          cpf: string | null
           criado_em: string
           email: string
           id: string
@@ -563,6 +564,7 @@ export type Database = {
           sobrenome: string
         }
         Insert: {
+          cpf?: string | null
           criado_em?: string
           email: string
           id: string
@@ -570,6 +572,7 @@ export type Database = {
           sobrenome?: string
         }
         Update: {
+          cpf?: string | null
           criado_em?: string
           email?: string
           id?: string

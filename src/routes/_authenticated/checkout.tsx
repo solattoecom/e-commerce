@@ -10,6 +10,7 @@ import { useCart } from "@/hooks/useCart";
 import { useAddresses, type NewAddress } from "@/hooks/useAddresses";
 import { quoteShipping, type ShippingOption } from "@/lib/shipping.functions";
 import { createOrder, getOrderStatus } from "@/lib/checkout.functions";
+import { updateProfileCpf } from "@/lib/account.functions";
 import { CouponInput } from "@/components/CouponInput";
 import type { DiscountResult } from "@/lib/coupon.functions";
 import { supabase } from "@/integrations/supabase/external";
@@ -59,6 +60,24 @@ function CheckoutPage() {
   const [desconto, setDesconto] = useState<DiscountResult | null>(null);
   const [shippingLoading, setShippingLoading] = useState(false);
   const [clientTipo, setClientTipo] = useState<"varejo" | "atacado" | "dropshipping">("varejo");
+
+  const [profileCpf, setProfileCpf] = useState("");
+
+  useEffect(() => {
+    if (!user?.id) return;
+    void supabase
+      .from("profiles")
+      .select("cpf")
+      .eq("id", user.id)
+      .single()
+      .then(({ data }) => {
+        if (data?.cpf) {
+          const v = data.cpf;
+          const fmt = v.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+          setProfileCpf(fmt);
+        }
+      });
+  }, [user?.id]);
 
   const [paymentMethod, setPaymentMethod] = useState<"pix" | "cartao" | "boleto">("pix");
   const [telefone, setTelefone] = useState("");
@@ -129,9 +148,12 @@ function CheckoutPage() {
 
   const handleGoToShipping = async () => {
     if (!selectedAddressId || !selectedAddress) { setErro("Selecione um endereço."); return; }
+    const cpfDigits = profileCpf.replace(/\D/g, "");
+    if (cpfDigits.length !== 11) { setErro("Informe um CPF válido com 11 dígitos."); return; }
     setErro(null);
     setShippingLoading(true);
     try {
+      await updateProfileCpf({ data: { cpf: cpfDigits } });
       const quote = await quoteShipping({ data: { cep: selectedAddress.cep, itens: itemCount, subtotal: total, clientTipo } });
       setShippingOptions(quote.opcoes);
       setSelectedShipping(quote.opcoes[0] ?? null);
@@ -404,6 +426,21 @@ function CheckoutPage() {
           ) : (
             <Button variant="outline" size="sm" onClick={() => setShowNewAddr(true)}>+ Adicionar endereço</Button>
           )}
+
+          <div className="grid gap-2">
+            <Label htmlFor="profile_cpf">CPF *</Label>
+            <Input
+              id="profile_cpf"
+              placeholder="000.000.000-00"
+              maxLength={14}
+              value={profileCpf}
+              onChange={(e) => {
+                const v = e.target.value.replace(/\D/g, "").slice(0, 11);
+                const fmt = v.replace(/(\d{3})(\d{3})(\d{3})(\d{0,2})/, (_, a, b, c, d) => d ? `${a}.${b}.${c}-${d}` : c ? `${a}.${b}.${c}` : b ? `${a}.${b}` : a);
+                setProfileCpf(fmt);
+              }}
+            />
+          </div>
 
           <Button className="w-full bg-foreground text-background hover:bg-foreground/90" disabled={!selectedAddressId || shippingLoading} onClick={handleGoToShipping}>
             {shippingLoading ? "Calculando frete..." : <><span>Continuar</span><ArrowRight className="ml-2 h-4 w-4" /></>}
