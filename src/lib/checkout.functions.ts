@@ -159,6 +159,7 @@ export const createOrder = createServerFn({ method: "POST" })
         address_id: data.address_id,
         coupon_id: data.coupon_id ?? null,
         desconto,
+        me_service_id: shippingOption.me_service_id ?? null,
       })
       .select("id")
       .single();
