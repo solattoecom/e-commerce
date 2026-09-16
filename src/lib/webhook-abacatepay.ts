@@ -61,7 +61,13 @@ export async function handleAbacatePayWebhook(request: Request): Promise<Respons
     if (!order) return new Response("order not found", { status: 404 });
     if (order.status === "pago") return new Response("already paid", { status: 200 });
 
-    await supabaseAdmin.from("orders").update({ status: "pago" }).eq("id", order.id);
+    const { data: updated } = await supabaseAdmin
+      .from("orders")
+      .update({ status: "pago" })
+      .eq("id", order.id)
+      .eq("status", "pendente")
+      .select("id");
+    if (!updated?.length) return new Response("already paid", { status: 200 });
 
     const { data: paidOrder } = await supabaseAdmin
       .from("orders")

@@ -35,13 +35,13 @@ export const requireSupabaseAuth = createMiddleware({ type: 'function' }).server
       },
     );
 
-    const { data, error } = await supabase.auth.getClaims(token);
-    if (error || !data?.claims?.sub) {
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    if (error || !user) {
       throw new Error('Unauthorized: Invalid token');
     }
 
     return next({
-      context: { supabase, userId: data.claims.sub, claims: data.claims },
+      context: { supabase, userId: user.id, claims: user },
     });
   },
 );

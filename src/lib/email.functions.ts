@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { Resend } from "resend";
+import { requireSupabaseAuth } from "@/integrations/supabase/external-auth-middleware";
 
 const FROM = "Solatto <pedidos@solatto.com.br>";
 
@@ -77,7 +78,7 @@ type StatusInput = {
   nome: string;
   pedido_id: string;
   status: string;
-  codigo_rastreio?: string | null;
+  codigo_rastreio?: string | null | undefined;
 };
 
 export async function enviarConfirmacaoPedido(data: ConfirmacaoInput) {
@@ -218,15 +219,8 @@ export async function enviarEmailAvaliacao(data: AvaliacaoInput) {
   });
 }
 
-export const enviarEmailConfirmacaoPedido = createServerFn({ method: "POST" })
-  .inputValidator((input: ConfirmacaoInput) => input)
-  .handler(async ({ data }) => { await enviarConfirmacaoPedido(data); });
-
-export const enviarEmailStatusPedido = createServerFn({ method: "POST" })
-  .inputValidator((input: StatusInput) => input)
-  .handler(async ({ data }) => { await enviarStatusPedido(data); });
-
 export const notificarMudancaStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: { order_id: string; status: string; codigo_rastreio?: string | null }) => input)
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/external.server");
@@ -276,11 +270,8 @@ type EstoqueDisponivelInput = {
   tamanho: string;
 };
 
-export const enviarEmailAvaliacaoPedido = createServerFn({ method: "POST" })
-  .inputValidator((input: AvaliacaoInput) => input)
-  .handler(async ({ data }) => { await enviarEmailAvaliacao(data); });
-
 export const enviarEmailEstoqueDisponivel = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: EstoqueDisponivelInput) => input)
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/external.server");

@@ -18,5 +18,5 @@ export const cadastrarAlertaEstoque = createServerFn({ method: "POST" })
         { produto_id: data.produto_id, tamanho: data.tamanho, nome: data.nome, email: data.email },
         { onConflict: "produto_id,tamanho,email" },
       );
-    if (error) throw new Error(error.message);
+    if (error) throw new Error("Erro ao cadastrar alerta de estoque.");
   });

@@ -10,7 +10,6 @@ import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useAdminExists } from "@/hooks/useAdminExists";
 import { claimFirstAdmin } from "@/lib/admin.functions";
 import { notificarMudancaStatus } from "@/lib/email.functions";
-import { incrementCouponUsage } from "@/lib/coupon.functions";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminPanel,
@@ -207,14 +206,7 @@ function AdminPanel() {
       .eq("id", pedido.id);
     if (error) setErro(error.message);
     else {
-      if (status === "pago" && pedido.coupon_id) {
-        try {
-          await incrementCouponUsage({ data: { coupon_id: pedido.coupon_id } });
-        } catch (couponErr) {
-          console.error("Erro ao incrementar cupom:", couponErr);
-        }
-      }
-      setNfePorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; return next; });
+setNfePorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; return next; });
       setStatusPorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; return next; });
       void notificarMudancaStatus({ data: {
         order_id: pedido.id,
