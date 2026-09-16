@@ -82,7 +82,6 @@ function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState<"pix" | "cartao" | "boleto">("pix");
   const [telefone, setTelefone] = useState("");
   const [card, setCard] = useState({ number: "", holder: "", expiry: "", cvv: "", cpf: "", telefone: "", parcelas: "1" });
-  const [boletoCpf, setBoletoCpf] = useState("");
   const [boletoUrl, setBoletoUrl] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
@@ -148,12 +147,9 @@ function CheckoutPage() {
 
   const handleGoToShipping = async () => {
     if (!selectedAddressId || !selectedAddress) { setErro("Selecione um endereço."); return; }
-    const cpfDigits = profileCpf.replace(/\D/g, "");
-    if (cpfDigits.length !== 11) { setErro("Informe um CPF válido com 11 dígitos."); return; }
     setErro(null);
     setShippingLoading(true);
     try {
-      await updateProfileCpf({ data: { cpf: cpfDigits } });
       const quote = await quoteShipping({ data: { cep: selectedAddress.cep, itens: itemCount, subtotal: total, clientTipo } });
       setShippingOptions(quote.opcoes);
       setSelectedShipping(quote.opcoes[0] ?? null);
@@ -176,9 +172,14 @@ function CheckoutPage() {
       setErro("Selecione endereço e frete antes de pagar.");
       return;
     }
+    const cpfDigits = profileCpf.replace(/\D/g, "");
+    if (cpfDigits.length !== 11) { setErro("Informe um CPF válido com 11 dígitos."); return; }
+    const telefoneDigits = telefone.replace(/\D/g, "");
+    if (telefoneDigits.length < 10) { setErro("Informe um telefone válido com DDD."); return; }
     setBusy(true);
     setErro(null);
     try {
+      await updateProfileCpf({ data: { cpf: cpfDigits } });
       const result = await createOrder({
         data: {
           address_id: selectedAddressId,
@@ -198,11 +199,11 @@ function CheckoutPage() {
             card_holder: card.holder,
             card_expiry: card.expiry,
             card_cvv: card.cvv,
-            card_cpf: card.cpf,
-            card_telefone: card.telefone.replace(/\D/g, ""),
+            card_cpf: profileCpf,
+            card_telefone: telefone.replace(/\D/g, ""),
             card_parcelas: Number(card.parcelas),
           }),
-          ...(paymentMethod === "boleto" && { boleto_cpf: boletoCpf }),
+          ...(paymentMethod === "boleto" && { boleto_cpf: profileCpf }),
         },
       });
 
@@ -427,21 +428,6 @@ function CheckoutPage() {
             <Button variant="outline" size="sm" onClick={() => setShowNewAddr(true)}>+ Adicionar endereço</Button>
           )}
 
-          <div className="grid gap-2">
-            <Label htmlFor="profile_cpf">CPF *</Label>
-            <Input
-              id="profile_cpf"
-              placeholder="000.000.000-00"
-              maxLength={14}
-              value={profileCpf}
-              onChange={(e) => {
-                const v = e.target.value.replace(/\D/g, "").slice(0, 11);
-                const fmt = v.replace(/(\d{3})(\d{3})(\d{3})(\d{0,2})/, (_, a, b, c, d) => d ? `${a}.${b}.${c}-${d}` : c ? `${a}.${b}.${c}` : b ? `${a}.${b}` : a);
-                setProfileCpf(fmt);
-              }}
-            />
-          </div>
-
           <Button className="w-full bg-foreground text-background hover:bg-foreground/90" disabled={!selectedAddressId || shippingLoading} onClick={handleGoToShipping}>
             {shippingLoading ? "Calculando frete..." : <><span>Continuar</span><ArrowRight className="ml-2 h-4 w-4" /></>}
           </Button>
@@ -475,6 +461,40 @@ function CheckoutPage() {
       {step === "pagamento" && (
         <div className="space-y-4">
           <h2 className="flex items-center gap-2 text-lg font-semibold"><CreditCard className="h-5 w-5" /> Pagamento</h2>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-2">
+              <Label htmlFor="profile_cpf">CPF *</Label>
+              <Input
+                id="profile_cpf"
+                placeholder="000.000.000-00"
+                maxLength={14}
+                value={profileCpf}
+                onChange={(e) => {
+                  const v = e.target.value.replace(/\D/g, "").slice(0, 11);
+                  const fmt = v.replace(/(\d{3})(\d{3})(\d{3})(\d{0,2})/, (_, a, b, c, d) => d ? `${a}.${b}.${c}-${d}` : c ? `${a}.${b}.${c}` : b ? `${a}.${b}` : a);
+                  setProfileCpf(fmt);
+                }}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="telefone">Telefone (com DDD) *</Label>
+              <Input
+                id="telefone"
+                placeholder="(11) 99999-9999"
+                maxLength={15}
+                value={telefone}
+                onChange={(e) => {
+                  const v = e.target.value.replace(/\D/g, "").slice(0, 11);
+                  const fmt = v.length <= 10
+                    ? v.replace(/(\d{2})(\d{4})(\d{0,4})/, (_, a, b, c) => c ? `(${a}) ${b}-${c}` : b ? `(${a}) ${b}` : a)
+                    : v.replace(/(\d{2})(\d{5})(\d{0,4})/, (_, a, b, c) => c ? `(${a}) ${b}-${c}` : b ? `(${a}) ${b}` : a);
+                  setTelefone(fmt);
+                }}
+              />
+            </div>
+          </div>
+
           <CouponInput subtotal={total} onApply={setDesconto} />
           <div className="flex gap-2">
             {(["pix", "cartao", "boleto"] as const).map((m) => (
@@ -538,16 +558,6 @@ function CheckoutPage() {
                 <Label htmlFor="card_holder">Nome no cartão</Label>
                 <Input id="card_holder" placeholder="NOME SOBRENOME" value={card.holder} onChange={(e) => setCard((c) => ({ ...c, holder: e.target.value.toUpperCase() }))} />
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="card_telefone">Telefone do titular (com DDD)</Label>
-                <Input id="card_telefone" placeholder="(11) 99999-9999" maxLength={15} value={card.telefone} onChange={(e) => {
-                  const v = e.target.value.replace(/\D/g, "").slice(0, 11);
-                  const fmt = v.length <= 10
-                    ? v.replace(/(\d{2})(\d{4})(\d{0,4})/, (_, a, b, c) => c ? `(${a}) ${b}-${c}` : b ? `(${a}) ${b}` : a)
-                    : v.replace(/(\d{2})(\d{5})(\d{0,4})/, (_, a, b, c) => c ? `(${a}) ${b}-${c}` : b ? `(${a}) ${b}` : a);
-                  setCard((c) => ({ ...c, telefone: fmt }));
-                }} />
-              </div>
               <div className="grid grid-cols-2 gap-2">
                 <div className="grid gap-2">
                   <Label htmlFor="card_expiry">Validade</Label>
@@ -583,20 +593,6 @@ function CheckoutPage() {
                   })}
                 </select>
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="card_cpf">CPF do titular</Label>
-                <Input
-                  id="card_cpf"
-                  placeholder="000.000.000-00"
-                  maxLength={14}
-                  value={card.cpf}
-                  onChange={(e) => {
-                    const v = e.target.value.replace(/\D/g, "").slice(0, 11);
-                    const fmt = v.replace(/(\d{3})(\d{3})(\d{3})(\d{0,2})/, (_, a, b, c, d) => d ? `${a}.${b}.${c}-${d}` : c ? `${a}.${b}.${c}` : b ? `${a}.${b}` : a);
-                    setCard((c) => ({ ...c, cpf: fmt }));
-                  }}
-                />
-              </div>
             </div>
           )}
 
@@ -615,23 +611,7 @@ function CheckoutPage() {
                 </a>
               </div>
             ) : (
-              <div className="space-y-3">
-                <div className="grid gap-2">
-                  <Label htmlFor="boleto_cpf">CPF do pagador</Label>
-                  <Input
-                    id="boleto_cpf"
-                    placeholder="000.000.000-00"
-                    maxLength={14}
-                    value={boletoCpf}
-                    onChange={(e) => {
-                      const v = e.target.value.replace(/\D/g, "").slice(0, 11);
-                      const fmt = v.replace(/(\d{3})(\d{3})(\d{3})(\d{0,2})/, (_, a, b, c, d) => d ? `${a}.${b}.${c}-${d}` : c ? `${a}.${b}.${c}` : b ? `${a}.${b}` : a);
-                      setBoletoCpf(fmt);
-                    }}
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground">Vencimento em 3 dias corridos. Compensação em até 2 dias úteis após o pagamento.</p>
-              </div>
+              <p className="text-xs text-muted-foreground">Vencimento em 3 dias corridos. Compensação em até 2 dias úteis após o pagamento.</p>
             )
           )}
 
