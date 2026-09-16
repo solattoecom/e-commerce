@@ -150,7 +150,7 @@ async function cotarMelhorEnvio(
   }
 
   const validos = servicos
-    .filter((s) => s.error === null && s.price !== null)
+    .filter((s) => !s.error && s.price !== null)
     .sort((a, b) => Number(a.price) - Number(b.price));
 
   if (validos.length === 0) {
