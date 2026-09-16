@@ -1,13 +1,8 @@
 import { enviarEmailAvaliacao, enviarEmailAtualizacaoRastreio } from "@/lib/email.functions";
 
-type METrackingEvento = {
-  status: string;
-  description?: string;
-};
-
 type METrackingItem = {
-  events?: METrackingEvento[];
   status?: string;
+  delivered_at?: string | null;
 };
 
 type METrackingResposta = Record<string, METrackingItem>;
@@ -31,26 +26,14 @@ async function consultarME(meOrderId: string): Promise<{ entregue: boolean; even
       },
     );
     const contentType = res.headers.get("content-type") ?? "";
-    const body = await res.text();
-    console.log(`[ME tracking] status=${res.status} content-type=${contentType} body=${body}`);
     if (!res.ok || !contentType.includes("application/json")) return { entregue: false, evento: null };
-    const data = JSON.parse(body) as METrackingResposta;
+    const data = (await res.json()) as METrackingResposta;
     const item = data[meOrderId];
     if (!item) return { entregue: false, evento: null };
 
     const status = item.status?.toLowerCase() ?? "";
-    const entregue =
-      status === "delivered" ||
-      status === "entregue" ||
-      (item.events ?? []).some(
-        (e) =>
-          e.status?.toLowerCase() === "delivered" ||
-          e.description?.toLowerCase().includes("entregue ao destinat"),
-      );
-
-    const eventos = item.events ?? [];
-    const ultimo = eventos[eventos.length - 1];
-    const evento = ultimo?.description ?? ultimo?.status ?? null;
+    const entregue = !!item.delivered_at || status === "delivered";
+    const evento = status || null;
 
     return { entregue, evento };
   } catch {
