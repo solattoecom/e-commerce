@@ -1,14 +1,4 @@
 {
-  "crons": [
-    {
-      "path": "/api/cron/check-deliveries",
-      "schedule": "0 8,12,18,22 * * *"
-    },
-    {
-      "path": "/api/cron/check-low-stock",
-      "schedule": "0 8 * * *"
-    }
-  ],
   "headers": [
     {
       "source": "/(.*)",

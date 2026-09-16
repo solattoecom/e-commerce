@@ -1,0 +1,22 @@
+name: Cron Jobs
+
+on:
+  schedule:
+    - cron: "0 8,12,18,22 * * *"
+
+jobs:
+  check-deliveries:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check deliveries
+        run: |
+          curl -sf -X GET "https://solatto.com.br/api/cron/check-deliveries" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
+
+  check-low-stock:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check low stock
+        run: |
+          curl -sf -X GET "https://solatto.com.br/api/cron/check-low-stock" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
