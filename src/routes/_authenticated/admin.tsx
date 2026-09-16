@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
-import { ChevronDown, ChevronUp, MapPin, CreditCard } from "lucide-react";
+import { ChevronDown, ChevronUp, MapPin, CreditCard, Truck } from "lucide-react";
 
 import { AdminProdutos } from "@/components/AdminProdutos";
 
@@ -11,6 +11,7 @@ import { useAdminExists } from "@/hooks/useAdminExists";
 import { claimFirstAdmin } from "@/lib/admin.functions";
 import { notificarMudancaStatus } from "@/lib/email.functions";
 import { generateLabel, getMelhorEnvioSaldo } from "@/lib/label.functions";
+import { getTrackingEvents, getTrackingByCode, type TrackingEvent } from "@/lib/tracking.functions";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminPanel,
@@ -170,6 +171,10 @@ function AdminPanel() {
   const [labelErroPorPedido, setLabelErroPorPedido] = useState<Record<string, string>>({});
   const [labelOcupado, setLabelOcupado] = useState<string | null>(null);
   const [saldoME, setSaldoME] = useState<number | null>(null);
+  const [trackingEventsByOrder, setTrackingEventsByOrder] = useState<Record<string, TrackingEvent[]>>({});
+  const [trackingLoadingByOrder, setTrackingLoadingByOrder] = useState<Record<string, boolean>>({});
+  const [trackingCodeEventsByOrder, setTrackingCodeEventsByOrder] = useState<Record<string, TrackingEvent[]>>({});
+  const [trackingCodeLoadingByOrder, setTrackingCodeLoadingByOrder] = useState<Record<string, boolean>>({});
 
   const carregar = useCallback(async () => {
     setCarregandoDados(true);
@@ -250,6 +255,32 @@ setNfePorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; re
       await carregar();
     }
     setOcupado(null);
+  }
+
+  async function handleLoadTracking(orderId: string, meOrderId: string) {
+    if (trackingEventsByOrder[orderId] !== undefined) return;
+    setTrackingLoadingByOrder((prev) => ({ ...prev, [orderId]: true }));
+    try {
+      const events = await getTrackingEvents({ data: { me_order_id: meOrderId } });
+      setTrackingEventsByOrder((prev) => ({ ...prev, [orderId]: events }));
+    } catch {
+      setTrackingEventsByOrder((prev) => ({ ...prev, [orderId]: [] }));
+    } finally {
+      setTrackingLoadingByOrder((prev) => { const next = { ...prev }; delete next[orderId]; return next; });
+    }
+  }
+
+  async function handleLoadTrackingByCode(orderId: string, codigo: string) {
+    if (trackingCodeEventsByOrder[orderId] !== undefined) return;
+    setTrackingCodeLoadingByOrder((prev) => ({ ...prev, [orderId]: true }));
+    try {
+      const events = await getTrackingByCode({ data: { codigo } });
+      setTrackingCodeEventsByOrder((prev) => ({ ...prev, [orderId]: events }));
+    } catch {
+      setTrackingCodeEventsByOrder((prev) => ({ ...prev, [orderId]: [] }));
+    } finally {
+      setTrackingCodeLoadingByOrder((prev) => { const next = { ...prev }; delete next[orderId]; return next; });
+    }
   }
 
   const handleCriarCupom = async () => {
@@ -502,7 +533,14 @@ setNfePorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; re
                   {/* Linha clicável */}
                   <button
                     type="button"
-                    onClick={() => setExpandido(isOpen ? null : p.id)}
+                    onClick={() => {
+                      const next = isOpen ? null : p.id;
+                      setExpandido(next);
+                      if (next && p.status === "enviado") {
+                        if (p.me_order_id) void handleLoadTracking(p.id, p.me_order_id);
+                        else if (p.codigo_rastreio) void handleLoadTrackingByCode(p.id, p.codigo_rastreio);
+                      }
+                    }}
                     className="flex w-full flex-wrap items-center justify-between gap-3 p-4 text-left hover:bg-muted/30 transition-colors"
                   >
                     <div className="min-w-0">
@@ -726,20 +764,78 @@ setNfePorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; re
                         );
                       })()}
 
-                      {/* Status de rastreio */}
-                      {p.status === "enviado" && p.codigo_rastreio && (
+                      {/* Rastreamento ao vivo */}
+                      {p.status === "enviado" && p.me_order_id ? (
                         <div>
-                          <p className="font-semibold mb-1">Status de rastreio</p>
-                          {p.ultimo_evento_rastreio ? (
-                            <p className="text-xs text-muted-foreground">
-                              {traduzirStatusME(p.ultimo_evento_rastreio)}
-                            </p>
+                          <p className="mb-2 flex items-center gap-1.5 font-semibold">
+                            <Truck className="size-4" /> Rastreamento
+                          </p>
+                          {trackingLoadingByOrder[p.id] ? (
+                            <p className="text-xs text-muted-foreground">Carregando eventos…</p>
+                          ) : trackingEventsByOrder[p.id]?.length ? (
+                            <ol className="space-y-3">
+                              {trackingEventsByOrder[p.id]!.map((ev, idx) => (
+                                <li key={idx} className="flex gap-3">
+                                  <div className="mt-0.5 flex flex-col items-center">
+                                    <div className="size-2.5 shrink-0 rounded-full bg-foreground" />
+                                    {idx < trackingEventsByOrder[p.id]!.length - 1 && (
+                                      <div className="mt-1 w-px flex-1 bg-border" />
+                                    )}
+                                  </div>
+                                  <div className="min-w-0 pb-3">
+                                    <p className="text-sm font-medium leading-snug">{ev.descricao}</p>
+                                    <p className="mt-0.5 text-xs text-muted-foreground">
+                                      {ev.data}{ev.local ? ` — ${ev.local}` : ""}
+                                    </p>
+                                  </div>
+                                </li>
+                              ))}
+                            </ol>
+                          ) : p.ultimo_evento_rastreio ? (
+                            <p className="text-xs text-muted-foreground">{traduzirStatusME(p.ultimo_evento_rastreio)}</p>
                           ) : (
-                            <p className="text-xs text-muted-foreground">Aguardando atualização do cron…</p>
+                            <p className="text-xs text-muted-foreground">Nenhum evento ainda.</p>
                           )}
-                          <p className="mt-0.5 font-mono text-xs text-muted-foreground">{p.codigo_rastreio}</p>
+                          {p.codigo_rastreio && (
+                            <p className="mt-1 font-mono text-xs text-muted-foreground">{p.codigo_rastreio}</p>
+                          )}
                         </div>
-                      )}
+                      ) : p.status === "enviado" && p.codigo_rastreio ? (
+                        <div>
+                          <p className="mb-2 flex items-center gap-1.5 font-semibold">
+                            <Truck className="size-4" /> Rastreamento
+                          </p>
+                          <p className="mb-2 font-mono text-xs text-muted-foreground">{p.codigo_rastreio}</p>
+                          {trackingCodeLoadingByOrder[p.id] ? (
+                            <p className="text-xs text-muted-foreground">Carregando eventos…</p>
+                          ) : trackingCodeEventsByOrder[p.id]?.length ? (
+                            <ol className="space-y-3">
+                              {trackingCodeEventsByOrder[p.id]!.map((ev, idx) => (
+                                <li key={idx} className="flex gap-3">
+                                  <div className="mt-0.5 flex flex-col items-center">
+                                    <div className="size-2.5 shrink-0 rounded-full bg-foreground" />
+                                    {idx < trackingCodeEventsByOrder[p.id]!.length - 1 && (
+                                      <div className="mt-1 w-px flex-1 bg-border" />
+                                    )}
+                                  </div>
+                                  <div className="min-w-0 pb-3">
+                                    <p className="text-sm font-medium leading-snug">{ev.descricao}</p>
+                                    <p className="mt-0.5 text-xs text-muted-foreground">
+                                      {ev.data}{ev.local ? ` — ${ev.local}` : ""}
+                                    </p>
+                                  </div>
+                                </li>
+                              ))}
+                            </ol>
+                          ) : trackingCodeEventsByOrder[p.id] !== undefined ? (
+                            p.ultimo_evento_rastreio ? (
+                              <p className="text-xs text-muted-foreground">{traduzirStatusME(p.ultimo_evento_rastreio)}</p>
+                            ) : (
+                              <p className="text-xs text-muted-foreground">Nenhum evento encontrado ainda.</p>
+                            )
+                          ) : null}
+                        </div>
+                      ) : null}
                     </div>
                   )}
                 </li>
