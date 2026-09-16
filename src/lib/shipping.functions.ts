@@ -5,6 +5,7 @@ export type ShippingOption = {
   nome: string;
   prazo: string;
   valor: number;
+  me_service_id?: number;
 };
 
 export type ShippingQuote = {
@@ -181,6 +182,7 @@ async function cotarMelhorEnvio(
         : `${s.company.name} — ${s.name}`,
       prazo,
       valor: id === "economico" && gratis ? 0 : Number(preco.toFixed(2)),
+      me_service_id: s.id,
     };
   };
 
