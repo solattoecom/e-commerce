@@ -28,6 +28,7 @@ function CheckoutPage() {
   const [editAddr, setEditAddr] = useState<Partial<NewAddress>>({});
 
   const [paid, setPaid] = useState(false);
+  const [orderSnapshot, setOrderSnapshot] = useState<{ itemCount: number; total: number } | null>(null);
 
   useEffect(() => {
     if (!paid && !cartLoading && items.length === 0) {
@@ -170,6 +171,7 @@ function CheckoutPage() {
       });
 
       setOrderId(result.order_id);
+      setOrderSnapshot({ itemCount, total });
 
       if (paymentMethod === "cartao") {
         if (result.status === "pago") {
@@ -273,7 +275,7 @@ function CheckoutPage() {
       {erro && <p className="mb-4 rounded-md bg-destructive/10 px-4 py-2 text-sm text-destructive">{erro}</p>}
 
       <div className="mb-6 rounded-lg border bg-muted/30 p-4 text-sm">
-        <p className="font-medium">{itemCount} {itemCount === 1 ? "item" : "itens"} — Subtotal: R$ {total.toFixed(2).replace(".", ",")}</p>
+        <p className="font-medium">{(orderSnapshot?.itemCount ?? itemCount)} {(orderSnapshot?.itemCount ?? itemCount) === 1 ? "item" : "itens"} — Subtotal: R$ {(orderSnapshot?.total ?? total).toFixed(2).replace(".", ",")}</p>
         {desconto ? (
           <p className="text-muted-foreground text-sm">
             Cupom ({desconto.code}): -{Number(desconto.discount_amount).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
