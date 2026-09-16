@@ -10,7 +10,7 @@ import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useAdminExists } from "@/hooks/useAdminExists";
 import { claimFirstAdmin } from "@/lib/admin.functions";
 import { notificarMudancaStatus } from "@/lib/email.functions";
-import { generateLabel, getMelhorEnvioSaldo } from "@/lib/label.functions";
+import { generateLabel, getMelhorEnvioSaldo, reprintLabel } from "@/lib/label.functions";
 import { getTrackingEvents, getTrackingByCode, type TrackingEvent } from "@/lib/tracking.functions";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -170,6 +170,7 @@ function AdminPanel() {
   const [labelPorPedido, setLabelPorPedido] = useState<Record<string, { pdf_url: string; codigo_rastreio: string }>>({});
   const [labelErroPorPedido, setLabelErroPorPedido] = useState<Record<string, string>>({});
   const [labelOcupado, setLabelOcupado] = useState<string | null>(null);
+  const [reprintOcupado, setReprintOcupado] = useState<string | null>(null);
   const [saldoME, setSaldoME] = useState<number | null>(null);
   const [trackingEventsByOrder, setTrackingEventsByOrder] = useState<Record<string, TrackingEvent[]>>({});
   const [trackingLoadingByOrder, setTrackingLoadingByOrder] = useState<Record<string, boolean>>({});
@@ -347,6 +348,22 @@ setNfePorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; re
       }));
     } finally {
       setLabelOcupado(null);
+    }
+  }
+
+  async function handleReprint(pedidoId: string) {
+    setReprintOcupado(pedidoId);
+    try {
+      const result = await reprintLabel({ data: { order_id: pedidoId } });
+      setLabelPorPedido((prev) => ({ ...prev, [pedidoId]: { ...prev[pedidoId], pdf_url: result.pdf_url } }));
+      await carregar();
+    } catch (e) {
+      setLabelErroPorPedido((prev) => ({
+        ...prev,
+        [pedidoId]: e instanceof Error ? e.message : "Erro ao reimprimir etiqueta.",
+      }));
+    } finally {
+      setReprintOcupado(null);
     }
   }
 
@@ -707,7 +724,7 @@ setNfePorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; re
                         return (
                           <div>
                             <p className="font-semibold mb-2">Etiqueta de envio</p>
-                            {pdfUrl ? (
+                            {pdfUrl && pdfUrl.startsWith("https://") ? (
                               <div className="space-y-2">
                                 <a
                                   href={pdfUrl}
@@ -717,6 +734,21 @@ setNfePorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; re
                                 >
                                   Imprimir Etiqueta
                                 </a>
+                                {rastreio && (
+                                  <p className="text-xs text-muted-foreground font-mono">Rastreio: {rastreio}</p>
+                                )}
+                              </div>
+                            ) : p.me_order_id ? (
+                              <div className="space-y-2">
+                                <p className="text-xs text-destructive">URL do PDF inválida — clique para buscar novamente.</p>
+                                <button
+                                  type="button"
+                                  disabled={reprintOcupado === p.id}
+                                  onClick={() => handleReprint(p.id)}
+                                  className="cursor-pointer rounded-full bg-foreground px-4 py-2 text-xs font-semibold text-background transition-colors hover:bg-foreground/85 disabled:opacity-60"
+                                >
+                                  {reprintOcupado === p.id ? "Buscando PDF…" : "Reimprimir Etiqueta"}
+                                </button>
                                 {rastreio && (
                                   <p className="text-xs text-muted-foreground font-mono">Rastreio: {rastreio}</p>
                                 )}

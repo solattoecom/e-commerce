@@ -176,3 +176,52 @@ export const generateLabel = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/external.server");
     return gerarEtiquetaCore(data.order_id, supabaseAdmin);
   });
+
+type ReprintLabelInput = { order_id: string };
+type ReprintLabelResult = { pdf_url: string };
+
+export const reprintLabel = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: ReprintLabelInput) => input)
+  .handler(async ({ data }): Promise<ReprintLabelResult> => {
+    const token = process.env["MELHOR_ENVIO_TOKEN"];
+    if (!token) throw new Error("MELHOR_ENVIO_TOKEN não configurado.");
+    const { supabaseAdmin } = await import("@/integrations/supabase/external.server");
+
+    const { data: order } = await supabaseAdmin
+      .from("orders")
+      .select("me_order_id")
+      .eq("id", data.order_id)
+      .single();
+    if (!order?.me_order_id) throw new Error("Etiqueta não gerada para este pedido.");
+
+    const meHeaders = {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      "User-Agent": "solatto/1.0 (solattoecom@gmail.com)",
+    };
+
+    const printRes = await fetch(`${ME_BASE}/shipment/print`, {
+      method: "POST",
+      headers: meHeaders,
+      body: JSON.stringify({ orders: [order.me_order_id] }),
+      signal: AbortSignal.timeout(15000),
+    });
+    const contentType = printRes.headers.get("content-type") ?? "";
+    if (!printRes.ok || contentType.includes("text/html")) {
+      throw new Error(`ME Impressão: resposta inválida (${printRes.status})`);
+    }
+    const printText = await printRes.text();
+    let pdfUrl: string;
+    try {
+      const parsed = JSON.parse(printText) as { url?: string } | string;
+      pdfUrl = typeof parsed === "string" ? parsed : (parsed.url ?? "");
+    } catch {
+      pdfUrl = printText.trim().replace(/^"|"$/g, "");
+    }
+    if (!pdfUrl.startsWith("https://")) throw new Error("ME Impressão: URL do PDF inválida.");
+
+    await supabaseAdmin.from("orders").update({ label_pdf_url: pdfUrl }).eq("id", data.order_id);
+    return { pdf_url: pdfUrl };
+  });
