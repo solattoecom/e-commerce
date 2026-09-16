@@ -648,6 +648,12 @@ setNfePorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; re
                         return (
                         <div>
                           <p className="font-semibold mb-2">Etiqueta de envio</p>
+                          {!label && Number(p.frete) > 0 && (
+                            <p className="mb-2 text-xs text-muted-foreground">
+                              Custo estimado da etiqueta: <span className="font-semibold text-foreground">{brl(Number(p.frete))}</span>
+                              {" "}(pode variar conforme seguro)
+                            </p>
+                          )}
                           {label ? (
                             <div className="space-y-2">
                               <a
