@@ -5,7 +5,7 @@ import { ArrowLeft, Package, ChevronDown, ChevronUp, MapPin, CreditCard, Truck, 
 import { supabase } from "@/integrations/supabase/external";
 import { useAuth } from "@/hooks/useAuth";
 import { retryPixPayment, getOrderStatus, cancelOrder } from "@/lib/checkout.functions";
-import { getTrackingEvents, type TrackingEvent } from "@/lib/tracking.functions";
+import { getTrackingEvents, getTrackingByCode, type TrackingEvent } from "@/lib/tracking.functions";
 
 export const Route = createFileRoute("/_authenticated/pedidos")({
   component: PedidosPage,
@@ -117,6 +117,8 @@ function PedidosPage() {
   const [cancelBusy, setCancelBusy] = useState<string | null>(null);
   const [trackingEventsByOrder, setTrackingEventsByOrder] = useState<Record<string, TrackingEvent[]>>({});
   const [trackingLoadingByOrder, setTrackingLoadingByOrder] = useState<Record<string, boolean>>({});
+  const [trackingCodeEventsByOrder, setTrackingCodeEventsByOrder] = useState<Record<string, TrackingEvent[]>>({});
+  const [trackingCodeLoadingByOrder, setTrackingCodeLoadingByOrder] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (!user?.id) return;
@@ -176,6 +178,19 @@ function PedidosPage() {
       alert(e instanceof Error ? e.message : "Erro ao gerar PIX.");
     } finally {
       setPixBusy(null);
+    }
+  }
+
+  async function handleLoadTrackingByCode(orderId: string, codigo: string) {
+    if (trackingCodeEventsByOrder[orderId] !== undefined) return;
+    setTrackingCodeLoadingByOrder((prev) => ({ ...prev, [orderId]: true }));
+    try {
+      const events = await getTrackingByCode({ data: { codigo } });
+      setTrackingCodeEventsByOrder((prev) => ({ ...prev, [orderId]: events }));
+    } catch {
+      setTrackingCodeEventsByOrder((prev) => ({ ...prev, [orderId]: [] }));
+    } finally {
+      setTrackingCodeLoadingByOrder((prev) => { const next = { ...prev }; delete next[orderId]; return next; });
     }
   }
 
@@ -247,6 +262,8 @@ function PedidosPage() {
                     setExpanded(next);
                     if (next && order.me_order_id) {
                       void handleLoadTracking(order.id, order.me_order_id);
+                    } else if (next && order.codigo_rastreio) {
+                      void handleLoadTrackingByCode(order.id, order.codigo_rastreio);
                     }
                   }}
                   className="flex w-full items-center gap-4 p-4 text-left transition-colors hover:bg-muted/30"
@@ -480,28 +497,34 @@ function PedidosPage() {
                       </div>
                     ) : order.codigo_rastreio ? (
                       <div>
-                        <p className="mb-2 flex items-center gap-1.5 font-semibold">
+                        <p className="mb-3 flex items-center gap-1.5 font-semibold">
                           <Truck className="size-4" /> Rastreamento
                         </p>
-                        <div className="flex flex-wrap items-center gap-3">
-                          <p className="font-mono text-muted-foreground">{order["codigo_rastreio"]}</p>
-                          <a
-                            href={`https://rastreamento.correios.com.br/app/index.php?objeto=${order["codigo_rastreio"]}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="rounded-full bg-foreground px-3 py-1 text-xs font-semibold text-background hover:bg-foreground/85"
-                          >
-                            Correios
-                          </a>
-                          <a
-                            href={`https://www.linketrack.com/trace/${order["codigo_rastreio"]}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="rounded-full border border-border px-3 py-1 text-xs font-semibold hover:bg-muted"
-                          >
-                            Linketrack
-                          </a>
-                        </div>
+                        <p className="mb-3 font-mono text-xs text-muted-foreground">{order.codigo_rastreio}</p>
+                        {trackingCodeLoadingByOrder[order.id] ? (
+                          <p className="text-sm text-muted-foreground">Carregando eventos...</p>
+                        ) : trackingCodeEventsByOrder[order.id]?.length ? (
+                          <ol className="space-y-3">
+                            {trackingCodeEventsByOrder[order.id]!.map((evento, idx) => (
+                              <li key={idx} className="flex gap-3">
+                                <div className="mt-0.5 flex flex-col items-center">
+                                  <div className="size-2.5 rounded-full bg-foreground shrink-0" />
+                                  {idx < trackingCodeEventsByOrder[order.id]!.length - 1 && (
+                                    <div className="mt-1 w-px flex-1 bg-border" />
+                                  )}
+                                </div>
+                                <div className="min-w-0 pb-3">
+                                  <p className="text-sm font-medium leading-snug">{evento.descricao}</p>
+                                  <p className="mt-0.5 text-xs text-muted-foreground">
+                                    {evento.data}{evento.local ? ` — ${evento.local}` : ""}
+                                  </p>
+                                </div>
+                              </li>
+                            ))}
+                          </ol>
+                        ) : trackingCodeEventsByOrder[order.id] !== undefined ? (
+                          <p className="text-sm text-muted-foreground">Nenhum evento encontrado ainda.</p>
+                        ) : null}
                       </div>
                     ) : null}
                   </div>

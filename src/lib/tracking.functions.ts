@@ -21,6 +21,39 @@ type METrackingItem = {
 type METrackingResponse = Record<string, METrackingItem>;
 
 type GetTrackingInput = { me_order_id: string };
+type GetTrackingByCodeInput = { codigo: string };
+
+type LinketrackTrilha = {
+  data?: string;
+  hora?: string;
+  local?: string;
+  status?: string;
+};
+
+export const getTrackingByCode = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: GetTrackingByCodeInput) => input)
+  .handler(async ({ data }): Promise<TrackingEvent[]> => {
+    const user  = process.env["LINKETRACK_USER"]  ?? "teste";
+    const token = process.env["LINKETRACK_TOKEN"] ?? "1abcd00b2731640422a9df9d9bca0ef9c67fce47e0c272e5ab42b09e4b16f19e";
+
+    try {
+      const url = `https://api.linketrack.com/track/json?user=${encodeURIComponent(user)}&token=${encodeURIComponent(token)}&codigo=${encodeURIComponent(data.codigo)}`;
+      const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
+      if (!res.ok) return [];
+
+      const json = (await res.json()) as { trilha?: LinketrackTrilha[] };
+      if (!json.trilha?.length) return [];
+
+      return json.trilha.map((t): TrackingEvent => ({
+        descricao: t.status ?? "Evento de rastreio",
+        data: t.data && t.hora ? `${t.data} ${t.hora}` : (t.data ?? ""),
+        ...(t.local ? { local: t.local } : {}),
+      }));
+    } catch {
+      return [];
+    }
+  });
 
 export const getTrackingEvents = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
