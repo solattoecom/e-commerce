@@ -137,7 +137,10 @@ export const createOrder = createServerFn({ method: "POST" })
     if (!shippingOption) throw new Error("Opção de frete inválida.");
     const shippingValor = shippingOption.valor;
 
-    const total = Math.round((subtotal - desconto + shippingValor) * 100) / 100;
+    const totalBase = Math.round((subtotal - desconto + shippingValor) * 100) / 100;
+    const total = data.payment_method === "pix"
+      ? Math.round(totalBase * 0.9 * 100) / 100
+      : totalBase;
 
     const { data: profile } = await supabaseAdmin
       .from("profiles")
@@ -160,6 +163,9 @@ export const createOrder = createServerFn({ method: "POST" })
         coupon_id: data.coupon_id ?? null,
         desconto,
         me_service_id: shippingOption.me_service_id ?? null,
+        card_parcelas: data.payment_method === "cartao" && data.card_parcelas && data.card_parcelas > 1
+          ? data.card_parcelas
+          : null,
       })
       .select("id")
       .single();

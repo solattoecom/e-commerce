@@ -285,6 +285,7 @@ export type Database = {
         Row: {
           address_id: string | null
           atualizado_em: string
+          card_parcelas: number | null
           codigo_rastreio: string | null
           comissao_percent: number
           comissao_valor: number
@@ -307,6 +308,7 @@ export type Database = {
         Insert: {
           address_id?: string | null
           atualizado_em?: string
+          card_parcelas?: number | null
           codigo_rastreio?: string | null
           comissao_percent?: number
           comissao_valor?: number
@@ -329,6 +331,7 @@ export type Database = {
         Update: {
           address_id?: string | null
           atualizado_em?: string
+          card_parcelas?: number | null
           codigo_rastreio?: string | null
           comissao_percent?: number
           comissao_valor?: number

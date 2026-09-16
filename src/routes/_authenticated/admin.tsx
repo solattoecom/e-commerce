@@ -65,6 +65,7 @@ type Pedido = {
   total: number;
   coupon_id: string | null;
   payment_method: string | null;
+  card_parcelas: number | null;
   nota_fiscal: string | null;
   codigo_rastreio: string | null;
   me_service_id: number | null;
@@ -102,6 +103,16 @@ const brl = (valor: number) =>
 
 const dataCurta = (iso: string) =>
   new Date(iso).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+
+function totalCobrado(p: Pedido): number {
+  if (p.card_parcelas && p.card_parcelas >= 11) {
+    const taxa = 0.0199;
+    const n = p.card_parcelas;
+    const parcela = p.total * (taxa * Math.pow(1 + taxa, n)) / (Math.pow(1 + taxa, n) - 1);
+    return Math.round(parcela * n * 100) / 100;
+  }
+  return Number(p.total);
+}
 
 function Aviso({ titulo, texto }: { titulo: string; texto: string }) {
   return (
@@ -155,7 +166,7 @@ function AdminPanel() {
       supabase
         .from("orders")
         .select(
-          "id, status, subtotal, frete, total, coupon_id, payment_method, nota_fiscal, codigo_rastreio, me_service_id, me_order_id, criado_em, usuario_id, endereco, profiles(nome, sobrenome, email), order_items(id, quantidade, preco_unitario, subtotal, products(nome, slug, product_images(url)), product_variants(tamanho))",
+          "id, status, subtotal, frete, total, coupon_id, payment_method, card_parcelas, nota_fiscal, codigo_rastreio, me_service_id, me_order_id, criado_em, usuario_id, endereco, profiles(nome, sobrenome, email), order_items(id, quantidade, preco_unitario, subtotal, products(nome, slug, product_images(url)), product_variants(tamanho))",
         )
         .order("criado_em", { ascending: false }),
     ]);
@@ -481,7 +492,7 @@ setNfePorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; re
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium">
                         {p.profiles ? `${p.profiles.nome} ${p.profiles.sobrenome}` : "Cliente"} ·{" "}
-                        {brl(Number(p.total))}
+                        {brl(totalCobrado(p))}
                       </p>
                       <p className="truncate text-xs text-muted-foreground">
                         {dataCurta(p.criado_em)} ·{" "}
@@ -510,7 +521,13 @@ setNfePorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; re
                       <div className="flex flex-wrap gap-4 text-muted-foreground">
                         <span className="flex items-center gap-1.5">
                           <CreditCard className="size-4 shrink-0" />
-                          {p.payment_method === "pix" ? "Pix" : "Cartão de crédito"}
+                          {p.payment_method === "pix"
+                            ? "Pix (desconto 10%)"
+                            : p.payment_method === "boleto"
+                            ? "Boleto"
+                            : p.card_parcelas && p.card_parcelas > 1
+                            ? `Cartão — ${p.card_parcelas}x de ${brl(totalCobrado(p) / p.card_parcelas)}`
+                            : "Cartão à vista"}
                         </span>
                         <span className="font-mono text-xs">{p.id}</span>
                       </div>
@@ -543,7 +560,13 @@ setNfePorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; re
                       <div className="rounded-xl border border-border p-3 space-y-1 text-xs">
                         <div className="flex justify-between text-muted-foreground"><span>Subtotal</span><span>{brl(Number(p.subtotal))}</span></div>
                         <div className="flex justify-between text-muted-foreground"><span>Frete</span><span>{Number(p.frete) === 0 ? "Grátis" : brl(Number(p.frete))}</span></div>
-                        <div className="flex justify-between border-t border-border pt-1 font-semibold text-sm"><span>Total</span><span>{brl(Number(p.total))}</span></div>
+                        {p.payment_method === "pix" && (
+                          <div className="flex justify-between text-green-600"><span>Desconto PIX (10%)</span><span>-{brl(Number(p.total) / 0.9 * 0.1)}</span></div>
+                        )}
+                        {p.card_parcelas && p.card_parcelas >= 11 && (
+                          <div className="flex justify-between text-amber-600"><span>Juros ({p.card_parcelas}x)</span><span>+{brl(totalCobrado(p) - Number(p.total))}</span></div>
+                        )}
+                        <div className="flex justify-between border-t border-border pt-1 font-semibold text-sm"><span>Total cobrado</span><span>{brl(totalCobrado(p))}</span></div>
                       </div>
 
                       {/* Endereço */}
