@@ -486,3 +486,28 @@ export const retryPixPayment = createServerFn({ method: "POST" })
       pix_expiration: pixData.data.expiresAt,
     };
   });
+
+export const cancelOrder = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { order_id: string }) => input)
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/external.server");
+
+    const { data: order } = await supabaseAdmin
+      .from("orders")
+      .select("id, status")
+      .eq("id", data.order_id)
+      .eq("usuario_id", context.userId)
+      .single();
+
+    if (!order) throw new Error("Pedido não encontrado.");
+    if (order.status !== "pendente") throw new Error("Só é possível cancelar pedidos pendentes.");
+
+    const { error } = await supabaseAdmin
+      .from("orders")
+      .update({ status: "cancelado" })
+      .eq("id", data.order_id)
+      .eq("status", "pendente");
+
+    if (error) throw new Error("Erro ao cancelar pedido.");
+  });

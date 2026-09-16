@@ -4,13 +4,13 @@ import { ArrowLeft, Package, ChevronDown, ChevronUp, MapPin, CreditCard, Truck, 
 
 import { supabase } from "@/integrations/supabase/external";
 import { useAuth } from "@/hooks/useAuth";
-import { retryPixPayment, getOrderStatus } from "@/lib/checkout.functions";
+import { retryPixPayment, getOrderStatus, cancelOrder } from "@/lib/checkout.functions";
 
 export const Route = createFileRoute("/_authenticated/pedidos")({
   component: PedidosPage,
 });
 
-type OrderStatus = "pendente" | "pago" | "separando" | "enviado" | "entregue" | "cancelado";
+type OrderStatus = "pendente" | "pago" | "separando" | "enviado" | "entregue" | "cancelado" | "expirado";
 
 const statusConfig: Record<OrderStatus, { label: string; color: string }> = {
   pendente:  { label: "Pendente",  color: "bg-yellow-100 text-yellow-800" },
@@ -19,6 +19,7 @@ const statusConfig: Record<OrderStatus, { label: string; color: string }> = {
   enviado:   { label: "Enviado",   color: "bg-orange-100 text-orange-800" },
   entregue:  { label: "Entregue",  color: "bg-green-100 text-green-800" },
   cancelado: { label: "Cancelado", color: "bg-red-100 text-red-800" },
+  expirado:  { label: "Expirado",  color: "bg-gray-100 text-gray-600" },
 };
 
 type OrderItem = {
@@ -65,6 +66,13 @@ function OrderTimeline({ status }: { status: OrderStatus }) {
       </div>
     );
   }
+  if (status === "expirado") {
+    return (
+      <div className="rounded-lg bg-gray-100 px-4 py-3 text-sm font-medium text-gray-600">
+        Pedido expirado — o prazo de pagamento encerrou e os itens foram devolvidos ao estoque.
+      </div>
+    );
+  }
 
   const currentIndex = TIMELINE_STEPS.findIndex((s) => s.status === status);
 
@@ -104,6 +112,7 @@ function PedidosPage() {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [pixByOrder, setPixByOrder] = useState<Record<string, PixState>>({});
   const [pixBusy, setPixBusy] = useState<string | null>(null);
+  const [cancelBusy, setCancelBusy] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -163,6 +172,19 @@ function PedidosPage() {
       alert(e instanceof Error ? e.message : "Erro ao gerar PIX.");
     } finally {
       setPixBusy(null);
+    }
+  }
+
+  async function handleCancelOrder(orderId: string) {
+    if (!confirm("Tem certeza que deseja cancelar este pedido?")) return;
+    setCancelBusy(orderId);
+    try {
+      await cancelOrder({ data: { order_id: orderId } });
+      setOrders((prev) => prev.map((o) => o.id === orderId ? { ...o, status: "cancelado" as OrderStatus } : o));
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Erro ao cancelar pedido.");
+    } finally {
+      setCancelBusy(null);
     }
   }
 
@@ -239,6 +261,31 @@ function PedidosPage() {
 
                     {/* Timeline de status */}
                     <OrderTimeline status={order.status} />
+
+                    {/* Banner de pedido expirado */}
+                    {order.status === "expirado" && (
+                      <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 text-center space-y-3">
+                        <p className="text-sm text-gray-600">O prazo de pagamento encerrou. Seus itens voltaram ao estoque.</p>
+                        <a
+                          href="/"
+                          className="inline-flex items-center justify-center rounded-full bg-foreground px-5 py-2 text-sm font-semibold text-background hover:bg-foreground/90"
+                        >
+                          Fazer novo pedido
+                        </a>
+                      </div>
+                    )}
+
+                    {/* Botão cancelar para pedidos pendentes */}
+                    {order.status === "pendente" && (
+                      <button
+                        type="button"
+                        disabled={cancelBusy === order.id}
+                        onClick={() => handleCancelOrder(order.id)}
+                        className="w-full rounded-lg border border-red-200 bg-red-50 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-100 disabled:opacity-60"
+                      >
+                        {cancelBusy === order.id ? "Cancelando..." : "Cancelar pedido"}
+                      </button>
+                    )}
 
                     {/* Retry PIX para pedidos pendentes */}
                     {order.status === "pendente" && order.payment_method === "pix" && (() => {
