@@ -12,102 +12,72 @@ type METrackingItem = {
 
 type METrackingResposta = Record<string, METrackingItem>;
 
-async function ultimoEvento(codigo: string): Promise<string | null> {
+async function consultarME(meOrderId: string): Promise<{ entregue: boolean; evento: string | null }> {
   const token = process.env["MELHOR_ENVIO_TOKEN"];
-  if (token) {
-    try {
-      const res = await fetch(
-        `https://melhorenvio.com.br/api/v2/me/shipment/tracking?orders[]=${encodeURIComponent(codigo)}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json",
-            "User-Agent": "solatto/1.0 (solattoecom@gmail.com)",
-          },
-          signal: AbortSignal.timeout(8000),
-        },
-      );
-      if (res.ok) {
-        const data = (await res.json()) as METrackingResposta;
-        const item = data[codigo];
-        const eventos = item?.events ?? [];
-        if (eventos.length > 0) {
-          const ultimo = eventos[eventos.length - 1];
-          return ultimo?.description ?? ultimo?.status ?? null;
-        }
-      }
-    } catch { /* fallback */ }
-  }
-
-  // Fallback: Linketrack
+  if (!token || !meOrderId) return { entregue: false, evento: null };
   try {
-    const user  = process.env["LINKETRACK_USER"]  ?? "teste";
-    const ltToken = process.env["LINKETRACK_TOKEN"] ?? "1abcd00b2731640422a9df9d9bca0ef9c67fce47e0c272e5ab42b09e4b16f19e";
     const res = await fetch(
-      `https://api.linketrack.com/track/json?user=${encodeURIComponent(user)}&token=${encodeURIComponent(ltToken)}&codigo=${encodeURIComponent(codigo)}`,
-      { signal: AbortSignal.timeout(8000) },
+      `https://melhorenvio.com.br/api/v2/me/shipment/tracking?orders[]=${encodeURIComponent(meOrderId)}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+          "User-Agent": "solatto/1.0 (solattoecom@gmail.com)",
+        },
+        signal: AbortSignal.timeout(8000),
+      },
     );
-    if (res.ok) {
-      const data = (await res.json()) as { trilha?: { status?: string }[] };
-      const trilha = data.trilha ?? [];
-      if (trilha.length > 0) return trilha[trilha.length - 1]?.status ?? null;
-    }
-  } catch { /* ignora */ }
+    if (!res.ok) return { entregue: false, evento: null };
+    const data = (await res.json()) as METrackingResposta;
+    const item = data[meOrderId];
+    if (!item) return { entregue: false, evento: null };
 
-  return null;
+    const status = item.status?.toLowerCase() ?? "";
+    const entregue =
+      status === "delivered" ||
+      status === "entregue" ||
+      (item.events ?? []).some(
+        (e) =>
+          e.status?.toLowerCase() === "delivered" ||
+          e.description?.toLowerCase().includes("entregue ao destinat"),
+      );
+
+    const eventos = item.events ?? [];
+    const ultimo = eventos[eventos.length - 1];
+    const evento = ultimo?.description ?? ultimo?.status ?? null;
+
+    return { entregue, evento };
+  } catch {
+    return { entregue: false, evento: null };
+  }
 }
 
-async function isEntregue(codigo: string): Promise<boolean> {
-  const token = process.env["MELHOR_ENVIO_TOKEN"];
-  if (token) {
-    try {
-      const res = await fetch(
-        `https://melhorenvio.com.br/api/v2/me/shipment/tracking?orders[]=${encodeURIComponent(codigo)}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json",
-            "User-Agent": "solatto/1.0 (solattoecom@gmail.com)",
-          },
-          signal: AbortSignal.timeout(8000),
-        },
-      );
-      if (res.ok) {
-        const data = (await res.json()) as METrackingResposta;
-        const item = data[codigo];
-        if (item) {
-          const status = item.status?.toLowerCase() ?? "";
-          if (status === "delivered" || status === "entregue") return true;
-          const eventos = item.events ?? [];
-          return eventos.some(
-            (e) =>
-              e.status?.toLowerCase() === "delivered" ||
-              e.description?.toLowerCase().includes("entregue ao destinat"),
-          );
-        }
-      }
-    } catch { /* fallback para Correios */ }
-  }
-
-  // Fallback: Correios
+async function consultarCorreios(codigo: string): Promise<{ entregue: boolean; evento: string | null }> {
   try {
     const res = await fetch(`https://proxyapp.correios.com.br/v1/sro-rastro/${codigo}`, {
-      headers: { Accept: "application/json" },
+      headers: { Accept: "application/json", "User-Agent": "solatto/1.0 (solattoecom@gmail.com)" },
       signal: AbortSignal.timeout(8000),
     });
-    if (!res.ok) return false;
+    if (!res.ok) return { entregue: false, evento: null };
     const data = (await res.json()) as {
-      objeto?: { evento?: { descricao?: string; tipo?: string }[] }[];
+      objeto?: { evento?: { descricao?: string; tipo?: string; detalhe?: string }[] }[];
     };
     const eventos = data.objeto?.[0]?.evento ?? [];
-    return eventos.some(
+    if (eventos.length === 0) return { entregue: false, evento: null };
+
+    const entregue = eventos.some(
       (e) =>
         e.descricao?.toLowerCase().includes("entregue ao destinatário") ||
         e.tipo === "BDE" ||
         e.tipo === "BDES",
     );
+
+    const ultimo = eventos[0];
+    const evento = ultimo?.descricao ?? null;
+
+    return { entregue, evento };
   } catch {
-    return false;
+    return { entregue: false, evento: null };
   }
 }
 
@@ -117,7 +87,7 @@ export async function runTrackingCron(): Promise<Response> {
 
     const { data: orders } = await supabaseAdmin
       .from("orders")
-      .select("id, usuario_id, codigo_rastreio, ultimo_evento_rastreio, order_items(products(nome, slug))")
+      .select("id, usuario_id, codigo_rastreio, me_order_id, ultimo_evento_rastreio, order_items(products(nome, slug))")
       .eq("status", "enviado")
       .not("codigo_rastreio", "is", null);
 
@@ -127,9 +97,23 @@ export async function runTrackingCron(): Promise<Response> {
 
     for (const order of orders) {
       const codigo = order.codigo_rastreio!;
+      const meOrderId = (order as { me_order_id?: string | null }).me_order_id ?? null;
 
-      // Verifica entrega
-      const entregue = await isEntregue(codigo);
+      let entregue = false;
+      let evento: string | null = null;
+
+      if (meOrderId) {
+        const me = await consultarME(meOrderId);
+        entregue = me.entregue;
+        evento = me.evento;
+      }
+
+      if (!entregue && !evento) {
+        const correios = await consultarCorreios(codigo);
+        entregue = correios.entregue;
+        evento = correios.evento;
+      }
+
       if (entregue) {
         await supabaseAdmin.from("orders").update({ status: "entregue" }).eq("id", order.id);
         updated++;
@@ -146,9 +130,8 @@ export async function runTrackingCron(): Promise<Response> {
         continue;
       }
 
-      // Verifica atualizações intermediárias
-      const evento = await ultimoEvento(codigo);
       if (!evento) continue;
+
       const ultimoConhecido = (order as { ultimo_evento_rastreio?: string | null }).ultimo_evento_rastreio ?? null;
       if (evento === ultimoConhecido) continue;
 
