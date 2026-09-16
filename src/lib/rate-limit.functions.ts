@@ -1,5 +1,5 @@
-const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/rate-limit`;
-const ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+const FUNCTION_URL = `${import.meta.env['VITE_SUPABASE_URL']}/functions/v1/rate-limit`;
+const ANON_KEY = import.meta.env['VITE_SUPABASE_PUBLISHABLE_KEY'];
 const HEADERS = {
   "Content-Type": "application/json",
   "apikey": ANON_KEY,

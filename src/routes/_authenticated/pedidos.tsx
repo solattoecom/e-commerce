@@ -355,7 +355,7 @@ function PedidosPage() {
                     </div>
 
                     {/* Endereço */}
-                    {end.rua ? (
+                    {end['rua'] ? (
                       <div>
                         <p className="mb-2 flex items-center gap-1.5 font-semibold">
                           <MapPin className="size-4" /> Endereço de entrega

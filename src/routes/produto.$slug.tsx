@@ -333,12 +333,11 @@ function ProductPage() {
           <div
             className="relative flex-1 overflow-hidden rounded-2xl border border-border bg-background"
             onTouchStart={(e) => {
-              const t = e.touches[0];
-              (e.currentTarget as HTMLDivElement).dataset.touchX = String(t.clientX);
+              (e.currentTarget as HTMLDivElement).dataset['touchX'] = String(e.touches[0]?.clientX ?? 0);
             }}
             onTouchEnd={(e) => {
-              const startX = Number((e.currentTarget as HTMLDivElement).dataset.touchX ?? 0);
-              const diff = startX - e.changedTouches[0].clientX;
+              const startX = Number((e.currentTarget as HTMLDivElement).dataset['touchX'] ?? 0);
+              const diff = startX - (e.changedTouches[0]?.clientX ?? 0);
               if (Math.abs(diff) > 40) setFoto((f) => (f + (diff > 0 ? 1 : -1) + imagens.length) % imagens.length);
             }}
           >

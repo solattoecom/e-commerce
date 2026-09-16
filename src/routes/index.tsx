@@ -1248,9 +1248,9 @@ function Index() {
               refreshKey={refreshKey}
               search={busca}
               filterSize={tamSelecionado ?? undefined}
-              onAdd={handleAddToCart}
+              onAdd={(produtoId, variacaoId) => { void handleAddToCart(produtoId, variacaoId); }}
               wishlistIds={wishlist.ids}
-              onToggleWishlist={user ? (id) => wishlist.toggle(id) : undefined}
+              {...(user ? { onToggleWishlist: (id: string) => { void wishlist.toggle(id); } } : {})}
             />
           </div>
         </section>

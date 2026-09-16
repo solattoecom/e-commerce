@@ -144,7 +144,8 @@ function AdminPanel() {
   const carregar = useCallback(async () => {
     setCarregandoDados(true);
     const [{ data: reqs, error: reqErro }, { data: peds, error: pedErro }] = await Promise.all([
-      supabase.rpc("get_confirmed_client_type_requests"),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (supabase.rpc as any)("get_confirmed_client_type_requests"),
       supabase
         .from("orders")
         .select(
@@ -195,14 +196,15 @@ function AdminPanel() {
 
   async function mudarStatus(pedido: Pedido, status: string, nfe?: string, rastreio?: string) {
     setOcupado(pedido.id);
-    const payload: Record<string, unknown> = { status: status as (typeof STATUS_PEDIDO)[number] };
+    const payload: { status: (typeof STATUS_PEDIDO)[number]; nota_fiscal?: string; codigo_rastreio?: string } = { status: status as (typeof STATUS_PEDIDO)[number] };
     if (status === "enviado") {
       if (nfe?.trim()) payload.nota_fiscal = nfe.trim();
       if (rastreio?.trim()) payload.codigo_rastreio = rastreio.trim();
     }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error } = await supabase
       .from("orders")
-      .update(payload)
+      .update(payload as any)
       .eq("id", pedido.id);
     if (error) setErro(error.message);
     else {

@@ -43,7 +43,7 @@ export function ProductGrid({
   signedIn: boolean;
   refreshKey?: number;
   search?: string;
-  filterSize?: string;
+  filterSize?: string | undefined;
   onAdd?: (produtoId: string, variacaoId: string | null) => void;
   wishlistIds?: Set<string>;
   onToggleWishlist?: (produtoId: string) => void;
@@ -134,11 +134,11 @@ export function ProductGrid({
             <div
               className="relative aspect-square bg-background"
               onTouchStart={(e) => {
-                (e.currentTarget as HTMLDivElement).dataset.touchX = String(e.touches[0].clientX);
+                (e.currentTarget as HTMLDivElement).dataset['touchX'] = String(e.touches[0]?.clientX ?? 0);
               }}
               onTouchEnd={(e) => {
-                const startX = Number((e.currentTarget as HTMLDivElement).dataset.touchX ?? 0);
-                const diff = startX - e.changedTouches[0].clientX;
+                const startX = Number((e.currentTarget as HTMLDivElement).dataset['touchX'] ?? 0);
+                const diff = startX - (e.changedTouches[0]?.clientX ?? 0);
                 if (Math.abs(diff) > 40) mover(diff > 0 ? 1 : -1);
               }}
             >

@@ -219,6 +219,34 @@ export async function enviarEmailAvaliacao(data: AvaliacaoInput) {
   });
 }
 
+export async function enviarEmailExpiracao(data: { email: string; nome: string; pedido_id: string; payment_method: string }) {
+  const resend = getResend();
+  const metodo = data.payment_method === "pix" ? "PIX" : data.payment_method === "boleto" ? "boleto" : "pagamento";
+  const html = baseTemplate(`
+    <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;">Seu ${metodo} expirou</h1>
+    <p style="margin:0 0 24px;font-size:15px;color:#555;">
+      Olá, ${data.nome}! O prazo para pagamento do seu pedido encerrou e ele foi cancelado automaticamente.
+    </p>
+    <div style="background:#f9f9f9;border-radius:10px;padding:16px;margin-bottom:24px;">
+      <p style="margin:0 0 4px;font-size:12px;color:#888;text-transform:uppercase;letter-spacing:0.08em;">Número do pedido</p>
+      <p style="margin:0;font-size:18px;font-weight:700;font-family:monospace;">#${data.pedido_id.slice(0, 8).toUpperCase()}</p>
+    </div>
+    <p style="margin:0 0 20px;font-size:14px;color:#555;">
+      Os itens foram devolvidos ao estoque. Se ainda quiser os produtos, é só fazer um novo pedido.
+    </p>
+    <a href="https://solatto.com.br" style="display:inline-block;background:#000;color:#fff;text-decoration:none;padding:12px 24px;border-radius:20px;font-size:14px;font-weight:600;">
+      Fazer novo pedido
+    </a>
+    <p style="margin:24px 0 0;font-size:13px;color:#999;">Qualquer dúvida, basta responder este e-mail.</p>
+  `);
+  await resend.emails.send({
+    from: FROM,
+    to: data.email,
+    subject: `Pedido #${data.pedido_id.slice(0, 8).toUpperCase()} expirado — Solatto`,
+    html,
+  });
+}
+
 export const notificarMudancaStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { order_id: string; status: string; codigo_rastreio?: string | null }) => input)
