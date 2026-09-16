@@ -561,7 +561,7 @@ setNfePorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; re
                         <div className="flex justify-between text-muted-foreground"><span>Subtotal</span><span>{brl(Number(p.subtotal))}</span></div>
                         <div className="flex justify-between text-muted-foreground"><span>Frete</span><span>{Number(p.frete) === 0 ? "Grátis" : brl(Number(p.frete))}</span></div>
                         {p.payment_method === "pix" && (
-                          <div className="flex justify-between text-green-600"><span>Desconto PIX (10%)</span><span>-{brl(Number(p.total) / 0.9 * 0.1)}</span></div>
+                          <div className="flex justify-between text-green-600"><span>Desconto PIX (10%)</span><span>-{brl(Math.round((Number(p.total) - Number(p.frete)) / 0.9 * 0.1 * 100) / 100)}</span></div>
                         )}
                         {p.card_parcelas && p.card_parcelas >= 11 && (
                           <div className="flex justify-between text-amber-600"><span>Juros ({p.card_parcelas}x)</span><span>+{brl(totalCobrado(p) - Number(p.total))}</span></div>

@@ -100,9 +100,10 @@ function CheckoutPage() {
   const selectedAddress = addresses.find((a) => a.id === selectedAddressId) ?? null;
   const itemCount = items.reduce((n, i) => n + i.quantidade, 0);
   const frete = selectedShipping?.valor ?? 0;
-  const totalFinal = total - (desconto?.discount_amount ?? 0) + frete;
-  const pixDesconto = totalFinal * 0.1;
-  const totalPix = totalFinal - pixDesconto;
+  const subtotalComDesconto = total - (desconto?.discount_amount ?? 0);
+  const totalFinal = subtotalComDesconto + frete;
+  const pixDesconto = subtotalComDesconto * 0.1;
+  const totalPix = subtotalComDesconto * 0.9 + frete;
   const totalEfetivo = paymentMethod === "pix" ? totalPix : totalFinal;
 
   const calcParcela = (n: number) => {

@@ -139,7 +139,7 @@ export const createOrder = createServerFn({ method: "POST" })
 
     const totalBase = Math.round((subtotal - desconto + shippingValor) * 100) / 100;
     const total = data.payment_method === "pix"
-      ? Math.round(totalBase * 0.9 * 100) / 100
+      ? Math.round((Math.round((subtotal - desconto) * 0.9 * 100) / 100 + shippingValor) * 100) / 100
       : totalBase;
 
     const { data: profile } = await supabaseAdmin
