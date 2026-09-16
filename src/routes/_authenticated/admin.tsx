@@ -230,6 +230,7 @@ function AdminPanel() {
     else {
 setNfePorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; return next; });
       setStatusPorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; return next; });
+      setRastreioPorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; return next; });
       void notificarMudancaStatus({ data: {
         order_id: pedido.id,
         status,
@@ -481,8 +482,8 @@ setNfePorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; re
           <ul className="divide-y divide-border">
             {pedidos.filter((p) => filtroStatus === "todos" || p.status === filtroStatus).map((p) => {
               const statusSelecionado = statusPorPedido[p.id] ?? p.status;
-              const nfeAtual = nfePorPedido[p.id] ?? "";
-              const rastreioAtual = rastreioPorPedido[p.id] ?? "";
+              const nfeAtual = nfePorPedido[p.id] ?? p.nota_fiscal ?? "";
+              const rastreioAtual = rastreioPorPedido[p.id] ?? p.codigo_rastreio ?? "";
               const isOpen = expandido === p.id;
               const end = p.endereco ?? {};
               return (
