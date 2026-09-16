@@ -142,6 +142,7 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: "Inter", sans-serif;
+    font-weight: 500;
     letter-spacing: 0;
   }
 }
