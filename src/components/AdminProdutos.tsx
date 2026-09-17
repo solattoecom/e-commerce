@@ -285,7 +285,6 @@ export function AdminProdutos() {
 
   async function dispararAlertasEstoque(tamanho: string, estoque: number) {
     if (!produtoAtual || estoque <= 0) return
-    console.log("[alerta] disparando para", produtoAtual.id, tamanho, estoque)
     try {
       await enviarEmailEstoqueDisponivel({
         data: {
@@ -295,7 +294,6 @@ export function AdminProdutos() {
           tamanho,
         },
       })
-      console.log("[alerta] server function concluída sem erro")
     } catch (err) {
       console.error("[alerta] erro na server function:", err)
       setErroForm("Erro ao disparar alerta de estoque: " + String(err))
