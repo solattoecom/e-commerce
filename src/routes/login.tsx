@@ -52,31 +52,31 @@ const styles = `
   font-size:clamp(38px,4.5vw,68px);letter-spacing:0;text-shadow:0 2px 22px var(--auth-overlay)}
 .auth-hl span{display:block}
 
-.auth-pane{min-width:0;display:flex;align-items:center;justify-content:center;padding:clamp(28px,5vw,72px);background:var(--auth-canvas);overflow-y:auto}
+.auth-pane{min-width:0;display:flex;align-items:center;justify-content:center;padding:clamp(16px,3vw,40px) clamp(28px,5vw,72px);background:var(--auth-canvas);overflow-y:auto}
 .auth-card{width:100%;max-width:360px}
-.auth-mark{width:38px;height:38px;margin:0 auto 20px;display:grid;place-items:center}
+.auth-mark{width:38px;height:38px;margin:0 auto 12px;display:grid;place-items:center}
 .auth-mark svg{width:38px;height:38px;border-radius:8px}
 .auth-h1{margin:0;color:var(--auth-text);font-family:'Bricolage Grotesque','Hanken Grotesk',sans-serif;
   font-variation-settings:'wght' 520;font-weight:520;text-align:center;font-size:25px;letter-spacing:0;line-height:1.1}
-.auth-sub{margin:8px 0 0;text-align:center;color:var(--auth-muted);font-size:12px;letter-spacing:0}
-.auth-tabs{display:grid;grid-template-columns:1fr 1fr;gap:3px;margin:24px 0 0;padding:3px;border-radius:7px;background:var(--auth-surface)}
+.auth-sub{margin:6px 0 0;text-align:center;color:var(--auth-muted);font-size:12px;letter-spacing:0}
+.auth-tabs{display:grid;grid-template-columns:1fr 1fr;gap:3px;margin:16px 0 0;padding:3px;border-radius:7px;background:var(--auth-surface)}
 .auth-tabs button{height:32px;border:0;border-radius:5px;background:transparent;color:var(--auth-muted);font:inherit;font-size:11px;font-weight:600;cursor:pointer;transition:background .18s ease,color .18s ease}
 .auth-tabs button[data-active="true"]{background:var(--auth-surface-strong);color:var(--auth-text);box-shadow:0 1px 4px color-mix(in oklab,var(--auth-canvas) 45%,transparent)}
-.auth-fields{display:flex;flex-direction:column;gap:12px;margin-top:22px}
+.auth-fields{display:flex;flex-direction:column;gap:10px;margin-top:14px}
 .auth-field-wrap{display:flex;flex-direction:column;gap:6px}
 .auth-label{padding-left:2px;color:var(--auth-muted);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.12em}
 .auth-field{display:flex;align-items:center;height:42px;border-radius:12px;background:color-mix(in oklab,var(--auth-surface) 72%,transparent);border:none;padding:0 12px;transition:background .18s ease}
 .auth-field:focus-within{background:var(--auth-surface)}
 .auth-field input{width:100%;border:0;outline:0;background:transparent;color:var(--auth-text);font:inherit;font-size:14px;letter-spacing:0}
 .auth-field input::placeholder{color:color-mix(in oklab,var(--auth-muted) 72%,transparent)}
-.auth-login{margin-top:18px;width:100%;height:42px;border-radius:6px;background:var(--auth-action);color:var(--auth-action-text);font-size:12px;font-weight:700;box-shadow:none}
+.auth-login{margin-top:12px;width:100%;height:42px;border-radius:6px;background:var(--auth-action);color:var(--auth-action-text);font-size:12px;font-weight:700;box-shadow:none}
 .auth-login:hover{background:color-mix(in oklab,var(--auth-action) 92%,var(--auth-muted))}
-.auth-div{display:flex;align-items:center;gap:12px;margin:18px 0}
+.auth-div{display:flex;align-items:center;gap:12px;margin:12px 0}
 .auth-div i{flex:1 1 auto;height:1px;background:var(--auth-border)}
 .auth-div b{color:var(--auth-muted);font-size:9px;font-weight:600;letter-spacing:.12em}
 .auth-google{width:100%;height:40px;border-radius:6px;border-color:var(--auth-border);background:color-mix(in oklab,var(--auth-surface) 48%,transparent);color:var(--auth-text);font-size:12px;box-shadow:none}
 .auth-google:hover{background:var(--auth-surface)}
-.auth-bottom{margin:20px 0 0;text-align:center;color:var(--auth-muted);font-size:11px;letter-spacing:0}
+.auth-bottom{margin:12px 0 0;text-align:center;color:var(--auth-muted);font-size:11px;letter-spacing:0}
 .auth-link{height:auto;padding:0;color:var(--auth-text);font-size:11px;font-weight:600;text-decoration:none}
 .auth-link:hover{text-decoration:underline;text-underline-offset:3px}
 .auth-stage :focus-visible{outline:2px solid var(--auth-focus);outline-offset:2px}
@@ -102,7 +102,7 @@ const styles = `
 .auth-back{display:flex;align-items:center;gap:6px;background:none;border:none;color:var(--auth-muted);
   font:inherit;font-size:12px;cursor:pointer;padding:0 0 20px;transition:color .18s;}
 .auth-back:hover{color:var(--auth-text);}
-.auth-visitor{display:block;margin:14px auto 0;text-align:center;background:none;border:none;color:var(--auth-muted);
+.auth-visitor{display:block;margin:8px auto 0;text-align:center;background:none;border:none;color:var(--auth-muted);
   font:inherit;font-size:11px;cursor:pointer;padding:0;opacity:.7}
 .auth-visitor:hover{opacity:1;text-decoration:underline;text-underline-offset:3px;}
 
