@@ -41,7 +41,7 @@ const styles = `
   font-family:'Hanken Grotesk',-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-serif;
   -webkit-font-smoothing:antialiased;text-rendering:geometricPrecision;overflow:hidden;
 }
-.auth-photo{position:relative;min-width:0;overflow:hidden;background:var(--auth-surface);border-radius:0 50% 50% 0}
+.auth-photo{position:relative;min-width:0;overflow:hidden;background:var(--auth-surface);border-radius:0 24px 24px 0}
 .auth-photo-media{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:58% 50%;display:block}
 .auth-scrim{position:absolute;inset:0;background:linear-gradient(180deg,transparent 35%,var(--auth-overlay) 100%)}
 .auth-hero{position:absolute;left:clamp(24px,4vw,62px);right:24px;bottom:clamp(28px,5vh,56px)}
