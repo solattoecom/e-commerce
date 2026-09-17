@@ -81,6 +81,8 @@ const styles = `
 .auth-link{height:auto;padding:0;color:var(--auth-text);font-size:11px;font-weight:600;text-decoration:none}
 .auth-link:hover{text-decoration:underline;text-underline-offset:3px}
 .auth-stage :focus-visible{outline:2px solid var(--auth-focus);outline-offset:2px}
+.auth-photo .auth-badge{color:#fff;border-color:rgba(255,255,255,.22);background:rgba(0,0,0,.38)}
+.auth-photo .auth-hl{color:#fff}
 
 .auth-types{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:4px}
 .auth-type-btn{display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 6px;
