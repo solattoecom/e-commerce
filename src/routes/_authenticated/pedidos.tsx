@@ -538,28 +538,7 @@ function PedidosPage() {
                         <p className="mb-3 flex items-center gap-1.5 font-semibold">
                           <Truck className="size-4" /> Rastreamento
                         </p>
-                        {trackingLoadingByOrder[order.id] ? (
-                          <p className="text-sm text-muted-foreground">Carregando eventos...</p>
-                        ) : trackingEventsByOrder[order.id]?.length ? (
-                          <ol className="space-y-3">
-                            {trackingEventsByOrder[order.id]!.map((evento, idx) => (
-                              <li key={idx} className="flex gap-3">
-                                <div className="mt-0.5 flex flex-col items-center">
-                                  <div className="size-2.5 rounded-full bg-foreground shrink-0" />
-                                  {idx < trackingEventsByOrder[order.id]!.length - 1 && (
-                                    <div className="mt-1 w-px flex-1 bg-border" />
-                                  )}
-                                </div>
-                                <div className="min-w-0 pb-3">
-                                  <p className="text-sm font-medium leading-snug">{evento.descricao}</p>
-                                  <p className="mt-0.5 text-xs text-muted-foreground">
-                                    {evento.data}{evento.local ? ` — ${evento.local}` : ""}
-                                  </p>
-                                </div>
-                              </li>
-                            ))}
-                          </ol>
-                        ) : order.ultimo_evento_rastreio ? (
+                        {order.ultimo_evento_rastreio ? (
                           <>
                             <TrackingTimeline status={order.ultimo_evento_rastreio} />
                             <TrackingLink codigo={order.codigo_rastreio} />
