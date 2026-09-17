@@ -104,12 +104,10 @@ export async function runTrackingCron(debug = false): Promise<Response> {
         log(`pedido ${order.id} | ME => entregue=${entregue} evento=${evento}`);
       }
 
-      if (!entregue && !evento) {
-        const correios = await consultarCorreios(codigo);
-        entregue = correios.entregue;
-        evento = correios.evento;
-        log(`pedido ${order.id} | Correios => entregue=${entregue} evento=${evento}`);
-      }
+      const correios = await consultarCorreios(codigo);
+      log(`pedido ${order.id} | Correios => entregue=${correios.entregue} evento=${correios.evento}`);
+      if (correios.entregue) entregue = true;
+      if (correios.evento && correios.evento !== ultimoConhecido) evento = correios.evento;
 
       log(`pedido ${order.id} | ultimoConhecido=${ultimoConhecido}`);
 
