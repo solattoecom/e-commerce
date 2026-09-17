@@ -1,4 +1,4 @@
-import { enviarEmailAvaliacao, enviarEmailAtualizacaoRastreio } from "@/lib/email.functions";
+import { enviarEmailAvaliacao } from "@/lib/email.functions";
 
 type METrackingItem = {
   status?: string;
@@ -96,21 +96,20 @@ export async function runTrackingCron(debug = false): Promise<Response> {
       const ultimoConhecido = (order as { ultimo_evento_rastreio?: string | null }).ultimo_evento_rastreio ?? null;
 
       let entregue = false;
-      let evento: string | null = null;
 
       if (meOrderId) {
         const me = await consultarME(meOrderId);
         entregue = me.entregue;
-        evento = me.evento;
-        log(`pedido ${order.id} | ME => entregue=${entregue} evento=${evento} raw=${me.raw}`);
+        log(`pedido ${order.id} | ME => entregue=${entregue}`);
       }
 
-      const correios = await consultarCorreios(codigo);
-      log(`pedido ${order.id} | Correios => entregue=${correios.entregue} evento=${correios.evento}`);
-      if (correios.entregue) entregue = true;
-      if (correios.evento && correios.evento !== ultimoConhecido) evento = correios.evento;
+      if (!entregue) {
+        const correios = await consultarCorreios(codigo);
+        if (correios.entregue) entregue = true;
+        log(`pedido ${order.id} | Correios => entregue=${correios.entregue}`);
+      }
 
-      log(`pedido ${order.id} | ultimoConhecido=${ultimoConhecido}`);
+      if (!entregue) { log(`pedido ${order.id} | não entregue, pulando`); continue; }
 
       if (entregue) {
         await supabaseAdmin.from("orders").update({ status: "entregue" }).eq("id", order.id);
@@ -125,28 +124,9 @@ export async function runTrackingCron(debug = false): Promise<Response> {
             .map((i) => ({ nome: i.products!.nome, slug: i.products!.slug }));
           void enviarEmailAvaliacao({ email: profile.email, nome: profile.nome, pedido_id: order.id, itens }).catch(() => {});
         }
-        continue;
+        log(`pedido ${order.id} | marcado como entregue`);
       }
 
-      if (!evento) { log(`pedido ${order.id} | sem evento, pulando`); continue; }
-
-      if (evento === ultimoConhecido) { log(`pedido ${order.id} | evento igual ao anterior, pulando`); continue; }
-
-      await supabaseAdmin.from("orders").update({ ultimo_evento_rastreio: evento }).eq("id", order.id);
-      log(`pedido ${order.id} | atualizado: ${evento}`);
-
-      const { data: profile } = await supabaseAdmin
-        .from("profiles").select("nome, email").eq("id", order.usuario_id).single();
-
-      if (profile?.email && ultimoConhecido !== null) {
-        void enviarEmailAtualizacaoRastreio({
-          email: profile.email,
-          nome: profile.nome,
-          pedido_id: order.id,
-          evento,
-          codigo_rastreio: codigo,
-        }).catch(() => {});
-      }
     }
 
     const resumo = `ok: ${updated} entregue(s)`;
