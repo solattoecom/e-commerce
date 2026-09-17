@@ -127,9 +127,7 @@ export default {
         let fixed = 0;
         for (const order of orders ?? []) {
           const original = order.ultimo_evento_rastreio as string;
-          const corrected = original
-            .replace(/tr\?nsito/gi, "trânsito")
-            .replace(/\?/g, "â");
+          const corrected = original.replace(/tr.nsito/gi, "trânsito");
           if (corrected !== original) {
             await supabaseAdmin.from("orders").update({ ultimo_evento_rastreio: corrected }).eq("id", order.id);
             fixed++;
