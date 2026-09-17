@@ -138,6 +138,10 @@
     border-color: var(--color-border);
   }
 
+  a, img, [role="button"] {
+    cursor: pointer;
+  }
+
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
