@@ -440,13 +440,13 @@ const [tamSelecionado, setTamSelecionado] = useState<string | null>(null);
   useEffect(() => {
     if (sessionStorage.getItem("openLogin") && !user && !loading) {
       sessionStorage.removeItem("openLogin");
-      void navigate({ to: "/login" });
+      void navigate({ to: "/entrar" });
     }
   }, [user, loading, navigate]);
 
   const handleAddToCart = async (produtoId: string, variacaoId: string | null = null) => {
     if (!user) {
-      void navigate({ to: "/login" });
+      void navigate({ to: "/entrar" });
       return;
     }
     await cart.addItem(produtoId, variacaoId);
@@ -471,14 +471,14 @@ const [tamSelecionado, setTamSelecionado] = useState<string | null>(null);
       <StickyHeader
         visible={scrolled}
         user={user}
-        onEnter={() => void navigate({ to: "/login" })}
+        onEnter={() => void navigate({ to: "/entrar" })}
         onSignOut={() => signOut()}
         busca={busca}
         onBuscaChange={setBusca}
         cartCount={cart.count}
-        onOpenCart={() => (user ? setShowCart(true) : void navigate({ to: "/login" }))}
+        onOpenCart={() => (user ? setShowCart(true) : void navigate({ to: "/entrar" }))}
         wishlistCount={wishlist.count}
-        onOpenWishlist={() => (user ? setShowWishlist(true) : void navigate({ to: "/login" }))}
+        onOpenWishlist={() => (user ? setShowWishlist(true) : void navigate({ to: "/entrar" }))}
       />
 {showCart && (
         <div className="fixed inset-0 z-[60] flex justify-end bg-foreground/40" onClick={() => setShowCart(false)}>
@@ -680,7 +680,7 @@ const [tamSelecionado, setTamSelecionado] = useState<string | null>(null);
               ) : (
                 <button
                   type="button"
-                  onClick={() => void navigate({ to: "/login" })}
+                  onClick={() => void navigate({ to: "/entrar" })}
                   className="hero-readex cursor-pointer rounded-full bg-white px-6 py-3 text-sm font-normal text-black transition-colors hover:bg-neutral-200"
                 >
                   entrar

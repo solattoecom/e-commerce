@@ -61,7 +61,7 @@ async function generateSitemap(): Promise<Response> {
     const base = "https://solatto.com.br";
     const staticPages = [
       { url: base, priority: "1.0", changefreq: "daily" },
-      { url: `${base}/login`, priority: "0.3", changefreq: "yearly" },
+      { url: `${base}/entrar`, priority: "0.3", changefreq: "yearly" },
     ];
 
     const productUrls = (products ?? []).map((p: { slug: string; criado_em: string }) => ({

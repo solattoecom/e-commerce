@@ -8,7 +8,7 @@ import { checkRateLimit, recordRateLimitAttempt } from "@/lib/rate-limit.functio
 import { Button } from "@/components/ui/button";
 import heroVideo from "@/assets/hero-calcando-sapato.mp4.asset.json";
 
-export const Route = createFileRoute("/login")({
+export const Route = createFileRoute("/entrar")({
   head: () => ({
     meta: [
       { title: "Entrar | Solatto" },

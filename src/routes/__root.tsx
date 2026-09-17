@@ -122,7 +122,7 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function WhatsAppButton() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  if (pathname === "/admin" || pathname === "/login") return null;
+  if (pathname === "/admin" || pathname === "/entrar") return null;
   return (
     <a
       href="https://wa.me/5516999136670"
