@@ -36,7 +36,6 @@ import { assinarNewsletter } from "@/lib/newsletter.functions";
 import { supabase } from "@/integrations/supabase/external";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 
-import { deleteMyAccount } from "@/lib/account.functions";
 import { signIn, signOut, signUpWithType, useAuth, type ClientType } from "@/hooks/useAuth";
 import { useCart } from "@/hooks/useCart";
 import { useWishlist } from "@/hooks/useWishlist";
@@ -110,7 +109,6 @@ function StickyHeader({
   user,
   onEnter,
   onSignOut,
-  onProfile,
   busca,
   onBuscaChange,
   cartCount,
@@ -122,7 +120,6 @@ function StickyHeader({
   user: { id?: string; email?: string } | null;
   onEnter: () => void;
   onSignOut: () => void;
-  onProfile: () => void;
   busca: string;
   onBuscaChange: (value: string) => void;
   cartCount: number;
@@ -238,17 +235,14 @@ function StickyHeader({
                 className="absolute right-0 top-11 z-50 w-52 overflow-hidden rounded-xl border border-border bg-background py-1 shadow-lg"
               >
                 <p className="truncate px-3 py-2 text-xs text-muted-foreground">{user.email}</p>
-                <button
-                  type="button"
+                <Link
+                  to="/perfil"
                   role="menuitem"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    onProfile();
-                  }}
+                  onClick={() => setMenuOpen(false)}
                   className="block w-full cursor-pointer px-3 py-2 text-left text-sm transition-colors hover:bg-muted"
                 >
                   Meu perfil
-                </button>
+                </Link>
                 {isAdmin ? (
                   <Link
                     to="/admin"
@@ -346,176 +340,6 @@ function CategoryCard({ name, description, images }: { name: string; description
   );
 }
 
-function ProfileDialog({
-  userId,
-  email,
-  onClose,
-  onDeleted,
-}: {
-  userId: string;
-  email: string;
-  onClose: () => void;
-  onDeleted: () => void;
-}) {
-  const [dados, setDados] = useState<{ nome: string; sobrenome: string; email: string; tipo: string | null } | null>(null);
-  const [salvando, setSalvando] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
-  const [erro, setErro] = useState<string | null>(null);
-  const [confirmar, setConfirmar] = useState(false);
-  const [excluindo, setExcluindo] = useState(false);
-
-  useEffect(() => {
-    let active = true;
-    (async () => {
-      const [{ data: perfil }, { data: tipo }] = await Promise.all([
-        supabase.from("profiles").select("nome, sobrenome").eq("id", userId).maybeSingle(),
-        supabase.from("user_client_types").select("tipo").eq("user_id", userId).maybeSingle(),
-      ]);
-      if (!active) return;
-      setDados({
-        nome: perfil?.nome ?? "",
-        sobrenome: perfil?.sobrenome ?? "",
-        email,
-        tipo: tipo?.tipo ?? null,
-      });
-    })();
-    return () => {
-      active = false;
-    };
-  }, [userId, email]);
-
-  const salvar = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!dados) return;
-    if (dados.email.trim() && !isValidEmail(dados.email)) { setErro("Digite um e-mail válido."); return; }
-    setSalvando(true);
-    setErro(null);
-    setMsg(null);
-    try {
-      const { error: perfilErro } = await supabase
-        .from("profiles")
-        .update({ nome: dados.nome.trim(), sobrenome: dados.sobrenome.trim() })
-        .eq("id", userId);
-      if (perfilErro) throw new Error(perfilErro.message);
-
-      if (dados.email.trim() && dados.email.trim() !== email) {
-        const { error: emailErro } = await supabase.auth.updateUser({ email: dados.email.trim() });
-        if (emailErro) throw new Error(emailErro.message);
-        setMsg("Dados salvos. Confirme o novo e-mail pelo link enviado.");
-      } else {
-        setMsg("Dados salvos.");
-      }
-    } catch (error) {
-      setErro(error instanceof Error ? error.message : "Não foi possível salvar.");
-    } finally {
-      setSalvando(false);
-    }
-  };
-
-  const excluir = async () => {
-    setExcluindo(true);
-    setErro(null);
-    try {
-      await deleteMyAccount();
-      await supabase.auth.signOut();
-      onDeleted();
-    } catch (error) {
-      setErro(error instanceof Error ? error.message : "Não foi possível excluir a conta.");
-      setExcluindo(false);
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 z-[70] grid place-items-center bg-foreground/40 px-4" onClick={onClose}>
-      <div
-        className="w-full max-w-sm rounded-2xl border border-border bg-background p-6 shadow-xl"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Meu perfil</h2>
-          <button type="button" onClick={onClose} aria-label="Fechar perfil" className="cursor-pointer rounded-full p-2 hover:bg-muted">
-            <X className="size-5" />
-          </button>
-        </div>
-
-        <form onSubmit={salvar} className="space-y-3 text-sm">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="space-y-1">
-              <span className="text-muted-foreground">Nome</span>
-              <Input
-                value={dados?.nome ?? ""}
-                onChange={(event) => setDados((atual) => (atual ? { ...atual, nome: event.target.value } : atual))}
-                required
-              />
-            </label>
-            <label className="space-y-1">
-              <span className="text-muted-foreground">Sobrenome</span>
-              <Input
-                value={dados?.sobrenome ?? ""}
-                onChange={(event) => setDados((atual) => (atual ? { ...atual, sobrenome: event.target.value } : atual))}
-              />
-            </label>
-          </div>
-          <label className="block space-y-1">
-            <span className="text-muted-foreground">E-mail</span>
-            <Input
-              type="email"
-              value={dados?.email ?? ""}
-              onChange={(event) => setDados((atual) => (atual ? { ...atual, email: event.target.value } : atual))}
-              required
-            />
-          </label>
-          <div className="space-y-1">
-            <span className="text-muted-foreground">Tipo de conta</span>
-            <p className="rounded-md border border-border bg-muted/50 px-3 py-2 capitalize text-muted-foreground">
-              {dados?.tipo ?? "—"}
-            </p>
-          </div>
-
-          {erro ? <p className="text-sm text-destructive">{erro}</p> : null}
-          {msg ? <p className="text-sm text-muted-foreground">{msg}</p> : null}
-
-          <Button type="submit" disabled={salvando || !dados} className="w-full bg-foreground text-background hover:bg-foreground/85">
-            {salvando ? "Salvando…" : "Salvar alterações"}
-          </Button>
-        </form>
-
-        <div className="mt-5 border-t border-border pt-4">
-          {confirmar ? (
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">Excluir a conta apaga seus dados definitivamente.</p>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={excluir}
-                  disabled={excluindo}
-                  className="flex-1 cursor-pointer rounded-md border border-black bg-white px-4 py-2 text-sm font-semibold text-black transition-colors hover:bg-red-600 hover:border-red-600 hover:text-white disabled:opacity-70"
-                >
-                  {excluindo ? "Excluindo…" : "Confirmar exclusão"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setConfirmar(false)}
-                  className="flex-1 cursor-pointer rounded-md bg-muted px-4 py-2 text-sm font-semibold transition-colors hover:bg-muted/70"
-                >
-                  Cancelar
-                </button>
-              </div>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setConfirmar(true)}
-              className="w-full cursor-pointer rounded-md border border-black bg-white px-4 py-2 text-sm font-semibold text-black transition-colors hover:bg-red-600 hover:border-red-600 hover:text-white"
-            >
-              Excluir conta
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 const accountTypes = [
   { id: "varejo", name: "Varejo", description: "Compre para você, com entrega em todo o Brasil.", Icon: Store },
@@ -621,8 +445,7 @@ function Index() {
   const [showWishlist, setShowWishlist] = useState(false);
   const [frete, setFrete] = useState<ShippingOption | null>(null);
   const [desconto, setDesconto] = useState<DiscountResult | null>(null);
-  const [showProfile, setShowProfile] = useState(false);
-  const [tamSelecionado, setTamSelecionado] = useState<string | null>(null);
+const [tamSelecionado, setTamSelecionado] = useState<string | null>(null);
   const [tamanhos, setTamanhos] = useState<string[]>([]);
   const cart = useCart(user?.id ?? null);
   const wishlist = useWishlist(user?.id ?? null);
@@ -835,7 +658,6 @@ function Index() {
         user={user}
         onEnter={() => setShowAccess(true)}
         onSignOut={() => signOut()}
-        onProfile={() => setShowProfile(true)}
         busca={busca}
         onBuscaChange={setBusca}
         cartCount={cart.count}
@@ -843,18 +665,7 @@ function Index() {
         wishlistCount={wishlist.count}
         onOpenWishlist={() => (user ? setShowWishlist(true) : setShowAccess(true))}
       />
-      {showProfile && user ? (
-        <ProfileDialog
-          userId={user.id}
-          email={user.email ?? ""}
-          onClose={() => setShowProfile(false)}
-          onDeleted={() => {
-            setShowProfile(false);
-            setRefreshKey((value) => value + 1);
-          }}
-        />
-      ) : null}
-      {showCart && (
+{showCart && (
         <div className="fixed inset-0 z-[60] flex justify-end bg-foreground/40" onClick={() => setShowCart(false)}>
           <aside
             className="flex h-full w-full max-w-md flex-col bg-background shadow-xl"
