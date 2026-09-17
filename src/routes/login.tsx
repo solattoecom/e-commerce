@@ -52,7 +52,7 @@ const styles = `
   font-size:clamp(38px,4.5vw,68px);letter-spacing:0;text-shadow:0 2px 22px var(--auth-overlay)}
 .auth-hl span{display:block}
 
-.auth-pane{min-width:0;display:flex;align-items:center;justify-content:center;padding:clamp(28px,5vw,72px);background:var(--auth-canvas);overflow-y:auto;border-radius:10px 0 0 10px}
+.auth-pane{min-width:0;display:flex;align-items:center;justify-content:center;padding:clamp(28px,5vw,72px);background:var(--auth-canvas);overflow-y:auto}
 .auth-card{width:100%;max-width:360px}
 .auth-mark{width:38px;height:38px;margin:0 auto 20px;display:grid;place-items:center}
 .auth-mark svg{width:38px;height:38px;border-radius:8px}
@@ -80,6 +80,7 @@ const styles = `
 .auth-link{height:auto;padding:0;color:var(--auth-text);font-size:11px;font-weight:600;text-decoration:none}
 .auth-link:hover{text-decoration:underline;text-underline-offset:3px}
 .auth-stage :focus-visible{outline:2px solid var(--auth-focus);outline-offset:2px}
+.auth-field input:focus-visible{outline:0}
 .auth-photo .auth-badge{color:#fff;border-color:rgba(255,255,255,.22);background:rgba(0,0,0,.38)}
 .auth-photo .auth-hl{color:#fff}
 
