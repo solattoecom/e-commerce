@@ -65,6 +65,23 @@ function traduzirStatusME(status: string): string {
   return ME_STATUS[status.toLowerCase()] ?? status;
 }
 
+function TrackingLink({ codigo }: { codigo: string | null }) {
+  if (!codigo) return null;
+  return (
+    <div className="mt-4 rounded-lg bg-muted/50 px-4 py-3">
+      <p className="text-xs text-muted-foreground">Para detalhes sobre o rastreio do seu pedido, consulte o rastreio dos Correios.</p>
+      <a
+        href={`https://www.melhorrastreio.com.br/rastreio/${codigo}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mt-2 inline-flex items-center gap-1.5 rounded-md bg-foreground px-3 py-1.5 text-xs font-semibold text-background hover:opacity-80 transition-opacity"
+      >
+        Rastrear no Melhor Rastreio
+      </a>
+    </div>
+  );
+}
+
 const TRACKING_STEPS = [
   { status: "posted",     label: "Postado" },
   { status: "in_transit", label: "Em trânsito" },
@@ -543,7 +560,10 @@ function PedidosPage() {
                             ))}
                           </ol>
                         ) : order.ultimo_evento_rastreio ? (
-                          <TrackingTimeline status={order.ultimo_evento_rastreio} />
+                          <>
+                            <TrackingTimeline status={order.ultimo_evento_rastreio} />
+                            <TrackingLink codigo={order.codigo_rastreio} />
+                          </>
                         ) : (
                           <p className="text-sm text-muted-foreground">Nenhum evento de rastreio ainda.</p>
                         )}
@@ -577,7 +597,10 @@ function PedidosPage() {
                           </ol>
                         ) : trackingCodeEventsByOrder[order.id] !== undefined ? (
                           order.ultimo_evento_rastreio ? (
-                            <TrackingTimeline status={order.ultimo_evento_rastreio} />
+                            <>
+                              <TrackingTimeline status={order.ultimo_evento_rastreio} />
+                              <TrackingLink codigo={order.codigo_rastreio} />
+                            </>
                           ) : (
                             <p className="text-sm text-muted-foreground">Nenhum evento encontrado ainda.</p>
                           )
