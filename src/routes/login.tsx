@@ -52,7 +52,7 @@ const styles = `
   font-size:clamp(38px,4.5vw,68px);letter-spacing:0;text-shadow:0 2px 22px var(--auth-overlay)}
 .auth-hl span{display:block}
 
-.auth-pane{min-width:0;display:flex;align-items:center;justify-content:center;padding:clamp(28px,5vw,72px);background:var(--auth-canvas);overflow-y:auto;border-radius:24px 0 0 24px}
+.auth-pane{min-width:0;display:flex;align-items:center;justify-content:center;padding:clamp(28px,5vw,72px);background:var(--auth-canvas);overflow-y:auto;border-radius:14px 0 0 14px}
 .auth-card{width:100%;max-width:360px}
 .auth-mark{width:38px;height:38px;margin:0 auto 20px;display:grid;place-items:center;border:1px solid var(--auth-border);border-radius:50%;background:color-mix(in oklab,var(--auth-surface) 72%,transparent)}
 .auth-mark span{width:13px;height:13px;border-radius:3px;background:var(--auth-text);transform:rotate(45deg)}
