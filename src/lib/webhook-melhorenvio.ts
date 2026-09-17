@@ -31,7 +31,7 @@ export async function handleMelhorEnvioWebhook(request: Request): Promise<Respon
 
     const novoStatus = body.order?.status?.toLowerCase() ?? "";
     const entregue = !!body.order?.delivered_at || novoStatus === "delivered";
-    const evento = body.order?.message ?? novoStatus ?? null;
+    const evento = novoStatus || null;
 
     if (!evento && !entregue) return new Response("no tracking data", { status: 200 });
 
