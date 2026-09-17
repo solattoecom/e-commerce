@@ -1,16 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import {
-  ArrowLeft,
-  Building2,
   ChevronDown,
   ChevronUp,
   Heart,
   MapPin,
   Search,
   ShoppingBag,
-  Store,
-  Truck,
   User,
   X,
 } from "lucide-react";
@@ -26,7 +22,7 @@ import infantil2 from "@/assets/infantil-foto-2.jpeg.asset.json";
 import infantil3 from "@/assets/infantil-foto-3.jpeg.asset.json";
 import heroVideo from "@/assets/hero-calcando-sapato.mp4.asset.json";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { LoginScreen } from "@/components/LoginScreen";
 import { ProductGrid } from "@/components/ProductGrid";
 import { ShippingCalculator } from "@/components/ShippingCalculator";
 import { CouponInput } from "@/components/CouponInput";
@@ -36,11 +32,10 @@ import { assinarNewsletter } from "@/lib/newsletter.functions";
 import { supabase } from "@/integrations/supabase/external";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 
-import { signIn, signOut, signUpWithType, useAuth, type ClientType } from "@/hooks/useAuth";
+import { signOut, useAuth } from "@/hooks/useAuth";
 import { useCart } from "@/hooks/useCart";
 import { useWishlist } from "@/hooks/useWishlist";
 import { isValidEmail } from "@/lib/validate";
-import { checkRateLimit, recordRateLimitAttempt } from "@/lib/rate-limit.functions";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -341,14 +336,6 @@ function CategoryCard({ name, description, images }: { name: string; description
 }
 
 
-const accountTypes = [
-  { id: "varejo", name: "Varejo", description: "Compre para você, com entrega em todo o Brasil.", Icon: Store },
-  { id: "atacado", name: "Atacado", description: "Compras em volume com condições especiais.", Icon: Building2 },
-  { id: "dropshipping", name: "Dropshipping", description: "Venda sem estoque, nós enviamos por você.", Icon: Truck },
-] as const;
-
-type AccountType = (typeof accountTypes)[number];
-
 function NewsletterForm() {
   const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
@@ -423,21 +410,7 @@ function NewsletterForm() {
 function Index() {
   const { user, loading } = useAuth();
   const [showAccess, setShowAccess] = useState(false);
-  const [accountType, setAccountType] = useState<AccountType | null>(null);
-  const [showLogin, setShowLogin] = useState(false);
-  const [emailNaoConfirmado, setEmailNaoConfirmado] = useState<string | null>(null);
-  const [form, setForm] = useState({ nome: "", sobrenome: "", email: "", senha: "" });
   const [activeIndex, setActiveIndex] = useState(0);
-  const [busy, setBusy] = useState(false);
-  const [erro, setErro] = useState<string | null>(null);
-  const [bloqueadoAte, setBloqueadoAte] = useState<number | null>(null);
-  useEffect(() => {
-    const v = typeof window !== "undefined" ? localStorage.getItem("login_blocked_until") : null;
-    if (v) setBloqueadoAte(Number(v));
-  }, []);
-  const [aviso, setAviso] = useState<string | null>(null);
-  const [showForgotPassword, setShowForgotPassword] = useState(false);
-  const [resetEmailSent, setResetEmailSent] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [scrolled, setScrolled] = useState(false);
   const [busca, setBusca] = useState("");
@@ -499,155 +472,6 @@ const [tamSelecionado, setTamSelecionado] = useState<string | null>(null);
 
   const closeAccess = () => {
     setShowAccess(false);
-    setAccountType(null);
-    setShowLogin(false);
-    setErro(null);
-    setAviso(null);
-  };
-
-  const mascararEmail = (email: string) => {
-    const [nome = "", dominio = ""] = email.split("@");
-    const visivel = nome.slice(0, 2);
-    return `${visivel}${"*".repeat(Math.max(nome.length - visivel.length, 3))}@${dominio}`;
-  };
-
-  const traduzErro = (message: string) => {
-    if (/already registered|already been registered/i.test(message)) return "Este e-mail já possui uma conta. Tente entrar.";
-    if (/Invalid login credentials/i.test(message)) return "E-mail ou senha incorretos.";
-    if (/pwned|compromised/i.test(message)) return "Escolha uma senha mais segura.";
-    if (/at least/i.test(message)) return "A senha precisa ter pelo menos 8 caracteres.";
-    if (/not confirmed|confirmation/i.test(message))
-      return "Conta criada. Confirme o e-mail que enviamos para entrar.";
-    return "Não foi possível concluir. Tente novamente.";
-  };
-
-  const validarSenha = (senha: string): string | null => {
-    if (!/[A-Z]/.test(senha)) return "A senha precisa ter pelo menos uma letra maiúscula.";
-    if (!/[^A-Za-z0-9]/.test(senha)) return "A senha precisa ter pelo menos um caractere especial.";
-    return null;
-  };
-
-  const handleSignUp = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!accountType) return;
-    if (!isValidEmail(form.email)) { setErro("Digite um e-mail válido."); return; }
-    const erroSenha = validarSenha(form.senha);
-    if (erroSenha) { setErro(erroSenha); return; }
-    setBusy(true);
-    setErro(null);
-    setAviso(null);
-    const rlSignup = await checkRateLimit("signup");
-    if (rlSignup.blocked) {
-      const min = rlSignup.retryAfterSeconds ? Math.ceil(rlSignup.retryAfterSeconds / 60) : 60;
-      setErro(`Muitas tentativas de cadastro. Aguarde ${min} min para tentar novamente.`);
-      setBusy(false);
-      return;
-    }
-    await recordRateLimitAttempt("signup");
-    try {
-      await signUpWithType({ ...form, tipo: accountType.id as ClientType });
-      const email = form.email.trim();
-      setAviso(`Confirme o e-mail enviado para ${mascararEmail(email)}.`);
-      setForm({ nome: "", sobrenome: "", email, senha: "" });
-      setAccountType(null);
-      setShowLogin(true);
-    } catch (error) {
-      const msg = error instanceof Error ? error.message : "";
-      if (/already registered/i.test(msg)) {
-        setAviso("Este e-mail já possui uma conta.");
-        setAccountType(null);
-        setShowLogin(true);
-      } else {
-        setErro(traduzErro(msg));
-      }
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const handleSignIn = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!isValidEmail(form.email)) { setErro("Digite um e-mail válido."); return; }
-    const agora = Date.now();
-    if (bloqueadoAte && agora < bloqueadoAte) {
-      const restam = Math.ceil((bloqueadoAte - agora) / 60000);
-      setErro(`Muitas tentativas. Aguarde ${restam} min para tentar novamente.`);
-      return;
-    }
-    const rlLogin = await checkRateLimit("login");
-    if (rlLogin.blocked) {
-      const min = rlLogin.retryAfterSeconds ? Math.ceil(rlLogin.retryAfterSeconds / 60) : 5;
-      setErro(`Muitas tentativas incorretas. Aguarde ${min} min para tentar novamente.`);
-      return;
-    }
-    setBusy(true);
-    setErro(null);
-    setEmailNaoConfirmado(null);
-    try {
-      await signIn(form.email, form.senha);
-      localStorage.removeItem("login_attempts");
-      localStorage.removeItem("login_blocked_until");
-      setBloqueadoAte(null);
-      setForm({ nome: "", sobrenome: "", email: "", senha: "" });
-      setRefreshKey((value) => value + 1);
-      closeAccess();
-    } catch (error) {
-      const msg = error instanceof Error ? error.message : "";
-      if (/not confirmed|email not confirmed/i.test(msg)) {
-        setEmailNaoConfirmado(form.email.trim());
-        setErro("Confirme seu e-mail antes de entrar.");
-      } else if (/Invalid login credentials/i.test(msg)) {
-        void recordRateLimitAttempt("login");
-        const tentativas = Number(localStorage.getItem("login_attempts") ?? "0") + 1;
-        localStorage.setItem("login_attempts", String(tentativas));
-        if (tentativas >= 5) {
-          const ate = Date.now() + 5 * 60 * 1000;
-          localStorage.setItem("login_blocked_until", String(ate));
-          setBloqueadoAte(ate);
-          setErro("Muitas tentativas incorretas. Aguarde 5 min para tentar novamente.");
-        } else {
-          setErro(`E-mail ou senha incorretos. ${5 - tentativas} tentativa${5 - tentativas > 1 ? "s" : ""} restante${5 - tentativas > 1 ? "s" : ""}.`);
-        }
-      } else {
-        setErro(traduzErro(msg));
-      }
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const handleForgotPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.email.trim()) return;
-    setBusy(true);
-    setErro(null);
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(form.email.trim(), {
-        redirectTo: "https://solatto.com.br/redefinir-senha",
-      });
-      if (error) throw error;
-      setResetEmailSent(true);
-    } catch {
-      setErro("Não foi possível enviar o e-mail. Tente novamente.");
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const reenviarConfirmacao = async () => {
-    if (!emailNaoConfirmado) return;
-    setBusy(true);
-    setErro(null);
-    try {
-      const { error } = await supabase.auth.resend({ type: "signup", email: emailNaoConfirmado });
-      if (error) throw error;
-      setAviso(`E-mail de confirmação reenviado para ${mascararEmail(emailNaoConfirmado)}.`);
-      setEmailNaoConfirmado(null);
-    } catch {
-      setErro("Não foi possível reenviar. Tente novamente.");
-    } finally {
-      setBusy(false);
-    }
   };
 
 
@@ -821,123 +645,10 @@ const [tamSelecionado, setTamSelecionado] = useState<string | null>(null);
         </div>
       )}
       {showAccess && (
-        <div className="fixed inset-0 z-50 grid min-h-[100dvh] place-items-center overflow-hidden bg-black px-5 py-8">
-          <video
-            className="absolute inset-0 h-full w-full scale-110 object-cover blur-xl"
-            autoPlay
-            loop
-            muted
-            playsInline
-            src={heroVideo.url}
-          />
-          <div className="absolute inset-0 bg-foreground/45" />
-          <div className="relative z-10 grid w-full max-w-[1100px] items-center md:grid-cols-[0.95fr_1.05fr]">
-            <div className="access-panel max-w-md text-primary-foreground">
-              <p className="mb-8 text-2xl font-bold uppercase tracking-[0.24em]">Solatto</p>
-
-              {!accountType && !showLogin ? (
-                <>
-                  <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] opacity-80">Bem-vindo à sua nova jornada</p>
-                  <h1 className="mb-5 text-4xl font-semibold leading-[1.05] tracking-normal sm:text-5xl">Como você quer comprar?</h1>
-                  <p className="mb-8 max-w-sm text-sm leading-6 opacity-85">Escolha o tipo de cadastro para continuar.</p>
-                  <div className="grid gap-3">
-                    {accountTypes.map((type) => {
-                      const { id, name, description, Icon } = type;
-                      return (
-                      <Button
-                        key={id}
-                        type="button"
-                        variant="ghost"
-                        onClick={() => setAccountType(type)}
-                        className="h-auto justify-start gap-4 rounded-md border border-primary-foreground/40 bg-primary-foreground/10 px-5 py-4 text-left text-primary-foreground transition-colors hover:bg-primary-foreground/20 hover:text-primary-foreground"
-                      >
-                        <Icon className="size-5 shrink-0" />
-                        <span>
-                          <span className="block text-sm font-semibold">{name}</span>
-                          <span className="block text-xs opacity-80">{description}</span>
-                        </span>
-                      </Button>
-                      );
-                    })}
-                  </div>
-                </>
-              ) : showLogin ? (
-                <>
-                  <Button variant="link" className="mb-3 h-auto px-0 text-xs text-primary-foreground/80 hover:text-primary-foreground" onClick={() => { setShowLogin(false); setShowForgotPassword(false); setResetEmailSent(false); setErro(null); }}>
-                    <ArrowLeft className="size-3" /> Voltar
-                  </Button>
-                  {showForgotPassword ? (
-                    resetEmailSent ? (
-                      <>
-                        <h1 className="mb-2 text-3xl font-semibold leading-tight sm:text-4xl">E-mail enviado</h1>
-                        <p className="mb-7 max-w-sm text-sm leading-6 opacity-85">Se este e-mail estiver cadastrado, você receberá um link para redefinir sua senha em breve.</p>
-                        <Button type="button" className="h-12 rounded-md bg-background text-foreground shadow-none hover:bg-background/90 hover:text-foreground" onClick={() => { setShowForgotPassword(false); setResetEmailSent(false); setErro(null); }}>Voltar ao login</Button>
-                      </>
-                    ) : (
-                      <>
-                        <h1 className="mb-2 text-3xl font-semibold leading-tight sm:text-4xl">Esqueci minha senha</h1>
-                        <p className="mb-7 max-w-sm text-sm leading-6 opacity-85">Digite seu e-mail e enviaremos um link para você criar uma nova senha.</p>
-                        <form className="grid gap-3" onSubmit={handleForgotPassword}>
-                          <Input required type="email" aria-label="E-mail" placeholder="E-mail" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} maxLength={255} className="h-12 border-border/70 bg-background/75 text-foreground backdrop-blur-sm placeholder:text-muted-foreground hover:border-border focus-visible:border-border focus-visible:ring-foreground/20" />
-                          {erro ? <p className="text-sm text-primary-foreground">{erro}</p> : null}
-                          <Button type="submit" disabled={busy} className="h-12 rounded-md bg-background text-foreground shadow-none hover:bg-background/90 hover:text-foreground">{busy ? "Enviando…" : "Enviar link"}</Button>
-                        </form>
-                        <button type="button" className="mt-3 text-xs text-primary-foreground/80 underline underline-offset-4 hover:text-primary-foreground" onClick={() => { setShowForgotPassword(false); setErro(null); }}>Voltar ao login</button>
-                      </>
-                    )
-                  ) : (
-                    <>
-                      <h1 className="mb-2 text-3xl font-semibold leading-tight sm:text-4xl">Entrar na sua conta</h1>
-                      <p className="mb-7 max-w-sm text-sm leading-6 opacity-85">Use seu e-mail e senha para continuar.</p>
-                      <form className="grid gap-3" onSubmit={handleSignIn}>
-                        <Input required type="email" aria-label="E-mail" placeholder="E-mail" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} maxLength={255} className="h-12 border-border/70 bg-background/75 text-foreground backdrop-blur-sm placeholder:text-muted-foreground hover:border-border focus-visible:border-border focus-visible:ring-foreground/20" />
-                        <Input required type="password" aria-label="Senha" placeholder="Senha" value={form.senha} onChange={(e) => setForm({ ...form, senha: e.target.value })} minLength={8} maxLength={72} className="h-12 border-border/70 bg-background/75 text-foreground backdrop-blur-sm placeholder:text-muted-foreground hover:border-border focus-visible:border-border focus-visible:ring-foreground/20" />
-                        {aviso ? <p className="text-sm font-medium text-primary-foreground">{aviso}</p> : null}
-                        {erro ? <p className="text-sm text-primary-foreground">{erro}</p> : null}
-                        {emailNaoConfirmado ? (
-                          <button type="button" disabled={busy} onClick={reenviarConfirmacao} className="text-sm underline underline-offset-4 text-primary-foreground/80 hover:text-primary-foreground disabled:opacity-60">
-                            Reenviar e-mail de confirmação
-                          </button>
-                        ) : null}
-                        <Button type="submit" disabled={busy} className="h-12 rounded-md bg-background text-foreground shadow-none hover:bg-background/90 hover:text-foreground">{busy ? "Entrando…" : "Entrar"}</Button>
-                        <button type="button" className="text-xs text-primary-foreground/80 underline underline-offset-4 hover:text-primary-foreground" onClick={() => { setShowForgotPassword(true); setErro(null); }}>Esqueci minha senha</button>
-                      </form>
-                    </>
-                  )}
-                </>
-              ) : accountType ? (
-                <>
-                  <Button variant="link" className="mb-3 h-auto px-0 text-xs text-primary-foreground/80 hover:text-primary-foreground" onClick={() => setAccountType(null)}>
-                    <ArrowLeft className="size-3" /> Voltar
-                  </Button>
-                  <h1 className="mb-2 text-3xl font-semibold leading-tight sm:text-4xl">Cadastro {accountType.name}</h1>
-                  <p className="mb-7 max-w-sm text-sm leading-6 opacity-85">{accountType.description}</p>
-                  <form className="grid gap-3" onSubmit={handleSignUp}>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <Input required aria-label="Nome" placeholder="Nome" value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} maxLength={60} className="h-12 border-border/70 bg-background/75 text-foreground backdrop-blur-sm placeholder:text-muted-foreground hover:border-border focus-visible:border-border focus-visible:ring-foreground/20" />
-                      <Input required aria-label="Sobrenome" placeholder="Sobrenome" value={form.sobrenome} onChange={(e) => setForm({ ...form, sobrenome: e.target.value })} maxLength={60} className="h-12 border-border/70 bg-background/75 text-foreground backdrop-blur-sm placeholder:text-muted-foreground hover:border-border focus-visible:border-border focus-visible:ring-foreground/20" />
-                    </div>
-                    <Input required type="email" aria-label="E-mail" placeholder="E-mail" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} maxLength={255} className="h-12 border-border/70 bg-background/75 text-foreground backdrop-blur-sm placeholder:text-muted-foreground hover:border-border focus-visible:border-border focus-visible:ring-foreground/20" />
-                    <Input required type="password" aria-label="Senha" placeholder="Senha" value={form.senha} onChange={(e) => setForm({ ...form, senha: e.target.value })} minLength={8} maxLength={72} className="h-12 border-border/70 bg-background/75 text-foreground backdrop-blur-sm placeholder:text-muted-foreground hover:border-border focus-visible:border-border focus-visible:ring-foreground/20" />
-                    {erro ? <p className="text-sm text-primary-foreground">{erro}</p> : null}
-                    <Button type="submit" disabled={busy} className="h-12 rounded-md bg-background text-foreground shadow-none hover:bg-background/90 hover:text-foreground">{busy ? "Criando…" : "Criar conta"}</Button>
-                  </form>
-                </>
-              ) : null}
-
-              <div className="mt-5 flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
-                {!showLogin && !accountType ? (
-                  <Button variant="link" className="h-auto px-0 text-xs text-primary-foreground hover:text-primary-foreground/80" onClick={() => setShowLogin(true)}>
-                    Já tenho uma conta
-                  </Button>
-                ) : null}
-                <Button variant="link" className="h-auto px-0 text-xs text-primary-foreground/75 hover:text-primary-foreground" onClick={closeAccess}>
-                  Continuar como visitante
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <LoginScreen
+          onClose={closeAccess}
+          onSuccess={() => setRefreshKey((k) => k + 1)}
+        />
       )}
 
       <main id="inicio">
