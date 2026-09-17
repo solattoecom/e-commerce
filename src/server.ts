@@ -115,6 +115,29 @@ export default {
         return await handleAsaasWebhook(request);
       }
 
+      if (url.pathname === "/api/admin/fix-tracking-encoding" && request.method === "POST") {
+        const secret = process.env["CRON_SECRET"];
+        const auth = request.headers.get("authorization");
+        if (secret && auth !== `Bearer ${secret}`) return new Response("unauthorized", { status: 401 });
+        const { supabaseAdmin } = await import("@/integrations/supabase/external.server");
+        const { data: orders } = await supabaseAdmin
+          .from("orders")
+          .select("id, ultimo_evento_rastreio")
+          .not("ultimo_evento_rastreio", "is", null);
+        let fixed = 0;
+        for (const order of orders ?? []) {
+          const original = order.ultimo_evento_rastreio as string;
+          const corrected = original
+            .replace(/tr\?nsito/gi, "trânsito")
+            .replace(/\?/g, "â");
+          if (corrected !== original) {
+            await supabaseAdmin.from("orders").update({ ultimo_evento_rastreio: corrected }).eq("id", order.id);
+            fixed++;
+          }
+        }
+        return new Response(`ok: ${fixed} corrigido(s)`, { status: 200 });
+      }
+
       if (url.pathname === "/api/cron/check-deliveries" && request.method === "GET") {
         const secret = process.env["CRON_SECRET"];
         const auth = request.headers.get("authorization");
