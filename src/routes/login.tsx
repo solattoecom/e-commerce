@@ -41,7 +41,7 @@ const styles = `
   font-family:'Hanken Grotesk',-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-serif;
   -webkit-font-smoothing:antialiased;text-rendering:geometricPrecision;overflow:hidden;
 }
-.auth-photo{position:relative;min-width:0;overflow:hidden;background:var(--auth-surface)}
+.auth-photo{position:relative;min-width:0;overflow:hidden;background:var(--auth-surface);border-radius:0 50% 50% 0}
 .auth-photo-media{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:58% 50%;display:block}
 .auth-scrim{position:absolute;inset:0;background:linear-gradient(180deg,transparent 35%,var(--auth-overlay) 100%)}
 .auth-hero{position:absolute;left:clamp(24px,4vw,62px);right:24px;bottom:clamp(28px,5vh,56px)}
@@ -53,7 +53,7 @@ const styles = `
   font-size:clamp(38px,4.5vw,68px);letter-spacing:0;text-shadow:0 2px 22px var(--auth-overlay)}
 .auth-hl span{display:block}
 
-.auth-pane{min-width:0;display:flex;align-items:center;justify-content:center;padding:clamp(28px,5vw,72px);background:var(--auth-canvas);overflow-y:auto;border-radius:50% 0 0 50%}
+.auth-pane{min-width:0;display:flex;align-items:center;justify-content:center;padding:clamp(28px,5vw,72px);background:var(--auth-canvas);overflow-y:auto}
 .auth-card{width:100%;max-width:360px}
 .auth-mark{width:38px;height:38px;margin:0 auto 20px;display:grid;place-items:center;border:1px solid var(--auth-border);border-radius:50%;background:color-mix(in oklab,var(--auth-surface) 72%,transparent)}
 .auth-mark span{width:13px;height:13px;border-radius:3px;background:var(--auth-text);transform:rotate(45deg)}
