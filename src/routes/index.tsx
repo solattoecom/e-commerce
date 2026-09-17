@@ -22,7 +22,6 @@ import infantil2 from "@/assets/infantil-foto-2.jpeg.asset.json";
 import infantil3 from "@/assets/infantil-foto-3.jpeg.asset.json";
 import heroVideo from "@/assets/hero-calcando-sapato.mp4.asset.json";
 import { Button } from "@/components/ui/button";
-import { LoginScreen } from "@/components/LoginScreen";
 import { ProductGrid } from "@/components/ProductGrid";
 import { ShippingCalculator } from "@/components/ShippingCalculator";
 import { CouponInput } from "@/components/CouponInput";
@@ -409,7 +408,6 @@ function NewsletterForm() {
 
 function Index() {
   const { user, loading } = useAuth();
-  const [showAccess, setShowAccess] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [refreshKey, setRefreshKey] = useState(0);
   const [scrolled, setScrolled] = useState(false);
@@ -442,13 +440,13 @@ const [tamSelecionado, setTamSelecionado] = useState<string | null>(null);
   useEffect(() => {
     if (sessionStorage.getItem("openLogin") && !user && !loading) {
       sessionStorage.removeItem("openLogin");
-      setShowAccess(true);
+      void navigate({ to: "/login" });
     }
-  }, [user, loading]);
+  }, [user, loading, navigate]);
 
   const handleAddToCart = async (produtoId: string, variacaoId: string | null = null) => {
     if (!user) {
-      setShowAccess(true);
+      void navigate({ to: "/login" });
       return;
     }
     await cart.addItem(produtoId, variacaoId);
@@ -466,28 +464,21 @@ const [tamSelecionado, setTamSelecionado] = useState<string | null>(null);
     };
   }, []);
 
-  useEffect(() => {
-    if (!loading && user) setShowAccess(false);
-  }, [loading, user]);
-
-  const closeAccess = () => {
-    setShowAccess(false);
-  };
 
 
   return (
     <div className="min-h-screen bg-background text-foreground">
       <StickyHeader
-        visible={scrolled && !showAccess}
+        visible={scrolled}
         user={user}
-        onEnter={() => setShowAccess(true)}
+        onEnter={() => void navigate({ to: "/login" })}
         onSignOut={() => signOut()}
         busca={busca}
         onBuscaChange={setBusca}
         cartCount={cart.count}
-        onOpenCart={() => (user ? setShowCart(true) : setShowAccess(true))}
+        onOpenCart={() => (user ? setShowCart(true) : void navigate({ to: "/login" }))}
         wishlistCount={wishlist.count}
-        onOpenWishlist={() => (user ? setShowWishlist(true) : setShowAccess(true))}
+        onOpenWishlist={() => (user ? setShowWishlist(true) : void navigate({ to: "/login" }))}
       />
 {showCart && (
         <div className="fixed inset-0 z-[60] flex justify-end bg-foreground/40" onClick={() => setShowCart(false)}>
@@ -644,13 +635,6 @@ const [tamSelecionado, setTamSelecionado] = useState<string | null>(null);
           </aside>
         </div>
       )}
-      {showAccess && (
-        <LoginScreen
-          onClose={closeAccess}
-          onSuccess={() => setRefreshKey((k) => k + 1)}
-        />
-      )}
-
       <main id="inicio">
         <section className="relative h-screen w-full overflow-hidden bg-black">
           <video
@@ -696,7 +680,7 @@ const [tamSelecionado, setTamSelecionado] = useState<string | null>(null);
               ) : (
                 <button
                   type="button"
-                  onClick={() => setShowAccess(true)}
+                  onClick={() => void navigate({ to: "/login" })}
                   className="hero-readex cursor-pointer rounded-full bg-white px-6 py-3 text-sm font-normal text-black transition-colors hover:bg-neutral-200"
                 >
                   entrar

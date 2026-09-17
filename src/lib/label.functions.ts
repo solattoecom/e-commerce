@@ -37,7 +37,7 @@ export async function gerarEtiquetaCore(
 
   const { data: profile } = await supabaseAdmin
     .from("profiles")
-    .select("nome, sobrenome, email, cpf")
+    .select("nome, email, cpf")
     .eq("id", order.usuario_id)
     .single();
 
@@ -73,7 +73,7 @@ export async function gerarEtiquetaCore(
       service: order.me_service_id,
       from: ME_FROM,
       to: {
-        name: `${profile.nome ?? ""} ${profile.sobrenome ?? ""}`.trim() || "Cliente",
+        name: profile.nome || "Cliente",
         phone: "00000000000",
         email: profile.email ?? "",
         document: profile.cpf,

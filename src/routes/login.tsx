@@ -1,3 +1,4 @@
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Building2, Store, Truck } from "lucide-react";
 import { signIn, signUpWithType, type ClientType } from "@/hooks/useAuth";
@@ -8,10 +9,17 @@ import { Button } from "@/components/ui/button";
 import heroShoe from "@/assets/shoe-hero.jpg";
 import heroVideo from "@/assets/hero-calcando-sapato.mp4.asset.json";
 
-// ── Types ──────────────────────────────────────────────────────────────────────
+export const Route = createFileRoute("/login")({
+  head: () => ({
+    meta: [
+      { title: "Entrar | Solatto" },
+      { name: "description", content: "Acesse sua conta Solatto para acompanhar pedidos, favoritos e ofertas exclusivas." },
+    ],
+  }),
+  component: LoginPage,
+});
 
-type Props = { onClose: () => void; onSuccess: () => void };
-type Mode = "login" | "signup" | "forgot" | "reset-sent";
+// ── Account types ──────────────────────────────────────────────────────────────
 
 const accountTypes = [
   { id: "varejo", name: "Varejo", Icon: Store },
@@ -20,6 +28,7 @@ const accountTypes = [
 ] as const;
 
 type AccountType = (typeof accountTypes)[number];
+type Mode = "login" | "signup" | "forgot" | "reset-sent";
 
 // ── Embedded styles ────────────────────────────────────────────────────────────
 
@@ -73,11 +82,6 @@ const styles = `
 .auth-link:hover{text-decoration:underline;text-underline-offset:3px}
 .auth-stage :focus-visible{outline:2px solid var(--auth-focus);outline-offset:2px}
 
-.auth-close{position:fixed;top:14px;right:14px;z-index:10;width:32px;height:32px;display:grid;place-items:center;
-  border:1px solid var(--auth-border);border-radius:50%;background:color-mix(in oklab,var(--auth-canvas) 72%,transparent);
-  backdrop-filter:blur(10px);color:var(--auth-muted);cursor:pointer;font-size:18px;line-height:1;
-  transition:color .18s,border-color .18s;}
-.auth-close:hover{color:var(--auth-text);border-color:color-mix(in oklab,var(--auth-text) 50%,transparent);}
 .auth-types{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:4px}
 .auth-type-btn{display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 6px;
   border:1px solid var(--auth-border);border-radius:6px;background:transparent;color:var(--auth-muted);
@@ -85,7 +89,6 @@ const styles = `
   transition:border-color .18s,background .18s,color .18s;}
 .auth-type-btn:hover{border-color:color-mix(in oklab,var(--auth-text) 50%,transparent);color:var(--auth-text);}
 .auth-type-btn[data-active="true"]{border-color:var(--auth-text);background:var(--auth-surface-strong);color:var(--auth-text);}
-.auth-name-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .auth-err{margin-top:10px;font-size:12px;color:oklch(.7 .18 27);letter-spacing:0}
 .auth-aviso{margin-top:10px;font-size:12px;color:var(--auth-muted);letter-spacing:0}
 .auth-forgot{display:block;margin-top:8px;text-align:right;background:none;border:none;color:var(--auth-muted);
@@ -98,8 +101,8 @@ const styles = `
   font:inherit;font-size:12px;cursor:pointer;padding:0 0 20px;transition:color .18s;}
 .auth-back:hover{color:var(--auth-text);}
 .auth-visitor{display:block;margin-top:14px;text-align:center;background:none;border:none;color:var(--auth-muted);
-  font:inherit;font-size:11px;cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:0;opacity:.7}
-.auth-visitor:hover{opacity:1}
+  font:inherit;font-size:11px;cursor:pointer;padding:0;opacity:.7}
+.auth-visitor:hover{opacity:1;text-decoration:underline;text-underline-offset:3px;}
 
 @media (max-width:760px){
   .auth-stage{position:relative;display:flex;flex-direction:column;min-height:100svh;overflow:visible}
@@ -122,8 +125,6 @@ const styles = `
   .auth-div{margin:14px 0}
   .auth-google{height:38px}
   .auth-bottom{margin-top:16px}
-  .auth-name-row{grid-template-columns:1fr;}
-  .auth-close{top:10px;right:10px;}
 }
 @media (max-width:370px){
   .auth-photo{height:156px}
@@ -133,12 +134,13 @@ const styles = `
 @media (prefers-reduced-motion:reduce){.auth-stage *{transition:none!important;animation:none!important}}
 `;
 
-// ── Component ──────────────────────────────────────────────────────────────────
+// ── Page component ─────────────────────────────────────────────────────────────
 
-export function LoginScreen({ onClose, onSuccess }: Props) {
+function LoginPage() {
+  const navigate = useNavigate();
   const [mode, setMode] = useState<Mode>("login");
   const [accountType, setAccountType] = useState<AccountType | null>(null);
-  const [form, setForm] = useState({ nome: "", sobrenome: "", email: "", senha: "" });
+  const [form, setForm] = useState({ nome: "", email: "", senha: "" });
   const [busy, setBusy] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
@@ -150,7 +152,7 @@ export function LoginScreen({ onClose, onSuccess }: Props) {
     if (v) setBloqueadoAte(Number(v));
   }, []);
 
-  // ── Helpers ────────────────────────────────────────────────────────────────
+  // ── Helpers ──────────────────────────────────────────────────────────────────
 
   const mascararEmail = (email: string) => {
     const [nome = "", dominio = ""] = email.split("@");
@@ -173,7 +175,7 @@ export function LoginScreen({ onClose, onSuccess }: Props) {
     return null;
   };
 
-  // ── Auth handlers ──────────────────────────────────────────────────────────
+  // ── Auth handlers ─────────────────────────────────────────────────────────────
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -195,9 +197,7 @@ export function LoginScreen({ onClose, onSuccess }: Props) {
       await signIn(form.email, form.senha);
       localStorage.removeItem("login_attempts");
       localStorage.removeItem("login_blocked_until");
-      setBloqueadoAte(null);
-      onSuccess();
-      onClose();
+      void navigate({ to: "/" });
     } catch (error) {
       const msg = error instanceof Error ? error.message : "";
       if (/not confirmed|email not confirmed/i.test(msg)) {
@@ -232,16 +232,16 @@ export function LoginScreen({ onClose, onSuccess }: Props) {
     const rl = await checkRateLimit("signup");
     if (rl.blocked) {
       const min = rl.retryAfterSeconds ? Math.ceil(rl.retryAfterSeconds / 60) : 60;
-      setErro(`Muitas tentativas de cadastro. Aguarde ${min} min.`);
+      setErro(`Muitas tentativas. Aguarde ${min} min.`);
       return;
     }
     setBusy(true); setErro(null); setAviso(null);
     await recordRateLimitAttempt("signup");
     try {
-      await signUpWithType({ ...form, tipo: accountType.id as ClientType });
+      await signUpWithType({ nome: form.nome, email: form.email, senha: form.senha, tipo: accountType.id as ClientType });
       const email = form.email.trim();
       setAviso(`Confirme o e-mail enviado para ${mascararEmail(email)}.`);
-      setForm({ nome: "", sobrenome: "", email, senha: "" });
+      setForm({ nome: "", email, senha: "" });
       setAccountType(null);
       setMode("login");
     } catch (error) {
@@ -309,16 +309,12 @@ export function LoginScreen({ onClose, onSuccess }: Props) {
 
   const isLogin = mode === "login";
 
-  // ── Render ─────────────────────────────────────────────────────────────────
+  // ── Render ────────────────────────────────────────────────────────────────────
 
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: styles }} />
       <div className="auth-stage">
-
-        <button type="button" className="auth-close" onClick={onClose} aria-label="Fechar">
-          ×
-        </button>
 
         {/* ── Photo panel ── */}
         <section className="auth-photo">
@@ -373,11 +369,7 @@ export function LoginScreen({ onClose, onSuccess }: Props) {
             {/* forgot password */}
             {mode === "forgot" && (
               <>
-                <button
-                  type="button"
-                  className="auth-back"
-                  onClick={() => { setMode("login"); setErro(null); }}
-                >
+                <button type="button" className="auth-back" onClick={() => { setMode("login"); setErro(null); }}>
                   <svg width="14" height="14" viewBox="0 0 22 22" fill="none" aria-hidden="true">
                     <path d="M19 11H3.6M11 18.7 3.3 11 11 3.3" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
@@ -463,34 +455,18 @@ export function LoginScreen({ onClose, onSuccess }: Props) {
                           </button>
                         ))}
                       </div>
-                      <div className="auth-name-row">
-                        <div className="auth-field-wrap">
-                          <label className="auth-label" htmlFor="auth-nome">Nome</label>
-                          <div className="auth-field">
-                            <input
-                              id="auth-nome"
-                              type="text"
-                              autoComplete="given-name"
-                              placeholder="Nome"
-                              value={form.nome}
-                              onChange={(e) => setForm({ ...form, nome: e.target.value })}
-                              maxLength={60}
-                            />
-                          </div>
-                        </div>
-                        <div className="auth-field-wrap">
-                          <label className="auth-label" htmlFor="auth-sobrenome">Sobrenome</label>
-                          <div className="auth-field">
-                            <input
-                              id="auth-sobrenome"
-                              type="text"
-                              autoComplete="family-name"
-                              placeholder="Sobrenome"
-                              value={form.sobrenome}
-                              onChange={(e) => setForm({ ...form, sobrenome: e.target.value })}
-                              maxLength={60}
-                            />
-                          </div>
+                      <div className="auth-field-wrap">
+                        <label className="auth-label" htmlFor="auth-nome">Nome completo</label>
+                        <div className="auth-field">
+                          <input
+                            id="auth-nome"
+                            type="text"
+                            autoComplete="name"
+                            placeholder="Seu nome completo"
+                            value={form.nome}
+                            onChange={(e) => setForm({ ...form, nome: e.target.value })}
+                            maxLength={120}
+                          />
                         </div>
                       </div>
                     </>
@@ -532,12 +508,7 @@ export function LoginScreen({ onClose, onSuccess }: Props) {
                 {aviso && <p className="auth-aviso">{aviso}</p>}
 
                 {emailNaoConfirmado && (
-                  <button
-                    type="button"
-                    className="auth-resend"
-                    disabled={busy}
-                    onClick={reenviarConfirmacao}
-                  >
+                  <button type="button" className="auth-resend" disabled={busy} onClick={reenviarConfirmacao}>
                     Reenviar e-mail de confirmação
                   </button>
                 )}
@@ -555,11 +526,7 @@ export function LoginScreen({ onClose, onSuccess }: Props) {
                 </Button>
 
                 {isLogin && (
-                  <button
-                    type="button"
-                    className="auth-forgot"
-                    onClick={() => { setMode("forgot"); setErro(null); }}
-                  >
+                  <button type="button" className="auth-forgot" onClick={() => { setMode("forgot"); setErro(null); }}>
                     Esqueceu a senha?
                   </button>
                 )}
@@ -588,11 +555,9 @@ export function LoginScreen({ onClose, onSuccess }: Props) {
                   </Button>
                 </p>
 
-                {!isLogin && (
-                  <button type="button" className="auth-visitor" onClick={onClose}>
-                    Continuar como visitante
-                  </button>
-                )}
+                <button type="button" className="auth-visitor" onClick={() => void navigate({ to: "/" })}>
+                  Continuar como visitante
+                </button>
               </>
             )}
 

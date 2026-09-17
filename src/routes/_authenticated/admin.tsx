@@ -45,7 +45,6 @@ type Solicitacao = {
   status: string;
   criado_em: string;
   nome: string;
-  sobrenome: string;
   email: string;
 };
 
@@ -76,7 +75,7 @@ type Pedido = {
   criado_em: string;
   usuario_id: string;
   endereco: Record<string, string>;
-  profiles: { nome: string; sobrenome: string; email: string } | null;
+  profiles: { nome: string; email: string } | null;
   order_items: PedidoItem[];
 };
 
@@ -185,7 +184,7 @@ function AdminPanel() {
       supabase
         .from("orders")
         .select(
-          "id, status, subtotal, frete, total, coupon_id, payment_method, card_parcelas, nota_fiscal, codigo_rastreio, label_pdf_url, me_service_id, me_order_id, ultimo_evento_rastreio, criado_em, usuario_id, endereco, profiles(nome, sobrenome, email), order_items(id, quantidade, preco_unitario, subtotal, products(nome, slug, product_images(url)), product_variants(tamanho))",
+          "id, status, subtotal, frete, total, coupon_id, payment_method, card_parcelas, nota_fiscal, codigo_rastreio, label_pdf_url, me_service_id, me_order_id, ultimo_evento_rastreio, criado_em, usuario_id, endereco, profiles(nome, email), order_items(id, quantidade, preco_unitario, subtotal, products(nome, slug, product_images(url)), product_variants(tamanho))",
         )
         .order("criado_em", { ascending: false }),
     ]);
@@ -487,7 +486,7 @@ setNfePorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; re
               <li key={s.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium">
-                    {s.nome ? `${s.nome} ${s.sobrenome}` : "Cliente"}
+                    {s.nome || "Cliente"}
                   </p>
                   <p className="truncate text-xs text-muted-foreground">
                     {s.email} · pediu <strong>{s.tipo_solicitado}</strong> em{" "}
@@ -564,7 +563,7 @@ setNfePorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; re
                   >
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium">
-                        {p.profiles ? `${p.profiles.nome} ${p.profiles.sobrenome}` : "Cliente"} ·{" "}
+                        {p.profiles?.nome || "Cliente"} ·{" "}
                         {brl(totalCobrado(p))}
                       </p>
                       <p className="truncate text-xs text-muted-foreground">
@@ -586,7 +585,7 @@ setNfePorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; re
                       {/* Cliente */}
                       <div>
                         <p className="font-semibold mb-1">Cliente</p>
-                        <p className="text-muted-foreground">{p.profiles ? `${p.profiles.nome} ${p.profiles.sobrenome}` : "—"}</p>
+                        <p className="text-muted-foreground">{p.profiles?.nome || "—"}</p>
                         <p className="text-muted-foreground">{p.profiles?.email}</p>
                       </div>
 

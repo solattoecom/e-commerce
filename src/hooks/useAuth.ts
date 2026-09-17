@@ -30,7 +30,6 @@ export function useAuth() {
 
 export async function signUpWithType(params: {
   nome: string;
-  sobrenome: string;
   email: string;
   senha: string;
   tipo: ClientType;
@@ -40,7 +39,7 @@ export async function signUpWithType(params: {
     password: params.senha,
     options: {
       emailRedirectTo: `${window.location.origin}/`,
-      data: { nome: params.nome, sobrenome: params.sobrenome, tipo: params.tipo },
+      data: { nome: params.nome, tipo: params.tipo },
     },
   });
   if (error) throw error;

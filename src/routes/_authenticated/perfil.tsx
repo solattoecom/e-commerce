@@ -16,7 +16,7 @@ export const Route = createFileRoute("/_authenticated/perfil")({
 function PerfilPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [dados, setDados] = useState<{ nome: string; sobrenome: string; email: string; tipo: string | null } | null>(null);
+  const [dados, setDados] = useState<{ nome: string; email: string; tipo: string | null } | null>(null);
   const [salvando, setSalvando] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [erro, setErro] = useState<string | null>(null);
@@ -28,13 +28,12 @@ function PerfilPage() {
     let active = true;
     (async () => {
       const [{ data: perfil }, { data: tipo }] = await Promise.all([
-        supabase.from("profiles").select("nome, sobrenome").eq("id", user.id).maybeSingle(),
+        supabase.from("profiles").select("nome").eq("id", user.id).maybeSingle(),
         supabase.from("user_client_types").select("tipo").eq("user_id", user.id).maybeSingle(),
       ]);
       if (!active) return;
       setDados({
         nome: perfil?.nome ?? "",
-        sobrenome: perfil?.sobrenome ?? "",
         email: user.email ?? "",
         tipo: tipo?.tipo ?? null,
       });
@@ -52,7 +51,7 @@ function PerfilPage() {
     try {
       const { error: perfilErro } = await supabase
         .from("profiles")
-        .update({ nome: dados.nome.trim(), sobrenome: dados.sobrenome.trim() })
+        .update({ nome: dados.nome.trim() })
         .eq("id", user.id);
       if (perfilErro) throw new Error(perfilErro.message);
 
@@ -100,23 +99,14 @@ function PerfilPage() {
 
       <div className="rounded-2xl border border-border bg-background p-6">
         <form onSubmit={salvar} className="space-y-4 text-sm">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="space-y-1.5">
-              <span className="text-muted-foreground">Nome</span>
-              <Input
-                value={dados?.nome ?? ""}
-                onChange={(e) => setDados((d) => d ? { ...d, nome: e.target.value } : d)}
-                required
-              />
-            </label>
-            <label className="space-y-1.5">
-              <span className="text-muted-foreground">Sobrenome</span>
-              <Input
-                value={dados?.sobrenome ?? ""}
-                onChange={(e) => setDados((d) => d ? { ...d, sobrenome: e.target.value } : d)}
-              />
-            </label>
-          </div>
+          <label className="block space-y-1.5">
+            <span className="text-muted-foreground">Nome completo</span>
+            <Input
+              value={dados?.nome ?? ""}
+              onChange={(e) => setDados((d) => d ? { ...d, nome: e.target.value } : d)}
+              required
+            />
+          </label>
 
           <label className="block space-y-1.5">
             <span className="text-muted-foreground">E-mail</span>

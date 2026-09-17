@@ -144,7 +144,7 @@ export const createOrder = createServerFn({ method: "POST" })
 
     const { data: profile } = await supabaseAdmin
       .from("profiles")
-      .select("nome, sobrenome, email")
+      .select("nome, email")
       .eq("id", context.userId)
       .single();
     if (!profile) throw new Error("Perfil não encontrado.");
@@ -223,7 +223,7 @@ export const createOrder = createServerFn({ method: "POST" })
           expiresIn: 3600,
           externalId: order.id,
           customer: {
-            name: `${profile.nome} ${profile.sobrenome}`.trim(),
+            name: profile.nome,
             email: profile.email,
             cellphone: data.telefone || "00000000000",
             taxId: "",
@@ -265,7 +265,7 @@ export const createOrder = createServerFn({ method: "POST" })
         method: "POST",
         headers: asaasHeaders,
         body: JSON.stringify({
-          name: `${profile.nome} ${profile.sobrenome}`.trim(),
+          name: profile.nome,
           cpfCnpj: (data.boleto_cpf ?? "").replace(/\D/g, ""),
           email: profile.email,
           externalReference: context.userId,
@@ -330,7 +330,7 @@ export const createOrder = createServerFn({ method: "POST" })
       method: "POST",
       headers: asaasHeaders,
       body: JSON.stringify({
-        name: `${profile.nome} ${profile.sobrenome}`.trim(),
+        name: profile.nome,
         cpfCnpj: (data.card_cpf ?? "").replace(/\D/g, ""),
         email: profile.email,
         externalReference: context.userId,
@@ -371,7 +371,7 @@ export const createOrder = createServerFn({ method: "POST" })
           ccv: data.card_cvv,
         },
         creditCardHolderInfo: {
-          name: `${profile.nome} ${profile.sobrenome}`.trim(),
+          name: profile.nome,
           email: profile.email,
           cpfCnpj: (data.card_cpf ?? "").replace(/\D/g, ""),
           postalCode: (address.cep ?? "").replace(/\D/g, ""),
@@ -468,7 +468,7 @@ export const retryPixPayment = createServerFn({ method: "POST" })
 
     const { data: profile } = await supabaseAdmin
       .from("profiles")
-      .select("nome, sobrenome, email")
+      .select("nome, email")
       .eq("id", context.userId)
       .single();
 
@@ -483,7 +483,7 @@ export const retryPixPayment = createServerFn({ method: "POST" })
           expiresIn: 3600,
           externalId: order.id,
           customer: {
-            name: `${profile?.nome ?? ""} ${profile?.sobrenome ?? ""}`.trim(),
+            name: profile?.nome ?? "",
             email: profile?.email ?? "",
             cellphone: "00000000000",
             taxId: "",

@@ -46,7 +46,7 @@ function PrivacidadePage() {
             <h2 className="text-lg font-semibold text-foreground">2. Dados que coletamos</h2>
             <p>Coletamos os seguintes dados pessoais:</p>
             <ul className="list-disc pl-5 space-y-1">
-              <li>Nome, sobrenome e e-mail — para criação de conta e comunicações</li>
+              <li>Nome completo e e-mail — para criação de conta e comunicações</li>
               <li>Endereço de entrega — para processamento e envio de pedidos</li>
               <li>Telefone (WhatsApp) — para confirmação de pedidos</li>
               <li>Dados de navegação (cookies) — para funcionamento do site e análises</li>

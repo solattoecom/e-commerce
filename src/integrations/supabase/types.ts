@@ -570,7 +570,6 @@ export type Database = {
           email: string
           id: string
           nome: string
-          sobrenome: string
         }
         Insert: {
           cpf?: string | null
@@ -578,7 +577,6 @@ export type Database = {
           email: string
           id: string
           nome: string
-          sobrenome?: string
         }
         Update: {
           cpf?: string | null
@@ -586,7 +584,6 @@ export type Database = {
           email?: string
           id?: string
           nome?: string
-          sobrenome?: string
         }
         Relationships: []
       }
