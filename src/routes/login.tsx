@@ -66,8 +66,8 @@ const styles = `
 .auth-fields{display:flex;flex-direction:column;gap:12px;margin-top:22px}
 .auth-field-wrap{display:flex;flex-direction:column;gap:6px}
 .auth-label{padding-left:2px;color:var(--auth-muted);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.12em}
-.auth-field{display:flex;align-items:center;height:42px;border-radius:6px;background:color-mix(in oklab,var(--auth-surface) 72%,transparent);border:1px solid var(--auth-border);padding:0 12px;transition:border-color .18s ease,background .18s ease}
-.auth-field:focus-within{border-color:var(--auth-focus);background:var(--auth-surface)}
+.auth-field{display:flex;align-items:center;height:42px;border-radius:6px;background:color-mix(in oklab,var(--auth-surface) 72%,transparent);border:none;padding:0 12px;transition:background .18s ease}
+.auth-field:focus-within{background:var(--auth-surface)}
 .auth-field input{width:100%;border:0;outline:0;background:transparent;color:var(--auth-text);font:inherit;font-size:14px;letter-spacing:0}
 .auth-field input::placeholder{color:color-mix(in oklab,var(--auth-muted) 72%,transparent)}
 .auth-login{margin-top:18px;width:100%;height:42px;border-radius:6px;background:var(--auth-action);color:var(--auth-action-text);font-size:12px;font-weight:700;box-shadow:none}
@@ -100,7 +100,7 @@ const styles = `
 .auth-back{display:flex;align-items:center;gap:6px;background:none;border:none;color:var(--auth-muted);
   font:inherit;font-size:12px;cursor:pointer;padding:0 0 20px;transition:color .18s;}
 .auth-back:hover{color:var(--auth-text);}
-.auth-visitor{display:block;margin-top:14px;text-align:center;background:none;border:none;color:var(--auth-muted);
+.auth-visitor{display:block;margin-top:14px;text-align:right;background:none;border:none;color:var(--auth-muted);
   font:inherit;font-size:11px;cursor:pointer;padding:0;opacity:.7}
 .auth-visitor:hover{opacity:1;text-decoration:underline;text-underline-offset:3px;}
 
