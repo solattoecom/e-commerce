@@ -70,7 +70,10 @@ async function consultarCorreios(codigo: string): Promise<{ entregue: boolean; e
   }
 }
 
-export async function runTrackingCron(): Promise<Response> {
+export async function runTrackingCron(debug = false): Promise<Response> {
+  const logs: string[] = [];
+  const log = (msg: string) => { console.log(msg); logs.push(msg); };
+
   try {
     const { supabaseAdmin } = await import("@/integrations/supabase/external.server");
 
@@ -82,12 +85,14 @@ export async function runTrackingCron(): Promise<Response> {
 
     if (!orders || orders.length === 0) return new Response("no orders", { status: 200 });
 
+    log(`pedidos: ${orders.length}`);
+
     let updated = 0;
-    console.log(`[cron-rastreio] ${orders.length} pedido(s) para verificar`);
 
     for (const order of orders) {
       const codigo = order.codigo_rastreio!;
       const meOrderId = (order as { me_order_id?: string | null }).me_order_id ?? null;
+      const ultimoConhecido = (order as { ultimo_evento_rastreio?: string | null }).ultimo_evento_rastreio ?? null;
 
       let entregue = false;
       let evento: string | null = null;
@@ -96,17 +101,17 @@ export async function runTrackingCron(): Promise<Response> {
         const me = await consultarME(meOrderId);
         entregue = me.entregue;
         evento = me.evento;
-        console.log(`[cron-rastreio] pedido ${order.id} ME =>`, { entregue, evento });
+        log(`pedido ${order.id} | ME => entregue=${entregue} evento=${evento}`);
       }
 
       if (!entregue && !evento) {
         const correios = await consultarCorreios(codigo);
         entregue = correios.entregue;
         evento = correios.evento;
-        console.log(`[cron-rastreio] pedido ${order.id} Correios =>`, { entregue, evento });
+        log(`pedido ${order.id} | Correios => entregue=${entregue} evento=${evento}`);
       }
 
-      console.log(`[cron-rastreio] pedido ${order.id} resultado =>`, { entregue, evento, ultimoConhecido: (order as { ultimo_evento_rastreio?: string | null }).ultimo_evento_rastreio });
+      log(`pedido ${order.id} | ultimoConhecido=${ultimoConhecido}`);
 
       if (entregue) {
         await supabaseAdmin.from("orders").update({ status: "entregue" }).eq("id", order.id);
@@ -124,12 +129,12 @@ export async function runTrackingCron(): Promise<Response> {
         continue;
       }
 
-      if (!evento) continue;
+      if (!evento) { log(`pedido ${order.id} | sem evento, pulando`); continue; }
 
-      const ultimoConhecido = (order as { ultimo_evento_rastreio?: string | null }).ultimo_evento_rastreio ?? null;
-      if (evento === ultimoConhecido) continue;
+      if (evento === ultimoConhecido) { log(`pedido ${order.id} | evento igual ao anterior, pulando`); continue; }
 
       await supabaseAdmin.from("orders").update({ ultimo_evento_rastreio: evento }).eq("id", order.id);
+      log(`pedido ${order.id} | atualizado: ${evento}`);
 
       const { data: profile } = await supabaseAdmin
         .from("profiles").select("nome, email").eq("id", order.usuario_id).single();
@@ -145,9 +150,10 @@ export async function runTrackingCron(): Promise<Response> {
       }
     }
 
-    return new Response(`ok: ${updated} entregue(s)`, { status: 200 });
+    const resumo = `ok: ${updated} entregue(s)`;
+    return new Response(debug ? `${resumo}\n\n${logs.join("\n")}` : resumo, { status: 200 });
   } catch (err) {
     console.error("[cron-rastreio]", err);
-    return new Response("error", { status: 500 });
+    return new Response(debug ? `error\n\n${logs.join("\n")}\n\n${String(err)}` : "error", { status: 500 });
   }
 }

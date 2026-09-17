@@ -116,7 +116,8 @@ export default {
         if (secret && auth !== `Bearer ${secret}`) {
           return new Response("unauthorized", { status: 401 });
         }
-        return await runTrackingCron();
+        const debug = url.searchParams.get("debug") === "1";
+        return await runTrackingCron(debug);
       }
 
       if (url.pathname === "/api/cron/check-low-stock" && request.method === "GET") {
