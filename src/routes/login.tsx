@@ -6,7 +6,6 @@ import { supabase } from "@/integrations/supabase/external";
 import { isValidEmail } from "@/lib/validate";
 import { checkRateLimit, recordRateLimitAttempt } from "@/lib/rate-limit.functions";
 import { Button } from "@/components/ui/button";
-import heroShoe from "@/assets/shoe-hero.jpg";
 import heroVideo from "@/assets/hero-calcando-sapato.mp4.asset.json";
 
 export const Route = createFileRoute("/login")({
@@ -327,7 +326,6 @@ function LoginPage() {
             loop
             playsInline
             preload="auto"
-            poster={heroShoe}
             aria-label="Homem calçando um sapato de couro"
           >
             <source src={heroVideo.url} type="video/mp4" />
