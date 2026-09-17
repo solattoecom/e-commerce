@@ -54,8 +54,8 @@ const styles = `
 
 .auth-pane{min-width:0;display:flex;align-items:center;justify-content:center;padding:clamp(28px,5vw,72px);background:var(--auth-canvas);overflow-y:auto;border-radius:10px 0 0 10px}
 .auth-card{width:100%;max-width:360px}
-.auth-mark{width:38px;height:38px;margin:0 auto 20px;display:grid;place-items:center;border:1px solid var(--auth-border);border-radius:50%;background:color-mix(in oklab,var(--auth-surface) 72%,transparent)}
-.auth-mark span{width:13px;height:13px;border-radius:3px;background:var(--auth-text);transform:rotate(45deg)}
+.auth-mark{width:38px;height:38px;margin:0 auto 20px;display:grid;place-items:center}
+.auth-mark svg{width:38px;height:38px;border-radius:8px}
 .auth-h1{margin:0;color:var(--auth-text);font-family:'Bricolage Grotesque','Hanken Grotesk',sans-serif;
   font-variation-settings:'wght' 520;font-weight:520;text-align:center;font-size:25px;letter-spacing:0;line-height:1.1}
 .auth-sub{margin:8px 0 0;text-align:center;color:var(--auth-muted);font-size:12px;letter-spacing:0}
@@ -346,7 +346,7 @@ function LoginPage() {
             {/* reset-sent */}
             {mode === "reset-sent" && (
               <>
-                <div className="auth-mark" aria-hidden="true"><span /></div>
+                <div className="auth-mark" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="6" fill="#000000"/><text x="16" y="23" fontFamily="serif" fontSize="22" fontWeight="700" fill="#ffffff" textAnchor="middle">S</text></svg></div>
                 <h1 className="auth-h1">E-mail enviado!</h1>
                 <p className="auth-sub">Verifique sua caixa de entrada para redefinir a senha.</p>
                 <Button
@@ -369,7 +369,7 @@ function LoginPage() {
                   </svg>
                   Voltar
                 </button>
-                <div className="auth-mark" aria-hidden="true"><span /></div>
+                <div className="auth-mark" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="6" fill="#000000"/><text x="16" y="23" fontFamily="serif" fontSize="22" fontWeight="700" fill="#ffffff" textAnchor="middle">S</text></svg></div>
                 <h1 className="auth-h1">Esqueci minha senha</h1>
                 <p className="auth-sub">Enviaremos um link para criar uma nova senha.</p>
                 <div className="auth-fields">
@@ -403,7 +403,7 @@ function LoginPage() {
             {/* login / signup */}
             {(mode === "login" || mode === "signup") && (
               <>
-                <div className="auth-mark" aria-hidden="true"><span /></div>
+                <div className="auth-mark" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="6" fill="#000000"/><text x="16" y="23" fontFamily="serif" fontSize="22" fontWeight="700" fill="#ffffff" textAnchor="middle">S</text></svg></div>
                 <h1 className="auth-h1">{isLogin ? "Bem-vindo de volta!" : "Crie sua conta"}</h1>
                 <p className="auth-sub">
                   {isLogin
