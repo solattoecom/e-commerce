@@ -83,6 +83,7 @@ export async function runTrackingCron(): Promise<Response> {
     if (!orders || orders.length === 0) return new Response("no orders", { status: 200 });
 
     let updated = 0;
+    console.log(`[cron-rastreio] ${orders.length} pedido(s) para verificar`);
 
     for (const order of orders) {
       const codigo = order.codigo_rastreio!;
@@ -95,13 +96,17 @@ export async function runTrackingCron(): Promise<Response> {
         const me = await consultarME(meOrderId);
         entregue = me.entregue;
         evento = me.evento;
+        console.log(`[cron-rastreio] pedido ${order.id} ME =>`, { entregue, evento });
       }
 
       if (!entregue && !evento) {
         const correios = await consultarCorreios(codigo);
         entregue = correios.entregue;
         evento = correios.evento;
+        console.log(`[cron-rastreio] pedido ${order.id} Correios =>`, { entregue, evento });
       }
+
+      console.log(`[cron-rastreio] pedido ${order.id} resultado =>`, { entregue, evento, ultimoConhecido: (order as { ultimo_evento_rastreio?: string | null }).ultimo_evento_rastreio });
 
       if (entregue) {
         await supabaseAdmin.from("orders").update({ status: "entregue" }).eq("id", order.id);
