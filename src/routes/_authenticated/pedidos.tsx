@@ -65,6 +65,44 @@ function traduzirStatusME(status: string): string {
   return ME_STATUS[status.toLowerCase()] ?? status;
 }
 
+const TRACKING_STEPS = [
+  { status: "posted",     label: "Postado" },
+  { status: "in_transit", label: "Em trânsito" },
+  { status: "delivered",  label: "Entregue" },
+] as const;
+
+function TrackingTimeline({ status }: { status: string | null }) {
+  if (!status) return null;
+  const s = status.toLowerCase();
+  const currentIndex = TRACKING_STEPS.findIndex((t) => t.status === s);
+  if (currentIndex === -1) return <p className="text-sm font-medium">{traduzirStatusME(status)}</p>;
+
+  return (
+    <div className="relative flex items-start justify-between gap-1">
+      {TRACKING_STEPS.map((step, i) => {
+        const done = i < currentIndex;
+        const active = i === currentIndex;
+        return (
+          <div key={step.status} className="relative flex flex-1 flex-col items-center gap-1.5">
+            {i < TRACKING_STEPS.length - 1 && (
+              <div className={`absolute left-1/2 top-3.5 h-px w-full -translate-y-1/2 ${i <= currentIndex - 1 ? "bg-foreground" : "bg-border"}`} />
+            )}
+            <div className={`relative z-10 flex h-7 w-7 items-center justify-center rounded-full border-2 text-xs font-bold transition-colors
+              ${done ? "border-foreground bg-foreground text-background"
+                : active ? "border-foreground bg-background text-foreground"
+                : "border-border bg-background text-muted-foreground"}`}>
+              {done ? <Check className="h-3.5 w-3.5" /> : i + 1}
+            </div>
+            <p className={`text-center text-[10px] leading-tight ${active ? "font-semibold text-foreground" : done ? "text-foreground" : "text-muted-foreground"}`}>
+              {step.label}
+            </p>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 const TIMELINE_STEPS: { status: OrderStatus; label: string }[] = [
   { status: "pendente",  label: "Pedido feito" },
   { status: "pago",      label: "Pagamento confirmado" },
@@ -505,16 +543,7 @@ function PedidosPage() {
                             ))}
                           </ol>
                         ) : order.ultimo_evento_rastreio ? (
-                          <ol className="space-y-3">
-                            <li className="flex gap-3">
-                              <div className="mt-0.5 flex flex-col items-center">
-                                <div className="size-2.5 rounded-full bg-foreground shrink-0" />
-                              </div>
-                              <div className="min-w-0 pb-3">
-                                <p className="text-sm font-medium leading-snug">{traduzirStatusME(order.ultimo_evento_rastreio)}</p>
-                              </div>
-                            </li>
-                          </ol>
+                          <TrackingTimeline status={order.ultimo_evento_rastreio} />
                         ) : (
                           <p className="text-sm text-muted-foreground">Nenhum evento de rastreio ainda.</p>
                         )}
@@ -548,16 +577,7 @@ function PedidosPage() {
                           </ol>
                         ) : trackingCodeEventsByOrder[order.id] !== undefined ? (
                           order.ultimo_evento_rastreio ? (
-                            <ol className="space-y-3">
-                              <li className="flex gap-3">
-                                <div className="mt-0.5 flex flex-col items-center">
-                                  <div className="size-2.5 rounded-full bg-foreground shrink-0" />
-                                </div>
-                                <div className="min-w-0 pb-3">
-                                  <p className="text-sm font-medium leading-snug">{traduzirStatusME(order.ultimo_evento_rastreio)}</p>
-                                </div>
-                              </li>
-                            </ol>
+                            <TrackingTimeline status={order.ultimo_evento_rastreio} />
                           ) : (
                             <p className="text-sm text-muted-foreground">Nenhum evento encontrado ainda.</p>
                           )
