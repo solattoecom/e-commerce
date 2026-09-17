@@ -3,6 +3,7 @@ name: Cron Jobs
 on:
   schedule:
     - cron: "0 8,12,18,22 * * *"
+  workflow_dispatch:
 
 jobs:
   check-deliveries:
@@ -10,7 +11,7 @@ jobs:
     steps:
       - name: Check deliveries
         run: |
-          curl -s --fail-with-body -X GET "https://www.solatto.com.br/api/cron/check-deliveries" \
+          curl -sf -X GET "https://www.solatto.com.br/api/cron/check-deliveries" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
 
   check-low-stock:
@@ -18,5 +19,5 @@ jobs:
     steps:
       - name: Check low stock
         run: |
-          curl -s --fail-with-body -X GET "https://www.solatto.com.br/api/cron/check-low-stock" \
+          curl -sf -X GET "https://www.solatto.com.br/api/cron/check-low-stock" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
