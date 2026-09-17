@@ -65,8 +65,8 @@ const styles = `
 .auth-fields{display:flex;flex-direction:column;gap:10px;margin-top:14px}
 .auth-field-wrap{display:flex;flex-direction:column;gap:6px}
 .auth-label{padding-left:2px;color:var(--auth-muted);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.12em}
-.auth-field{display:flex;align-items:center;height:42px;border-radius:12px;background:color-mix(in oklab,var(--auth-surface) 72%,transparent);border:none;padding:0 12px;transition:background .18s ease}
-.auth-field:focus-within{background:var(--auth-surface)}
+.auth-field{display:flex;align-items:center;height:42px;border-radius:12px;background:color-mix(in oklab,var(--auth-surface) 72%,transparent);border:1.5px solid transparent;padding:0 12px;transition:background .18s ease,border-color .18s ease}
+.auth-field:focus-within{background:var(--auth-surface);border-color:var(--auth-text)}
 .auth-field input{width:100%;border:0;outline:0;background:transparent;color:var(--auth-text);font:inherit;font-size:14px;letter-spacing:0}
 .auth-field input::placeholder{color:color-mix(in oklab,var(--auth-muted) 72%,transparent)}
 .auth-login{margin-top:12px;width:100%;height:42px;border-radius:6px;background:var(--auth-action);color:var(--auth-action-text);font-size:12px;font-weight:700;box-shadow:none}
