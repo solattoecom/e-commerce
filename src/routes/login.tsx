@@ -66,7 +66,7 @@ const styles = `
 .auth-fields{display:flex;flex-direction:column;gap:12px;margin-top:22px}
 .auth-field-wrap{display:flex;flex-direction:column;gap:6px}
 .auth-label{padding-left:2px;color:var(--auth-muted);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.12em}
-.auth-field{display:flex;align-items:center;height:42px;border-radius:12px;background:color-mix(in oklab,var(--auth-surface) 72%,transparent);border:none;padding:0 12px;transition:background .18s ease}
+.auth-field{display:flex;align-items:center;height:42px;border-radius:999px;background:color-mix(in oklab,var(--auth-surface) 72%,transparent);border:none;padding:0 16px;transition:background .18s ease}
 .auth-field:focus-within{background:var(--auth-surface)}
 .auth-field input{width:100%;border:0;outline:0;background:transparent;color:var(--auth-text);font:inherit;font-size:14px;letter-spacing:0}
 .auth-field input::placeholder{color:color-mix(in oklab,var(--auth-muted) 72%,transparent)}
