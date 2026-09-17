@@ -332,12 +332,6 @@ function LoginPage() {
           </video>
           <div className="auth-scrim" />
           <div className="auth-hero">
-            <div className="auth-badge">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" fill="#fff" />
-              </svg>
-              <span>Feito para quem não perde tempo</span>
-            </div>
             <h2 className="auth-hl">
               <span>O passo certo</span>
               <span>começa aqui</span>
