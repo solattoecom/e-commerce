@@ -92,7 +92,7 @@ const styles = `
 .auth-type-btn[data-active="true"]{border-color:var(--auth-text);background:var(--auth-surface-strong);color:var(--auth-text);}
 .auth-err{margin-top:10px;font-size:12px;color:oklch(.7 .18 27);letter-spacing:0}
 .auth-aviso{margin-top:10px;font-size:12px;color:var(--auth-muted);letter-spacing:0}
-.auth-forgot{display:block;margin-top:8px;text-align:right;background:none;border:none;color:var(--auth-muted);
+.auth-forgot{display:block;margin-top:8px;text-align:center;background:none;border:none;color:var(--auth-muted);
   font:inherit;font-size:11px;cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:0;}
 .auth-forgot:hover{color:var(--auth-text);}
 .auth-resend{display:block;margin-top:6px;text-align:center;background:none;border:none;color:var(--auth-muted);
@@ -101,7 +101,7 @@ const styles = `
 .auth-back{display:flex;align-items:center;gap:6px;background:none;border:none;color:var(--auth-muted);
   font:inherit;font-size:12px;cursor:pointer;padding:0 0 20px;transition:color .18s;}
 .auth-back:hover{color:var(--auth-text);}
-.auth-visitor{display:block;margin-top:14px;text-align:right;background:none;border:none;color:var(--auth-muted);
+.auth-visitor{display:block;margin-top:14px;text-align:center;background:none;border:none;color:var(--auth-muted);
   font:inherit;font-size:11px;cursor:pointer;padding:0;opacity:.7}
 .auth-visitor:hover{opacity:1;text-decoration:underline;text-underline-offset:3px;}
 
