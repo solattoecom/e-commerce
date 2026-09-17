@@ -7,7 +7,7 @@ type METrackingItem = {
 
 type METrackingResposta = Record<string, METrackingItem>;
 
-async function consultarME(meOrderId: string): Promise<{ entregue: boolean; evento: string | null }> {
+async function consultarME(meOrderId: string): Promise<{ entregue: boolean; evento: string | null; raw?: string }> {
   const token = process.env["MELHOR_ENVIO_TOKEN"];
   if (!token || !meOrderId) return { entregue: false, evento: null };
   try {
@@ -28,14 +28,15 @@ async function consultarME(meOrderId: string): Promise<{ entregue: boolean; even
     const contentType = res.headers.get("content-type") ?? "";
     if (!res.ok || !contentType.includes("application/json")) return { entregue: false, evento: null };
     const data = (await res.json()) as METrackingResposta;
+    const raw = JSON.stringify(data);
     const item = data[meOrderId];
-    if (!item) return { entregue: false, evento: null };
+    if (!item) return { entregue: false, evento: null, raw };
 
     const status = item.status?.toLowerCase() ?? "";
     const entregue = !!item.delivered_at || status === "delivered";
     const evento = status || null;
 
-    return { entregue, evento };
+    return { entregue, evento, raw };
   } catch {
     return { entregue: false, evento: null };
   }
@@ -101,7 +102,7 @@ export async function runTrackingCron(debug = false): Promise<Response> {
         const me = await consultarME(meOrderId);
         entregue = me.entregue;
         evento = me.evento;
-        log(`pedido ${order.id} | ME => entregue=${entregue} evento=${evento}`);
+        log(`pedido ${order.id} | ME => entregue=${entregue} evento=${evento} raw=${me.raw}`);
       }
 
       const correios = await consultarCorreios(codigo);
