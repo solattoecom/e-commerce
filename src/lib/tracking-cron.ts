@@ -101,36 +101,43 @@ export async function runTrackingCron(debug = false): Promise<Response> {
       const ultimoConhecido = (order as { ultimo_evento_rastreio?: string | null }).ultimo_evento_rastreio ?? null;
 
       let entregue = false;
+      let novoEvento: string | null = null;
 
       if (meOrderId) {
         const me = await consultarME(meOrderId);
         entregue = me.entregue;
-        log(`pedido ${order.id} | ME => entregue=${entregue}`);
+        novoEvento = me.evento;
+        log(`pedido ${order.id} | ME => status=${me.evento} entregue=${entregue}`);
       }
 
       if (!entregue) {
         const correios = await consultarCorreios(codigo);
         if (correios.entregue) entregue = true;
+        if (correios.evento && !novoEvento) novoEvento = correios.evento;
         log(`pedido ${order.id} | Correios => entregue=${correios.entregue}`);
+      }
+
+      // Atualiza ultimo_evento_rastreio se mudou
+      if (novoEvento && novoEvento !== ultimoConhecido) {
+        await supabaseAdmin.from("orders").update({ ultimo_evento_rastreio: novoEvento }).eq("id", order.id);
+        log(`pedido ${order.id} | evento atualizado: ${novoEvento}`);
       }
 
       if (!entregue) { log(`pedido ${order.id} | não entregue, pulando`); continue; }
 
-      if (entregue) {
-        await supabaseAdmin.from("orders").update({ status: "entregue" }).eq("id", order.id);
-        updated++;
+      await supabaseAdmin.from("orders").update({ status: "entregue" }).eq("id", order.id);
+      updated++;
 
-        const { data: profile } = await supabaseAdmin
-          .from("profiles").select("nome, email").eq("id", order.usuario_id).single();
+      const { data: profile } = await supabaseAdmin
+        .from("profiles").select("nome, email").eq("id", order.usuario_id).single();
 
-        if (profile?.email) {
-          const itens = ((order.order_items ?? []) as { products: { nome: string; slug: string } | null }[])
-            .filter((i) => i.products)
-            .map((i) => ({ nome: i.products!.nome, slug: i.products!.slug }));
-          void enviarEmailAvaliacao({ email: profile.email, nome: profile.nome, pedido_id: order.id, itens }).catch(() => {});
-        }
-        log(`pedido ${order.id} | marcado como entregue`);
+      if (profile?.email) {
+        const itens = ((order.order_items ?? []) as { products: { nome: string; slug: string } | null }[])
+          .filter((i) => i.products)
+          .map((i) => ({ nome: i.products!.nome, slug: i.products!.slug }));
+        void enviarEmailAvaliacao({ email: profile.email, nome: profile.nome, pedido_id: order.id, itens }).catch(() => {});
       }
+      log(`pedido ${order.id} | marcado como entregue`);
 
     }
 
