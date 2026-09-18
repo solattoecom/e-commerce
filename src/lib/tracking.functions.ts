@@ -15,6 +15,9 @@ type METrackingEvent = {
 };
 
 type METrackingItem = {
+  status?: string;
+  tracking?: string;
+  delivered_at?: string | null;
   events?: METrackingEvent[];
 };
 
@@ -92,9 +95,10 @@ export const getTrackingEvents = createServerFn({ method: "GET" })
 
       const responseData = (await res.json()) as METrackingResponse;
       const item = responseData[data.me_order_id];
-      if (!item?.events || item.events.length === 0) return [];
+      if (!item) return [];
 
-      return item.events
+      // Se houver eventos detalhados, usa eles
+      if (item.events && item.events.length > 0) return item.events
         .map((e): TrackingEvent => {
           const descricao = e.description ?? e.message ?? "Evento de rastreio";
           const dataFormatada = e.created_at
@@ -120,6 +124,19 @@ export const getTrackingEvents = createServerFn({ method: "GET" })
           return result;
         })
         .reverse();
+
+      // Sem eventos detalhados — mostra ao menos o status atual do ME
+      const statusMap: Record<string, string> = {
+        posted: "Objeto postado",
+        in_transit: "Objeto em trânsito",
+        delivered: "Objeto entregue ao destinatário",
+        undelivered: "Tentativa de entrega não realizada",
+        delivery_exception: "Ocorrência na entrega",
+      };
+      const status = item.status?.toLowerCase() ?? "";
+      const descricao = statusMap[status] ?? (status ? `Status: ${status}` : null);
+      if (!descricao) return [];
+      return [{ descricao, data: "" }];
     } catch {
       return [];
     }
