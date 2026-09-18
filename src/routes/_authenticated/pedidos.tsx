@@ -576,6 +576,7 @@ function PedidosPage() {
                               order.ultimo_evento_rastreio ?? "in_transit"
                             } />
                             <TrackingLink codigo={order.codigo_rastreio} />
+                          </>
                         )}
                       </div>
                     ) : order.codigo_rastreio ? (
