@@ -135,7 +135,7 @@ export default {
         return new Response(`ok: ${fixed} corrigido(s)`, { status: 200 });
       }
 
-      if (url.pathname === "/api/debug/tracking" && request.method === "GET") {
+      if (url.pathname === "/solatto-debug" && request.method === "GET") {
         const orderId = url.searchParams.get("order_id");
         if (!orderId) return new Response("missing order_id", { status: 400 });
         const token = process.env["MELHOR_ENVIO_TOKEN"];
