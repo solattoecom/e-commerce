@@ -97,8 +97,9 @@ function TrackingTimeline({ status }: { status: string | null }) {
   return (
     <div className="relative flex items-start justify-between gap-1">
       {TRACKING_STEPS.map((step, i) => {
-        const done = i < currentIndex;
-        const active = i === currentIndex;
+        const isLastStep = currentIndex === TRACKING_STEPS.length - 1;
+        const done = i < currentIndex || (isLastStep && i === currentIndex);
+        const active = i === currentIndex && !isLastStep;
         return (
           <div key={step.status} className="relative flex flex-1 flex-col items-center gap-1.5">
             {i < TRACKING_STEPS.length - 1 && (
