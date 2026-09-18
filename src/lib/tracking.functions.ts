@@ -125,18 +125,7 @@ export const getTrackingEvents = createServerFn({ method: "GET" })
         })
         .reverse();
 
-      // Sem eventos detalhados — mostra ao menos o status atual do ME
-      const statusMap: Record<string, string> = {
-        posted: "Objeto postado",
-        in_transit: "Objeto em trânsito",
-        delivered: "Objeto entregue ao destinatário",
-        undelivered: "Tentativa de entrega não realizada",
-        delivery_exception: "Ocorrência na entrega",
-      };
-      const status = item.status?.toLowerCase() ?? "";
-      const descricao = statusMap[status] ?? (status ? `Status: ${status}` : null);
-      if (!descricao) return [];
-      return [{ descricao, data: "" }];
+      return [];
     } catch {
       return [];
     }

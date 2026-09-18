@@ -569,22 +569,13 @@ function PedidosPage() {
                               </li>
                             ))}
                           </ol>
-                        ) : trackingEventsByOrder[order.id] !== undefined ? (
-                          order.status === "entregue" || order.ultimo_evento_rastreio ? (
-                            <>
-                              <TrackingTimeline status={order.status === "entregue" ? "delivered" : order.ultimo_evento_rastreio} />
-                              <TrackingLink codigo={order.codigo_rastreio} />
-                            </>
-                          ) : (
-                            <p className="text-sm text-muted-foreground">Nenhum evento de rastreio ainda.</p>
-                          )
-                        ) : order.status === "entregue" || order.ultimo_evento_rastreio ? (
-                          <>
-                            <TrackingTimeline status={order.status === "entregue" ? "delivered" : order.ultimo_evento_rastreio} />
-                            <TrackingLink codigo={order.codigo_rastreio} />
-                          </>
                         ) : (
-                          <p className="text-sm text-muted-foreground">Nenhum evento de rastreio ainda.</p>
+                          <>
+                            <TrackingTimeline status={
+                              order.status === "entregue" ? "delivered" :
+                              order.ultimo_evento_rastreio ?? "in_transit"
+                            } />
+                            <TrackingLink codigo={order.codigo_rastreio} />
                         )}
                       </div>
                     ) : order.codigo_rastreio ? (
