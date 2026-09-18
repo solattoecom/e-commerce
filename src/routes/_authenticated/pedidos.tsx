@@ -538,9 +538,9 @@ function PedidosPage() {
                         <p className="mb-3 flex items-center gap-1.5 font-semibold">
                           <Truck className="size-4" /> Rastreamento
                         </p>
-                        {order.ultimo_evento_rastreio ? (
+                        {order.status === "entregue" || order.ultimo_evento_rastreio ? (
                           <>
-                            <TrackingTimeline status={order.ultimo_evento_rastreio} />
+                            <TrackingTimeline status={order.status === "entregue" ? "delivered" : order.ultimo_evento_rastreio} />
                             <TrackingLink codigo={order.codigo_rastreio} />
                           </>
                         ) : (
@@ -575,9 +575,9 @@ function PedidosPage() {
                             ))}
                           </ol>
                         ) : trackingCodeEventsByOrder[order.id] !== undefined ? (
-                          order.ultimo_evento_rastreio ? (
+                          order.status === "entregue" || order.ultimo_evento_rastreio ? (
                             <>
-                              <TrackingTimeline status={order.ultimo_evento_rastreio} />
+                              <TrackingTimeline status={order.status === "entregue" ? "delivered" : order.ultimo_evento_rastreio} />
                               <TrackingLink codigo={order.codigo_rastreio} />
                             </>
                           ) : (
