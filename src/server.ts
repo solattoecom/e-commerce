@@ -136,9 +136,6 @@ export default {
       }
 
       if (url.pathname === "/api/debug/tracking" && request.method === "GET") {
-        const secret = process.env["CRON_SECRET"];
-        const auth = request.headers.get("authorization");
-        if (secret && auth !== `Bearer ${secret}`) return new Response("unauthorized", { status: 401 });
         const meOrderId = url.searchParams.get("order_id");
         if (!meOrderId) return new Response("missing order_id", { status: 400 });
         const token = process.env["MELHOR_ENVIO_TOKEN"];
