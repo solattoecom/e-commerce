@@ -264,12 +264,20 @@ function PedidosPage() {
     }
   }
 
-  async function handleLoadTracking(orderId: string, meOrderId: string) {
+  async function handleLoadTracking(orderId: string, meOrderId: string, codigoRastreio?: string | null) {
     if (trackingEventsByOrder[orderId] !== undefined) return;
     setTrackingLoadingByOrder((prev) => ({ ...prev, [orderId]: true }));
     try {
       const events = await getTrackingEvents({ data: { me_order_id: meOrderId } });
-      setTrackingEventsByOrder((prev) => ({ ...prev, [orderId]: events }));
+      if (events.length > 0) {
+        setTrackingEventsByOrder((prev) => ({ ...prev, [orderId]: events }));
+      } else if (codigoRastreio) {
+        // ME não retornou eventos — tenta pelo código dos Correios
+        const correiosEvents = await getTrackingByCode({ data: { codigo: codigoRastreio } });
+        setTrackingEventsByOrder((prev) => ({ ...prev, [orderId]: correiosEvents }));
+      } else {
+        setTrackingEventsByOrder((prev) => ({ ...prev, [orderId]: [] }));
+      }
     } catch {
       setTrackingEventsByOrder((prev) => ({ ...prev, [orderId]: [] }));
     } finally {
@@ -331,7 +339,7 @@ function PedidosPage() {
                     const next = isOpen ? null : order.id;
                     setExpanded(next);
                     if (next && order.me_order_id) {
-                      void handleLoadTracking(order.id, order.me_order_id);
+                      void handleLoadTracking(order.id, order.me_order_id, order.codigo_rastreio);
                     } else if (next && order.codigo_rastreio) {
                       void handleLoadTrackingByCode(order.id, order.codigo_rastreio);
                     }
