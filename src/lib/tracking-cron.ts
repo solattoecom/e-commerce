@@ -33,7 +33,7 @@ async function consultarME(meOrderId: string): Promise<{ entregue: boolean; even
     if (!item) return { entregue: false, evento: null, raw };
 
     const status = item.status?.toLowerCase() ?? "";
-    const entregue = !!item.delivered_at || status === "delivered";
+    const entregue = !!item.delivered_at || status === "delivered" || status === "entregue";
     const evento = status || null;
 
     return { entregue, evento, raw };
@@ -48,7 +48,10 @@ async function consultarCorreios(codigo: string): Promise<{ entregue: boolean; e
       headers: { Accept: "application/json", "User-Agent": "solatto/1.0 (solattoecom@gmail.com)" },
       signal: AbortSignal.timeout(8000),
     });
-    if (!res.ok) return { entregue: false, evento: null };
+    if (!res.ok) {
+      console.warn(`[correios] HTTP ${res.status} para código ${codigo}`);
+      return { entregue: false, evento: null };
+    }
     const data = (await res.json()) as {
       objeto?: { evento?: { descricao?: string; tipo?: string; detalhe?: string }[] }[];
     };
@@ -58,6 +61,7 @@ async function consultarCorreios(codigo: string): Promise<{ entregue: boolean; e
     const entregue = eventos.some(
       (e) =>
         e.descricao?.toLowerCase().includes("entregue ao destinatário") ||
+        e.descricao?.toLowerCase().includes("objeto entregue") ||
         e.tipo === "BDE" ||
         e.tipo === "BDES",
     );
@@ -66,7 +70,8 @@ async function consultarCorreios(codigo: string): Promise<{ entregue: boolean; e
     const evento = ultimo?.descricao ?? null;
 
     return { entregue, evento };
-  } catch {
+  } catch (err) {
+    console.warn(`[correios] erro ao consultar ${codigo}:`, String(err));
     return { entregue: false, evento: null };
   }
 }
