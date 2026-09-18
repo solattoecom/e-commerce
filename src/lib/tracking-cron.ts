@@ -107,7 +107,7 @@ export async function runTrackingCron(debug = false): Promise<Response> {
         const me = await consultarME(meOrderId);
         entregue = me.entregue;
         novoEvento = me.evento;
-        log(`pedido ${order.id} | ME => status=${me.evento} entregue=${entregue}`);
+        log(`pedido ${order.id} | ME => status=${me.evento} entregue=${entregue} raw=${me.raw?.slice(0, 500)}`);
       }
 
       if (!entregue) {
