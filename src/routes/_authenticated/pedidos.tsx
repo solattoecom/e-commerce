@@ -573,7 +573,7 @@ function PedidosPage() {
                           <>
                             <TrackingTimeline status={
                               order.status === "entregue" ? "delivered" :
-                              order.ultimo_evento_rastreio ?? "in_transit"
+                              order.ultimo_evento_rastreio ?? "posted"
                             } />
                             <TrackingLink codigo={order.codigo_rastreio} />
                           </>
