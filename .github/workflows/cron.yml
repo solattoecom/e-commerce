@@ -11,7 +11,7 @@ jobs:
     steps:
       - name: Check deliveries
         run: |
-          curl -sf -X GET "https://www.solatto.com.br/api/cron/check-deliveries?debug=1" \
+          curl -sf -X GET "https://www.solatto.com.br/api/cron/check-deliveries" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
 
   check-low-stock:
