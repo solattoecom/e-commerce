@@ -136,16 +136,26 @@ export default {
       }
 
       if (url.pathname === "/api/debug/tracking" && request.method === "GET") {
-        const meOrderId = url.searchParams.get("order_id");
-        if (!meOrderId) return new Response("missing order_id", { status: 400 });
+        const orderId = url.searchParams.get("order_id");
+        if (!orderId) return new Response("missing order_id", { status: 400 });
         const token = process.env["MELHOR_ENVIO_TOKEN"];
-        if (!token) return new Response("no ME token", { status: 500 });
+        if (!token) return new Response("no ME token configured", { status: 500 });
+        const { supabaseAdmin } = await import("@/integrations/supabase/external.server");
+        const { data: order } = await supabaseAdmin
+          .from("orders")
+          .select("id, me_order_id, codigo_rastreio, status, ultimo_evento_rastreio")
+          .eq("id", orderId)
+          .single();
+        if (!order) return new Response("order not found", { status: 404 });
+        const meOrderId = (order as { me_order_id?: string | null }).me_order_id;
+        const info = `order: ${order.id}\nme_order_id: ${meOrderId ?? "null"}\ncodigo_rastreio: ${(order as { codigo_rastreio?: string | null }).codigo_rastreio ?? "null"}\nstatus: ${order.status}\nultimo_evento: ${(order as { ultimo_evento_rastreio?: string | null }).ultimo_evento_rastreio ?? "null"}\n\n`;
+        if (!meOrderId) return new Response(`${info}no me_order_id`, { status: 200, headers: { "content-type": "text/plain" } });
         const res = await fetch(
           `https://melhorenvio.com.br/api/v2/me/shipment/tracking?orders[]=${encodeURIComponent(meOrderId)}`,
-          { headers: { Authorization: `Bearer ${token}`, Accept: "application/json", "User-Agent": "solatto/1.0 (solattoecom@gmail.com)" } }
+          { headers: { Authorization: `Bearer ${token}`, Accept: "application/json", "User-Agent": "solatto/1.0 (solattoecom@gmail.com)" }, redirect: "manual" }
         );
         const text = await res.text();
-        return new Response(`status: ${res.status}\n\n${text}`, { status: 200, headers: { "content-type": "text/plain" } });
+        return new Response(`${info}ME status: ${res.status}\nContent-Type: ${res.headers.get("content-type")}\n\n${text.slice(0, 2000)}`, { status: 200, headers: { "content-type": "text/plain" } });
       }
 
       if (url.pathname === "/api/cron/check-deliveries" && request.method === "GET") {
