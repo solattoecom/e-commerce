@@ -50,7 +50,11 @@ export const Route = createFileRoute("/")({
         content: "Uma nova experiência em calçados, feita para acompanhar o seu ritmo.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://www.solatto.com.br/" },
       { name: "twitter:card", content: "summary_large_image" },
+    ],
+    links: [
+      { rel: "canonical", href: "https://www.solatto.com.br/" },
     ],
   }),
   component: Index,
@@ -468,6 +472,38 @@ const [tamSelecionado, setTamSelecionado] = useState<string | null>(null);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify({
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Organization",
+              "@id": "https://www.solatto.com.br/#organization",
+              "name": "Solatto",
+              "url": "https://www.solatto.com.br/",
+              "logo": "https://www.solatto.com.br/favicon.svg",
+              "sameAs": [
+                "https://www.instagram.com/solattoatacadovarejodrop",
+                "https://www.facebook.com/solattocalcados"
+              ],
+            },
+            {
+              "@type": "WebSite",
+              "@id": "https://www.solatto.com.br/#website",
+              "url": "https://www.solatto.com.br/",
+              "name": "Solatto",
+              "description": "Calçados para todos os seus caminhos.",
+              "publisher": { "@id": "https://www.solatto.com.br/#organization" },
+              "potentialAction": {
+                "@type": "SearchAction",
+                "target": "https://www.solatto.com.br/#novidades?q={search_term_string}",
+                "query-input": "required name=search_term_string",
+              },
+            },
+          ],
+        })}}
+      />
       <StickyHeader
         visible={scrolled}
         user={user}
@@ -690,9 +726,10 @@ const [tamSelecionado, setTamSelecionado] = useState<string | null>(null);
           </div>
 
           <div className="relative h-full w-full">
-            <h1 className="hero-title absolute left-4 top-[18%] text-[14vw] font-medium text-white md:left-10 md:text-[13vw]">conforto</h1>
-            <h1 className="hero-title absolute right-4 top-[38%] text-[14vw] font-medium text-white md:right-10 md:text-[13vw]">em cada</h1>
-            <h1 className="hero-title absolute left-[18%] top-[58%] text-[14vw] font-medium text-white md:left-[28%] md:text-[13vw]">passo</h1>
+            <h1 className="sr-only">Solatto — Calçados para todos os caminhos</h1>
+            <p className="hero-title absolute left-4 top-[18%] text-[14vw] font-medium text-white md:left-10 md:text-[13vw]">conforto</p>
+            <p className="hero-title absolute right-4 top-[38%] text-[14vw] font-medium text-white md:right-10 md:text-[13vw]">em cada</p>
+            <p className="hero-title absolute left-[18%] top-[58%] text-[14vw] font-medium text-white md:left-[28%] md:text-[13vw]">passo</p>
 
             <p className="hero-readex absolute left-6 top-[46%] max-w-[240px] text-[15px] leading-snug text-white/90 md:left-10">
               calçados feitos com cuidado, para levar você mais longe todos os dias
