@@ -75,10 +75,15 @@ export const getTrackingEvents = createServerFn({ method: "GET" })
         },
       );
 
-      if (!res.ok) return [];
+      if (!res.ok) {
+        console.log("[tracking-me] status:", res.status);
+        return [];
+      }
 
       const responseData = (await res.json()) as METrackingResponse;
+      console.log("[tracking-me] raw:", JSON.stringify(responseData).slice(0, 500));
       const item = responseData[data.me_order_id];
+      console.log("[tracking-me] item:", JSON.stringify(item).slice(0, 300));
       if (!item?.events || item.events.length === 0) return [];
 
       return item.events
