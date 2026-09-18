@@ -135,6 +135,22 @@ export default {
         return new Response(`ok: ${fixed} corrigido(s)`, { status: 200 });
       }
 
+      if (url.pathname === "/api/debug/tracking" && request.method === "GET") {
+        const secret = process.env["CRON_SECRET"];
+        const auth = request.headers.get("authorization");
+        if (secret && auth !== `Bearer ${secret}`) return new Response("unauthorized", { status: 401 });
+        const meOrderId = url.searchParams.get("order_id");
+        if (!meOrderId) return new Response("missing order_id", { status: 400 });
+        const token = process.env["MELHOR_ENVIO_TOKEN"];
+        if (!token) return new Response("no ME token", { status: 500 });
+        const res = await fetch(
+          `https://melhorenvio.com.br/api/v2/me/shipment/tracking?orders[]=${encodeURIComponent(meOrderId)}`,
+          { headers: { Authorization: `Bearer ${token}`, Accept: "application/json", "User-Agent": "solatto/1.0 (solattoecom@gmail.com)" } }
+        );
+        const text = await res.text();
+        return new Response(`status: ${res.status}\n\n${text}`, { status: 200, headers: { "content-type": "text/plain" } });
+      }
+
       if (url.pathname === "/api/cron/check-deliveries" && request.method === "GET") {
         const secret = process.env["CRON_SECRET"];
         const auth = request.headers.get("authorization");
