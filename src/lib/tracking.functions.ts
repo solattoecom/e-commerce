@@ -143,7 +143,10 @@ export const getTrackingEvents = createServerFn({ method: "GET" })
         return { events, status: status || null };
       }
 
-      return { events: [], status: status || null };
+      // Sem eventos detalhados — retorna apenas se entregue, senão deixa o
+      // caller buscar status real via Correios
+      const entregue = !!item.delivered_at || status === "delivered";
+      return { events: [], status: entregue ? "delivered" : null };
     } catch {
       return { events: [], status: null };
     }

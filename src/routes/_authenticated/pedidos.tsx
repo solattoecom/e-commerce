@@ -278,6 +278,15 @@ function PedidosPage() {
       } else if (codigoRastreio) {
         const correiosEvents = await getTrackingByCode({ data: { codigo: codigoRastreio } });
         setTrackingEventsByOrder((prev) => ({ ...prev, [orderId]: correiosEvents }));
+        // Se ME não retornou status, deriva do evento mais recente dos Correios
+        if (!result.status && correiosEvents.length > 0) {
+          const desc = correiosEvents[0].descricao.toLowerCase();
+          const correiosStatus =
+            desc.includes("entregue") ? "delivered" :
+            desc.includes("trânsito") || desc.includes("transito") || desc.includes("encaminhado") || desc.includes("saiu") ? "in_transit" :
+            "posted";
+          setTrackingStatusByOrder((prev) => ({ ...prev, [orderId]: correiosStatus }));
+        }
       } else {
         setTrackingEventsByOrder((prev) => ({ ...prev, [orderId]: [] }));
       }

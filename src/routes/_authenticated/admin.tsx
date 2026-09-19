@@ -296,7 +296,7 @@ setNfePorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; re
     setOcupado(null);
   }
 
-  async function handleLoadTracking(orderId: string, meOrderId: string) {
+  async function handleLoadTracking(orderId: string, meOrderId: string, codigoRastreio?: string | null) {
     if (trackingEventsByOrder[orderId] !== undefined) return;
     setTrackingLoadingByOrder((prev) => ({ ...prev, [orderId]: true }));
     try {
@@ -304,7 +304,22 @@ setNfePorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; re
       if (result.status) {
         setTrackingStatusByOrder((prev) => ({ ...prev, [orderId]: result.status! }));
       }
-      setTrackingEventsByOrder((prev) => ({ ...prev, [orderId]: result.events }));
+      if (result.events.length > 0) {
+        setTrackingEventsByOrder((prev) => ({ ...prev, [orderId]: result.events }));
+      } else if (codigoRastreio) {
+        const correiosEvents = await getTrackingByCode({ data: { codigo: codigoRastreio } });
+        setTrackingEventsByOrder((prev) => ({ ...prev, [orderId]: correiosEvents }));
+        if (!result.status && correiosEvents.length > 0) {
+          const desc = correiosEvents[0].descricao.toLowerCase();
+          const correiosStatus =
+            desc.includes("entregue") ? "delivered" :
+            desc.includes("trânsito") || desc.includes("transito") || desc.includes("encaminhado") || desc.includes("saiu") ? "in_transit" :
+            "posted";
+          setTrackingStatusByOrder((prev) => ({ ...prev, [orderId]: correiosStatus }));
+        }
+      } else {
+        setTrackingEventsByOrder((prev) => ({ ...prev, [orderId]: [] }));
+      }
     } catch {
       setTrackingEventsByOrder((prev) => ({ ...prev, [orderId]: [] }));
     } finally {
@@ -597,7 +612,7 @@ setNfePorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; re
                       const next = isOpen ? null : p.id;
                       setExpandido(next);
                       if (next && p.status === "enviado") {
-                        if (p.me_order_id) void handleLoadTracking(p.id, p.me_order_id);
+                        if (p.me_order_id) void handleLoadTracking(p.id, p.me_order_id, p.codigo_rastreio);
                         else if (p.codigo_rastreio) void handleLoadTrackingByCode(p.id, p.codigo_rastreio);
                       }
                     }}
