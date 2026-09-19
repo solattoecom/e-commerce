@@ -159,10 +159,14 @@ function LoginPage() {
     const params = new URLSearchParams(window.location.search);
     if (!params.has("tipo")) return;
 
+    const oauthTs = localStorage.getItem("google_oauth_ts");
+    localStorage.removeItem("google_oauth_ts");
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_IN" && session?.user) {
+      if ((event === "SIGNED_IN" || event === "INITIAL_SESSION") && session?.user) {
+        if (!oauthTs) { void navigate({ to: "/" }); return; }
         const createdAt = new Date(session.user.created_at).getTime();
-        const isNew = Date.now() - createdAt < 120_000;
+        const isNew = createdAt >= Number(oauthTs) - 60_000;
         if (isNew) {
           setMode("select-type");
         } else {
@@ -313,6 +317,7 @@ function LoginPage() {
 
   const googleSignIn = async () => {
     try {
+      localStorage.setItem("google_oauth_ts", String(Date.now()));
       await supabase.auth.signInWithOAuth({
         provider: "google",
         options: { redirectTo: `${window.location.origin}/entrar?tipo=1` },
