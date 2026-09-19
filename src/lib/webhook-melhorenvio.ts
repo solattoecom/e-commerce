@@ -49,7 +49,10 @@ export async function handleMelhorEnvioWebhook(request: Request): Promise<Respon
     }
 
     if (entregue && order.status !== "entregue") {
-      await supabaseAdmin.from("orders").update({ status: "entregue" }).eq("id", order.id);
+      await supabaseAdmin
+        .from("orders")
+        .update({ status: "entregue", ultimo_evento_rastreio: evento ?? order.ultimo_evento_rastreio })
+        .eq("id", order.id);
 
       const { data: profile } = await supabaseAdmin
         .from("profiles").select("nome, email").eq("id", order.usuario_id).single();
@@ -71,7 +74,7 @@ export async function handleMelhorEnvioWebhook(request: Request): Promise<Respon
       const { data: profile } = await supabaseAdmin
         .from("profiles").select("nome, email").eq("id", order.usuario_id).single();
 
-      if (profile?.email && order.ultimo_evento_rastreio !== null) {
+      if (profile?.email) {
         void enviarEmailAtualizacaoRastreio({
           email: profile.email,
           nome: profile.nome,
