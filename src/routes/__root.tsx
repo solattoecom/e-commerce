@@ -201,12 +201,12 @@ function RootComponent() {
       localStorage.removeItem("google_oauth_ts");
 
       const [{ data: clientType }, { data: request }] = await Promise.all([
-        supabase.from("user_client_types").select("tipo").eq("user_id", session.user.id).maybeSingle(),
+        supabase.from("user_client_types").select("tipo, tipo_confirmado").eq("user_id", session.user.id).maybeSingle(),
         supabase.from("client_type_requests").select("id").eq("user_id", session.user.id).maybeSingle(),
       ]);
 
-      const jaEscolheu = localStorage.getItem(`tipo_escolhido_${session.user.id}`) === "1";
-      if ((!clientType || clientType.tipo === "varejo") && !request && !jaEscolheu) {
+      const jaEscolheu = clientType?.tipo_confirmado === true || !!request;
+      if (!jaEscolheu) {
         void navigate({ to: "/entrar", search: { select: "1" } });
       }
     });

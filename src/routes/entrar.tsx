@@ -325,12 +325,11 @@ function LoginPage() {
           tipo_solicitado: tipo,
           status: "pendente",
         });
-      } else {
-        await supabase.from("user_client_types")
-          .upsert({ user_id: user.id, tipo: "varejo" }, { onConflict: "user_id" });
       }
 
-      localStorage.setItem(`tipo_escolhido_${user.id}`, "1");
+      await supabase.from("user_client_types")
+        .upsert({ user_id: user.id, tipo: "varejo", tipo_confirmado: true }, { onConflict: "user_id" });
+
       void navigate({ to: "/" });
     } catch {
       setErro("Não foi possível salvar. Tente novamente.");
@@ -630,7 +629,10 @@ function LoginPage() {
 
                 <button type="button" className="auth-visitor" onClick={async () => {
                   const { data: { user } } = await supabase.auth.getUser();
-                  if (user) localStorage.setItem(`tipo_escolhido_${user.id}`, "1");
+                  if (user) {
+                    await supabase.from("user_client_types")
+                      .upsert({ user_id: user.id, tipo: "varejo", tipo_confirmado: true }, { onConflict: "user_id" });
+                  }
                   void navigate({ to: "/" });
                 }}>
                   Pular, entrar como Varejo
