@@ -23,6 +23,8 @@ type METrackingItem = {
 
 type METrackingResponse = Record<string, METrackingItem>;
 
+export type TrackingResult = { events: TrackingEvent[]; status: string | null };
+
 type GetTrackingInput = { me_order_id: string };
 type GetTrackingByCodeInput = { codigo: string };
 
@@ -71,12 +73,21 @@ export const getTrackingByCode = createServerFn({ method: "GET" })
     }
   });
 
+function normalizarStatusME(status: string): string {
+  if (!status) return "";
+  if (status === "with_carrier" || status === "in transit" || status === "in-transit") return "in_transit";
+  if (status === "delivered" || status === "entregue") return "delivered";
+  if (status === "posted" || status === "postado") return "posted";
+  if (status === "undelivered") return "undelivered";
+  return status;
+}
+
 export const getTrackingEvents = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: GetTrackingInput) => input)
-  .handler(async ({ data }): Promise<TrackingEvent[]> => {
+  .handler(async ({ data }): Promise<TrackingResult> => {
     const token = process.env["MELHOR_ENVIO_TOKEN"];
-    if (!token) return [];
+    if (!token) return { events: [], status: null };
 
     try {
       const res = await fetch(
@@ -91,42 +102,46 @@ export const getTrackingEvents = createServerFn({ method: "GET" })
         },
       );
 
-      if (!res.ok) return [];
+      if (!res.ok) return { events: [], status: null };
 
       const responseData = (await res.json()) as METrackingResponse;
       const item = responseData[data.me_order_id];
-      if (!item) return [];
+      if (!item) return { events: [], status: null };
 
-      // Se houver eventos detalhados, usa eles
-      if (item.events && item.events.length > 0) return item.events
-        .map((e): TrackingEvent => {
-          const descricao = e.description ?? e.message ?? "Evento de rastreio";
-          const dataFormatada = e.created_at
-            ? new Date(e.created_at).toLocaleString("pt-BR", {
-                day: "2-digit",
-                month: "2-digit",
-                hour: "2-digit",
-                minute: "2-digit",
-              })
-            : "";
-          let local: string | undefined;
-          if (e.location) {
-            if (typeof e.location === "string") {
-              local = e.location;
-            } else if (e.location.city) {
-              local = e.location.state
-                ? `${e.location.city}/${e.location.state}`
-                : e.location.city;
+      const status = normalizarStatusME(item.status?.toLowerCase() ?? "");
+
+      if (item.events && item.events.length > 0) {
+        const events = item.events
+          .map((e): TrackingEvent => {
+            const descricao = e.description ?? e.message ?? "Evento de rastreio";
+            const dataFormatada = e.created_at
+              ? new Date(e.created_at).toLocaleString("pt-BR", {
+                  day: "2-digit",
+                  month: "2-digit",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })
+              : "";
+            let local: string | undefined;
+            if (e.location) {
+              if (typeof e.location === "string") {
+                local = e.location;
+              } else if (e.location.city) {
+                local = e.location.state
+                  ? `${e.location.city}/${e.location.state}`
+                  : e.location.city;
+              }
             }
-          }
-          const result: TrackingEvent = { descricao, data: dataFormatada };
-          if (local) result.local = local;
-          return result;
-        })
-        .reverse();
+            const result: TrackingEvent = { descricao, data: dataFormatada };
+            if (local) result.local = local;
+            return result;
+          })
+          .reverse();
+        return { events, status: status || null };
+      }
 
-      return [];
+      return { events: [], status: status || null };
     } catch {
-      return [];
+      return { events: [], status: null };
     }
   });

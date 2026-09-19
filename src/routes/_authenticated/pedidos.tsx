@@ -187,6 +187,7 @@ function PedidosPage() {
   const [cancelBusy, setCancelBusy] = useState<string | null>(null);
   const [trackingEventsByOrder, setTrackingEventsByOrder] = useState<Record<string, TrackingEvent[]>>({});
   const [trackingLoadingByOrder, setTrackingLoadingByOrder] = useState<Record<string, boolean>>({});
+  const [trackingStatusByOrder, setTrackingStatusByOrder] = useState<Record<string, string>>({});
   const [trackingCodeEventsByOrder, setTrackingCodeEventsByOrder] = useState<Record<string, TrackingEvent[]>>({});
   const [trackingCodeLoadingByOrder, setTrackingCodeLoadingByOrder] = useState<Record<string, boolean>>({});
 
@@ -268,11 +269,13 @@ function PedidosPage() {
     if (trackingEventsByOrder[orderId] !== undefined) return;
     setTrackingLoadingByOrder((prev) => ({ ...prev, [orderId]: true }));
     try {
-      const events = await getTrackingEvents({ data: { me_order_id: meOrderId } });
-      if (events.length > 0) {
-        setTrackingEventsByOrder((prev) => ({ ...prev, [orderId]: events }));
+      const result = await getTrackingEvents({ data: { me_order_id: meOrderId } });
+      if (result.status) {
+        setTrackingStatusByOrder((prev) => ({ ...prev, [orderId]: result.status! }));
+      }
+      if (result.events.length > 0) {
+        setTrackingEventsByOrder((prev) => ({ ...prev, [orderId]: result.events }));
       } else if (codigoRastreio) {
-        // ME não retornou eventos — tenta pelo código dos Correios
         const correiosEvents = await getTrackingByCode({ data: { codigo: codigoRastreio } });
         setTrackingEventsByOrder((prev) => ({ ...prev, [orderId]: correiosEvents }));
       } else {
@@ -573,7 +576,7 @@ function PedidosPage() {
                           <>
                             <TrackingTimeline status={
                               order.status === "entregue" ? "delivered" :
-                              order.ultimo_evento_rastreio ?? "posted"
+                              trackingStatusByOrder[order.id] ?? order.ultimo_evento_rastreio ?? "posted"
                             } />
                             <TrackingLink codigo={order.codigo_rastreio} />
                           </>
@@ -609,7 +612,7 @@ function PedidosPage() {
                         ) : trackingCodeEventsByOrder[order.id] !== undefined ? (
                           order.status === "entregue" || order.ultimo_evento_rastreio ? (
                             <>
-                              <TrackingTimeline status={order.status === "entregue" ? "delivered" : order.ultimo_evento_rastreio} />
+                              <TrackingTimeline status={order.status === "entregue" ? "delivered" : trackingStatusByOrder[order.id] ?? order.ultimo_evento_rastreio} />
                               <TrackingLink codigo={order.codigo_rastreio} />
                             </>
                           ) : (
