@@ -169,10 +169,11 @@ function LoginPage() {
         if (cancelled) return;
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-          const createdAt = new Date(user.created_at).getTime();
-          const isNew = createdAt >= Number(oauthTs) - 60_000;
+          const googleIdentity = user.identities?.find((id) => id.provider === "google");
+          const googleCreatedAt = googleIdentity ? new Date(googleIdentity.created_at).getTime() : null;
+          const isFirstGoogleLogin = googleCreatedAt !== null && googleCreatedAt >= Number(oauthTs) - 60_000;
           if (!cancelled) {
-            if (isNew) setMode("select-type");
+            if (isFirstGoogleLogin) setMode("select-type");
             else void navigate({ to: "/" });
           }
           return;
