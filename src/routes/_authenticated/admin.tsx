@@ -211,6 +211,7 @@ function AdminPanel() {
   const [saldoME, setSaldoME] = useState<number | null>(null);
   const [trackingEventsByOrder, setTrackingEventsByOrder] = useState<Record<string, TrackingEvent[]>>({});
   const [trackingLoadingByOrder, setTrackingLoadingByOrder] = useState<Record<string, boolean>>({});
+  const [trackingStatusByOrder, setTrackingStatusByOrder] = useState<Record<string, string>>({});
   const [trackingCodeEventsByOrder, setTrackingCodeEventsByOrder] = useState<Record<string, TrackingEvent[]>>({});
   const [trackingCodeLoadingByOrder, setTrackingCodeLoadingByOrder] = useState<Record<string, boolean>>({});
 
@@ -299,8 +300,11 @@ setNfePorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; re
     if (trackingEventsByOrder[orderId] !== undefined) return;
     setTrackingLoadingByOrder((prev) => ({ ...prev, [orderId]: true }));
     try {
-      const events = await getTrackingEvents({ data: { me_order_id: meOrderId } });
-      setTrackingEventsByOrder((prev) => ({ ...prev, [orderId]: events }));
+      const result = await getTrackingEvents({ data: { me_order_id: meOrderId } });
+      if (result.status) {
+        setTrackingStatusByOrder((prev) => ({ ...prev, [orderId]: result.status! }));
+      }
+      setTrackingEventsByOrder((prev) => ({ ...prev, [orderId]: result.events }));
     } catch {
       setTrackingEventsByOrder((prev) => ({ ...prev, [orderId]: [] }));
     } finally {
@@ -841,8 +845,8 @@ setNfePorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; re
                           <p className="mb-2 flex items-center gap-1.5 font-semibold">
                             <Truck className="size-4" /> Rastreamento
                           </p>
-                          {p.ultimo_evento_rastreio ? (
-                            <TrackingTimeline status={p.ultimo_evento_rastreio} />
+                          {(trackingStatusByOrder[p.id] ?? p.ultimo_evento_rastreio) ? (
+                            <TrackingTimeline status={trackingStatusByOrder[p.id] ?? p.ultimo_evento_rastreio} />
                           ) : (
                             <p className="text-xs text-muted-foreground">Nenhum evento ainda.</p>
                           )}
@@ -856,8 +860,8 @@ setNfePorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; re
                             <Truck className="size-4" /> Rastreamento
                           </p>
                           <p className="mb-2 font-mono text-xs text-muted-foreground">{p.codigo_rastreio}</p>
-                          {p.ultimo_evento_rastreio ? (
-                            <TrackingTimeline status={p.ultimo_evento_rastreio} />
+                          {(trackingStatusByOrder[p.id] ?? p.ultimo_evento_rastreio) ? (
+                            <TrackingTimeline status={trackingStatusByOrder[p.id] ?? p.ultimo_evento_rastreio} />
                           ) : (
                             <p className="text-xs text-muted-foreground">Nenhum evento ainda.</p>
                           )}
