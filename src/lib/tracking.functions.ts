@@ -91,13 +91,16 @@ export const getTrackingEvents = createServerFn({ method: "GET" })
 
     try {
       const res = await fetch(
-        `https://melhorenvio.com.br/api/v2/me/shipment/tracking?orders[]=${encodeURIComponent(data.me_order_id)}`,
+        "https://melhorenvio.com.br/api/v2/me/shipment/tracking",
         {
+          method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
             Accept: "application/json",
             "User-Agent": "solatto/1.0 (solattoecom@gmail.com)",
           },
+          body: JSON.stringify({ orders: [data.me_order_id] }),
           signal: AbortSignal.timeout(10000),
         },
       );
