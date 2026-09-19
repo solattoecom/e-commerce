@@ -158,7 +158,10 @@ function LoginPage() {
   // Detecta ?select=1 injetado pelo __root.tsx após OAuth Google
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    if (params.has("select")) setMode("select-type");
+    if (params.has("select")) {
+      setMode("select-type");
+      window.history.replaceState(null, "", "/entrar");
+    }
   }, [location.search]);
 
   // ── Helpers ──────────────────────────────────────────────────────────────────
