@@ -330,6 +330,7 @@ function LoginPage() {
           .upsert({ user_id: user.id, tipo: "varejo" }, { onConflict: "user_id" });
       }
 
+      localStorage.setItem(`tipo_escolhido_${user.id}`, "1");
       void navigate({ to: "/" });
     } catch {
       setErro("Não foi possível salvar. Tente novamente.");
@@ -627,7 +628,11 @@ function LoginPage() {
                   </svg>
                 </Button>
 
-                <button type="button" className="auth-visitor" onClick={() => void navigate({ to: "/" })}>
+                <button type="button" className="auth-visitor" onClick={async () => {
+                  const { data: { user } } = await supabase.auth.getUser();
+                  if (user) localStorage.setItem(`tipo_escolhido_${user.id}`, "1");
+                  void navigate({ to: "/" });
+                }}>
                   Pular, entrar como Varejo
                 </button>
               </>

@@ -205,7 +205,8 @@ function RootComponent() {
         supabase.from("client_type_requests").select("id").eq("user_id", session.user.id).maybeSingle(),
       ]);
 
-      if ((!clientType || clientType.tipo === "varejo") && !request) {
+      const jaEscolheu = localStorage.getItem(`tipo_escolhido_${session.user.id}`) === "1";
+      if ((!clientType || clientType.tipo === "varejo") && !request && !jaEscolheu) {
         void navigate({ to: "/entrar", search: { select: "1" } });
       }
     });
