@@ -156,35 +156,36 @@ function LoginPage() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const params = new URLSearchParams(window.location.search);
-    if (!params.has("tipo")) return;
+    if (!localStorage.getItem("google_oauth_ts")) return;
 
-    const oauthTs = localStorage.getItem("google_oauth_ts");
-    localStorage.removeItem("google_oauth_ts");
-    if (!oauthTs) { void navigate({ to: "/" }); return; }
+    let done = false;
 
-    let cancelled = false;
-    const aguardarSessao = async () => {
-      for (let i = 0; i < 15; i++) {
-        if (cancelled) return;
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const googleIdentity = user.identities?.find((id) => id.provider === "google");
-          const googleCreatedAt = googleIdentity ? new Date(googleIdentity.created_at).getTime() : null;
-          const isFirstGoogleLogin = googleCreatedAt !== null && googleCreatedAt >= Number(oauthTs) - 60_000;
-          if (!cancelled) {
-            if (isFirstGoogleLogin) setMode("select-type");
-            else void navigate({ to: "/" });
-          }
-          return;
-        }
-        await new Promise((r) => setTimeout(r, 300));
-      }
-      if (!cancelled) void navigate({ to: "/" });
+    const verificarTipo = async (userId: string) => {
+      if (done) return;
+      done = true;
+      localStorage.removeItem("google_oauth_ts");
+
+      const [{ data: clientType }, { data: request }] = await Promise.all([
+        supabase.from("user_client_types").select("tipo").eq("user_id", userId).maybeSingle(),
+        supabase.from("client_type_requests").select("id").eq("user_id", userId).maybeSingle(),
+      ]);
+
+      const precisaEscolher = (!clientType || clientType.tipo === "varejo") && !request;
+      if (precisaEscolher) setMode("select-type");
+      else void navigate({ to: "/" });
     };
 
-    void aguardarSessao();
-    return () => { cancelled = true; };
+    // Sessão já estabelecida (redirect já processado)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) void verificarTipo(session.user.id);
+    });
+
+    // Aguarda sessão ser estabelecida
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) void verificarTipo(session.user.id);
+    });
+
+    return () => subscription.unsubscribe();
   }, [navigate]);
 
   // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -329,7 +330,7 @@ function LoginPage() {
       localStorage.setItem("google_oauth_ts", String(Date.now()));
       await supabase.auth.signInWithOAuth({
         provider: "google",
-        options: { redirectTo: `${window.location.origin}/entrar?tipo=1` },
+        options: { redirectTo: `${window.location.origin}/entrar` },
       });
     } catch {
       setErro("Não foi possível entrar com Google. Tente novamente.");
