@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, useLocation } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Building2, Store, Truck } from "lucide-react";
 import { signIn, signUpWithType, type ClientType } from "@/hooks/useAuth";
@@ -140,6 +140,7 @@ const styles = `
 
 function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [mode, setMode] = useState<Mode>("login");
   const [accountType, setAccountType] = useState<AccountType | null>(null);
   const [form, setForm] = useState({ nome: "", email: "", senha: "" });
@@ -154,39 +155,11 @@ function LoginPage() {
     if (v) setBloqueadoAte(Number(v));
   }, []);
 
+  // Detecta ?select=1 injetado pelo __root.tsx após OAuth Google
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (!localStorage.getItem("google_oauth_ts")) return;
-
-    let done = false;
-
-    const verificarTipo = async (userId: string) => {
-      if (done) return;
-      done = true;
-      localStorage.removeItem("google_oauth_ts");
-
-      const [{ data: clientType }, { data: request }] = await Promise.all([
-        supabase.from("user_client_types").select("tipo").eq("user_id", userId).maybeSingle(),
-        supabase.from("client_type_requests").select("id").eq("user_id", userId).maybeSingle(),
-      ]);
-
-      const precisaEscolher = (!clientType || clientType.tipo === "varejo") && !request;
-      if (precisaEscolher) setMode("select-type");
-      else void navigate({ to: "/" });
-    };
-
-    // Sessão já estabelecida (redirect já processado)
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) void verificarTipo(session.user.id);
-    });
-
-    // Aguarda sessão ser estabelecida
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) void verificarTipo(session.user.id);
-    });
-
-    return () => subscription.unsubscribe();
-  }, [navigate]);
+    const params = new URLSearchParams(location.search);
+    if (params.has("select")) setMode("select-type");
+  }, [location.search]);
 
   // ── Helpers ──────────────────────────────────────────────────────────────────
 

@@ -5,10 +5,12 @@ import {
   createRootRouteWithContext,
   useRouter,
   useRouterState,
+  useNavigate,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
+import { supabase } from "@/integrations/supabase/external";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -189,6 +191,27 @@ function CookieBanner() {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (!session || !localStorage.getItem("google_oauth_ts")) return;
+      localStorage.removeItem("google_oauth_ts");
+
+      const [{ data: clientType }, { data: request }] = await Promise.all([
+        supabase.from("user_client_types").select("tipo").eq("user_id", session.user.id).maybeSingle(),
+        supabase.from("client_type_requests").select("id").eq("user_id", session.user.id).maybeSingle(),
+      ]);
+
+      if ((!clientType || clientType.tipo === "varejo") && !request) {
+        void navigate({ to: "/entrar", search: { select: "1" } });
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
 
   return (
     <QueryClientProvider client={queryClient}>
