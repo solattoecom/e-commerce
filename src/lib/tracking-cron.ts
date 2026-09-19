@@ -1,5 +1,14 @@
 import { enviarEmailAvaliacao } from "@/lib/email.functions";
 
+function normalizarStatusME(status: string): string {
+  if (!status) return "";
+  if (status === "with_carrier" || status === "in transit" || status === "in-transit") return "in_transit";
+  if (status === "delivered" || status === "entregue") return "delivered";
+  if (status === "posted" || status === "postado") return "posted";
+  if (status === "undelivered") return "undelivered";
+  return status;
+}
+
 type METrackingItem = {
   status?: string;
   delivered_at?: string | null;
@@ -34,7 +43,7 @@ async function consultarME(meOrderId: string): Promise<{ entregue: boolean; even
 
     const status = item.status?.toLowerCase() ?? "";
     const entregue = !!item.delivered_at || status === "delivered" || status === "entregue";
-    const evento = status || null;
+    const evento = normalizarStatusME(status) || null;
 
     return { entregue, evento, raw };
   } catch {

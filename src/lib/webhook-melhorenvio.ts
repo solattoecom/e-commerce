@@ -1,6 +1,15 @@
 import { enviarEmailAvaliacao, enviarEmailAtualizacaoRastreio } from "@/lib/email.functions";
 import { logger } from "@/lib/logger";
 
+function normalizarStatusME(status: string): string {
+  if (!status) return "";
+  if (status === "with_carrier" || status === "in transit" || status === "in-transit") return "in_transit";
+  if (status === "delivered" || status === "entregue") return "delivered";
+  if (status === "posted" || status === "postado") return "posted";
+  if (status === "undelivered") return "undelivered";
+  return status;
+}
+
 type MEWebhookPayload = {
   event?: string;
   order?: {
@@ -31,7 +40,7 @@ export async function handleMelhorEnvioWebhook(request: Request): Promise<Respon
 
     const novoStatus = body.order?.status?.toLowerCase() ?? "";
     const entregue = !!body.order?.delivered_at || novoStatus === "delivered" || novoStatus === "entregue";
-    const evento = novoStatus || null;
+    const evento = normalizarStatusME(novoStatus) || null;
 
     if (!evento && !entregue) return new Response("no tracking data", { status: 200 });
 
