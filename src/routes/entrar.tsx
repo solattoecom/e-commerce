@@ -161,21 +161,29 @@ function LoginPage() {
 
     const oauthTs = localStorage.getItem("google_oauth_ts");
     localStorage.removeItem("google_oauth_ts");
+    if (!oauthTs) { void navigate({ to: "/" }); return; }
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if ((event === "SIGNED_IN" || event === "INITIAL_SESSION") && session?.user) {
-        if (!oauthTs) { void navigate({ to: "/" }); return; }
-        const createdAt = new Date(session.user.created_at).getTime();
-        const isNew = createdAt >= Number(oauthTs) - 60_000;
-        if (isNew) {
-          setMode("select-type");
-        } else {
-          void navigate({ to: "/" });
+    let cancelled = false;
+    const aguardarSessao = async () => {
+      for (let i = 0; i < 15; i++) {
+        if (cancelled) return;
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const createdAt = new Date(user.created_at).getTime();
+          const isNew = createdAt >= Number(oauthTs) - 60_000;
+          if (!cancelled) {
+            if (isNew) setMode("select-type");
+            else void navigate({ to: "/" });
+          }
+          return;
         }
+        await new Promise((r) => setTimeout(r, 300));
       }
-    });
+      if (!cancelled) void navigate({ to: "/" });
+    };
 
-    return () => { subscription.unsubscribe(); };
+    void aguardarSessao();
+    return () => { cancelled = true; };
   }, [navigate]);
 
   // ── Helpers ──────────────────────────────────────────────────────────────────
