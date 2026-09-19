@@ -27,7 +27,7 @@ const accountTypes = [
 ] as const;
 
 type AccountType = (typeof accountTypes)[number];
-type Mode = "login" | "signup" | "forgot" | "reset-sent";
+type Mode = "login" | "signup" | "forgot" | "reset-sent" | "select-type";
 
 // ── Embedded styles ────────────────────────────────────────────────────────────
 
@@ -152,6 +152,15 @@ function LoginPage() {
   useEffect(() => {
     const v = typeof window !== "undefined" ? localStorage.getItem("login_blocked_until") : null;
     if (v) setBloqueadoAte(Number(v));
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (!params.has("tipo")) return;
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) setMode("select-type");
+    });
   }, []);
 
   // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -295,10 +304,35 @@ function LoginPage() {
     try {
       await supabase.auth.signInWithOAuth({
         provider: "google",
-        options: { redirectTo: window.location.origin },
+        options: { redirectTo: `${window.location.origin}/entrar?tipo=1` },
       });
     } catch {
       setErro("Não foi possível entrar com Google. Tente novamente.");
+    }
+  };
+
+  const handleSelectType = async (tipo: ClientType) => {
+    setBusy(true); setErro(null);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("não autenticado");
+
+      if (tipo !== "varejo") {
+        await supabase.from("client_type_requests").insert({
+          user_id: user.id,
+          tipo_solicitado: tipo,
+          status: "pendente",
+        });
+      } else {
+        await supabase.from("user_client_types")
+          .upsert({ user_id: user.id, tipo: "varejo" }, { onConflict: "user_id" });
+      }
+
+      void navigate({ to: "/" });
+    } catch {
+      setErro("Não foi possível salvar. Tente novamente.");
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -552,6 +586,46 @@ function LoginPage() {
 
                 <button type="button" className="auth-visitor" onClick={() => void navigate({ to: "/" })}>
                   Continuar como visitante
+                </button>
+              </>
+            )}
+
+            {mode === "select-type" && (
+              <>
+                <h1 className="auth-title">Como você vai comprar?</h1>
+                <p className="auth-subtitle">Escolha o tipo de conta para continuar. Atacado e Drops precisam de aprovação.</p>
+
+                <div className="auth-types" style={{ marginTop: 8 }}>
+                  {accountTypes.map((t) => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      className="auth-type-btn"
+                      data-active={String(accountType?.id === t.id)}
+                      onClick={() => setAccountType(t)}
+                    >
+                      <t.Icon size={16} />
+                      {t.name}
+                    </button>
+                  ))}
+                </div>
+
+                {erro && <p className="auth-err">{erro}</p>}
+
+                <Button
+                  type="button"
+                  className="auth-login"
+                  disabled={busy || !accountType}
+                  onClick={() => accountType && void handleSelectType(accountType.id as ClientType)}
+                >
+                  <span>{busy ? "Salvando…" : "Confirmar"}</span>
+                  <svg viewBox="0 0 22 22" fill="none" aria-hidden="true" style={{ width: 16, height: 16 }}>
+                    <path d="M4 11h13M12 5.5 17.5 11 12 16.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </Button>
+
+                <button type="button" className="auth-visitor" onClick={() => void navigate({ to: "/" })}>
+                  Pular, entrar como Varejo
                 </button>
               </>
             )}
