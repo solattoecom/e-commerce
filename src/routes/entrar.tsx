@@ -158,10 +158,21 @@ function LoginPage() {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
     if (!params.has("tipo")) return;
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) setMode("select-type");
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN" && session?.user) {
+        const createdAt = new Date(session.user.created_at).getTime();
+        const isNew = Date.now() - createdAt < 120_000;
+        if (isNew) {
+          setMode("select-type");
+        } else {
+          void navigate({ to: "/" });
+        }
+      }
     });
-  }, []);
+
+    return () => { subscription.unsubscribe(); };
+  }, [navigate]);
 
   // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -592,8 +603,9 @@ function LoginPage() {
 
             {mode === "select-type" && (
               <>
-                <h1 className="auth-title">Como você vai comprar?</h1>
-                <p className="auth-subtitle">Escolha o tipo de conta para continuar. Atacado e Drops precisam de aprovação.</p>
+                <div className="auth-mark" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="6" fill="#000000"/><text x="16" y="23" fontFamily="serif" fontSize="22" fontWeight="700" fill="#ffffff" textAnchor="middle">S</text></svg></div>
+                <h1 className="auth-h1">Como você vai comprar?</h1>
+                <p className="auth-sub">Escolha o tipo de conta para continuar. Atacado e Drops precisam de aprovação.</p>
 
                 <div className="auth-types" style={{ marginTop: 8 }}>
                   {accountTypes.map((t) => (
