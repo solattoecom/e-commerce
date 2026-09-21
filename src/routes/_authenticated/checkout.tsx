@@ -46,7 +46,7 @@ function CheckoutPage() {
       .eq("user_id", user.id)
       .maybeSingle()
       .then(({ data }) => {
-        if (data?.tipo) setClientTipo(data.tipo as "varejo" | "atacado" | "dropshipping");
+        if (data?.tipo) setClientTipo(data.tipo as "varejo" | "dropshipping");
       });
   }, [user?.id]);
   const [step, setStep] = useState<Step>("endereco");
@@ -59,7 +59,9 @@ function CheckoutPage() {
   const [selectedShipping, setSelectedShipping] = useState<ShippingOption | null>(null);
   const [desconto, setDesconto] = useState<DiscountResult | null>(null);
   const [shippingLoading, setShippingLoading] = useState(false);
-  const [clientTipo, setClientTipo] = useState<"varejo" | "atacado" | "dropshipping">("varejo");
+  const [clientTipo, setClientTipo] = useState<"varejo" | "dropshipping">("varejo");
+  const [etiquetaFile, setEtiquetaFile] = useState<File | null>(null);
+  const [etiquetaErro, setEtiquetaErro] = useState<string | null>(null);
 
   const [profileCpf, setProfileCpf] = useState("");
 
@@ -164,6 +166,10 @@ function CheckoutPage() {
 
   const handleGoToPayment = () => {
     if (!selectedShipping) { setErro("Selecione uma opção de entrega."); return; }
+    if (clientTipo === "dropshipping" && !etiquetaFile) {
+      setErro("Faça upload da sua etiqueta de frete antes de continuar.");
+      return;
+    }
     setErro(null);
     setStep("pagamento");
   };
@@ -177,6 +183,23 @@ function CheckoutPage() {
     if (cpfDigits.length !== 11) { setErro("Informe um CPF válido com 11 dígitos."); return; }
     const telefoneDigits = telefone.replace(/\D/g, "");
     if (telefoneDigits.length < 10) { setErro("Informe um telefone válido com DDD."); return; }
+
+    // Converte etiqueta para base64 (dropshipping)
+    let etiquetaBase64: string | undefined;
+    let etiquetaExt: string | undefined;
+    if (clientTipo === "dropshipping" && etiquetaFile) {
+      etiquetaBase64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          resolve(result.split(",")[1] ?? "");
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(etiquetaFile);
+      });
+      etiquetaExt = etiquetaFile.name.split(".").pop()?.toLowerCase();
+    }
+
     setBusy(true);
     setErro(null);
     try {
@@ -195,6 +218,7 @@ function CheckoutPage() {
             quantidade: item.quantidade,
           })),
           coupon_id: desconto?.coupon_id ?? null,
+          ...(etiquetaBase64 && { etiqueta_file_base64: etiquetaBase64, etiqueta_file_ext: etiquetaExt }),
           ...(paymentMethod === "cartao" && {
             card_number: card.number,
             card_holder: card.holder,
@@ -452,6 +476,31 @@ function CheckoutPage() {
               </button>
             ))}
           </div>
+          {clientTipo === "dropshipping" && (
+            <div className="space-y-2 rounded-lg border border-dashed p-4">
+              <p className="text-sm font-medium">Etiqueta de frete</p>
+              <p className="text-xs text-muted-foreground">
+                Faça upload da etiqueta da sua transportadora. Aceitamos PDF, JPG ou PNG (máx. 10 MB).
+              </p>
+              <input
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png,.webp"
+                onChange={(e) => {
+                  const file = e.target.files?.[0] ?? null;
+                  if (file && file.size > 10 * 1024 * 1024) {
+                    setEtiquetaErro("Arquivo muito grande. Máximo 10 MB.");
+                    setEtiquetaFile(null);
+                  } else {
+                    setEtiquetaErro(null);
+                    setEtiquetaFile(file);
+                  }
+                }}
+                className="block w-full text-sm text-muted-foreground file:mr-3 file:rounded-md file:border-0 file:bg-foreground file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-background hover:file:bg-foreground/90"
+              />
+              {etiquetaErro && <p className="text-xs text-destructive">{etiquetaErro}</p>}
+              {etiquetaFile && <p className="text-xs text-green-600">Arquivo selecionado: {etiquetaFile.name}</p>}
+            </div>
+          )}
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setStep("endereco")}><ArrowLeft className="mr-2 h-4 w-4" /> Voltar</Button>
             <Button className="flex-1 bg-foreground text-background hover:bg-foreground/90" disabled={!selectedShipping} onClick={handleGoToPayment}>Continuar <ArrowRight className="ml-2 h-4 w-4" /></Button>
