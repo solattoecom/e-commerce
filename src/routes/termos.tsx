@@ -44,7 +44,7 @@ function TermosPage() {
 
           <div className="space-y-3">
             <h2 className="text-lg font-semibold text-foreground">2. Sobre a Solatto</h2>
-            <p>A Solatto é uma empresa fabricante e comercializante de calçados, inscrita no CNPJ 51.987.195/0001-46, com sede em Franca — SP. Atendemos clientes nos segmentos varejo, atacado e dropshipping em todo o território nacional.</p>
+            <p>A Solatto é uma empresa fabricante e comercializante de calçados, inscrita no CNPJ 51.987.195/0001-46, com sede em Franca — SP. Atendemos clientes nos segmentos varejo e dropshipping em todo o território nacional.</p>
           </div>
 
           <div className="space-y-3">

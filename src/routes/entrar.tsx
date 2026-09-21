@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate, useLocation } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Building2, Store, Truck } from "lucide-react";
+import { Store, Truck } from "lucide-react";
 import { signIn, signUpWithType, type ClientType } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/external";
 import { isValidEmail } from "@/lib/validate";
@@ -22,7 +22,6 @@ export const Route = createFileRoute("/entrar")({
 
 const accountTypes = [
   { id: "varejo", name: "Varejo", Icon: Store },
-  { id: "atacado", name: "Atacado", Icon: Building2 },
   { id: "dropshipping", name: "Drops", Icon: Truck },
 ] as const;
 

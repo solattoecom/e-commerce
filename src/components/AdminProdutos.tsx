@@ -29,7 +29,7 @@ const toSlug = (s: string) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "")
 
-const TIPOS_PRECO = ["varejo", "atacado", "dropshipping"] as const
+const TIPOS_PRECO = ["varejo", "dropshipping"] as const
 
 type TipoPreco = (typeof TIPOS_PRECO)[number]
 
@@ -69,7 +69,6 @@ export function AdminProdutos() {
 
   const [precos, setPrecos] = useState<Record<TipoPreco, PrecoLocal>>({
     varejo: { preco: "", preco_original: "" },
-    atacado: { preco: "", preco_original: "" },
     dropshipping: { preco: "", preco_original: "" },
   })
   const [salvandoPrecos, setSalvandoPrecos] = useState(false)
@@ -108,7 +107,6 @@ export function AdminProdutos() {
     setVariantes([])
     setPrecos({
       varejo: { preco: "", preco_original: "" },
-      atacado: { preco: "", preco_original: "" },
       dropshipping: { preco: "", preco_original: "" },
     })
     setErroForm(null)
@@ -127,7 +125,6 @@ export function AdminProdutos() {
     setVariantes([...(p.product_variants ?? [])])
     const precosIniciais: Record<TipoPreco, PrecoLocal> = {
       varejo: { preco: "", preco_original: "" },
-      atacado: { preco: "", preco_original: "" },
       dropshipping: { preco: "", preco_original: "" },
     }
     for (const pr of p.product_prices ?? []) {

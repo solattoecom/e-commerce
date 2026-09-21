@@ -85,7 +85,7 @@ function SobrePage() {
               cabedal e a vulcanização da sola.
             </p>
             <p className="leading-relaxed text-muted-foreground">
-              A expansão para o atacado e o dropshipping abriu caminho para que revendedores de
+              A expansão para o dropshipping abriu caminho para que revendedores de
               todo o Brasil levassem os calçados Solatto aos seus clientes, sem abrir mão do padrão
               de qualidade que tornou a marca referência.
             </p>
