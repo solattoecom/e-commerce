@@ -225,3 +225,29 @@ export const reprintLabel = createServerFn({ method: "POST" })
     await supabaseAdmin.from("orders").update({ label_pdf_url: pdfUrl }).eq("id", data.order_id);
     return { pdf_url: pdfUrl };
   });
+
+type GetEtiquetaUrlInput = { order_id: string };
+type GetEtiquetaUrlResult = { url: string };
+
+export const getEtiquetaUrl = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: GetEtiquetaUrlInput) => input)
+  .handler(async ({ data }): Promise<GetEtiquetaUrlResult> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/external.server");
+
+    const { data: order } = await supabaseAdmin
+      .from("orders")
+      .select("etiqueta_path")
+      .eq("id", data.order_id)
+      .single();
+
+    if (!order?.etiqueta_path) throw new Error("Etiqueta não encontrada para este pedido.");
+
+    const { data: signedData, error } = await supabaseAdmin.storage
+      .from("etiquetas")
+      .createSignedUrl(order.etiqueta_path, 120);
+
+    if (error || !signedData?.signedUrl) throw new Error("Não foi possível gerar o link de download.");
+
+    return { url: signedData.signedUrl };
+  });

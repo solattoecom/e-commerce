@@ -209,10 +209,10 @@ export const createOrder = createServerFn({ method: "POST" })
           p_quantidade: item.quantidade,
         });
       }
-      await supabaseAdmin.from("orders").delete().eq("id", order.id);
       if (etiquetaPath) {
         await supabaseAdmin.storage.from("etiquetas").remove([etiquetaPath]);
       }
+      await supabaseAdmin.from("orders").delete().eq("id", order.id);
     }
 
     // Upload da etiqueta para dropshipping
@@ -221,13 +221,18 @@ export const createOrder = createServerFn({ method: "POST" })
       const allowedExts = ["pdf", "jpg", "jpeg", "png", "webp"];
       if (allowedExts.includes(ext)) {
         const path = `${order.id}/etiqueta.${ext}`;
-        const buf = Buffer.from(data.etiqueta_file_base64, "base64");
-        if (buf.length <= 10 * 1024 * 1024) {
-          const contentType = ext === "pdf" ? "application/pdf" : `image/${ext}`;
-          const { error: uploadErr } = await supabaseAdmin.storage
-            .from("etiquetas")
-            .upload(path, buf, { contentType, upsert: true });
-          if (!uploadErr) {
+        const maxBase64Len = 14 * 1024 * 1024; // ~10MB decoded
+        if (data.etiqueta_file_base64.length <= maxBase64Len) {
+          const buf = Buffer.from(data.etiqueta_file_base64, "base64");
+          if (buf.length <= 10 * 1024 * 1024) {
+            const contentType = ext === "pdf" ? "application/pdf" : `image/${ext}`;
+            const { error: uploadErr } = await supabaseAdmin.storage
+              .from("etiquetas")
+              .upload(path, buf, { contentType, upsert: true });
+            if (uploadErr) {
+              await cancelarPedido();
+              throw new Error("Não foi possível salvar a etiqueta. Tente novamente.");
+            }
             etiquetaPath = path;
             await supabaseAdmin.from("orders").update({ etiqueta_path: path }).eq("id", order.id);
           }
