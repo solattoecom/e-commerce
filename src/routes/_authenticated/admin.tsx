@@ -674,7 +674,7 @@ setNfePorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; re
                         <span className="flex items-center gap-1.5">
                           <CreditCard className="size-4 shrink-0" />
                           {p.payment_method === "pix"
-                            ? p.profiles?.user_client_types?.[0]?.tipo === "dropshipping" ? "Pix" : "Pix (desconto 10%)"
+                            ? "Pix"
                             : p.payment_method === "boleto"
                             ? "Boleto"
                             : p.card_parcelas && p.card_parcelas > 1
