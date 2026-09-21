@@ -1,14 +1,10 @@
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
-
 User-agent: *
 Allow: /
+Disallow: /checkout
+Disallow: /admin
+Disallow: /pedidos
+Disallow: /perfil
+Disallow: /redefinir-senha
+Disallow: /entrar
+
+Sitemap: https://solatto.com.br/sitemap.xml
