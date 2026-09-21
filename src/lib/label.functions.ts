@@ -226,7 +226,7 @@ export const reprintLabel = createServerFn({ method: "POST" })
     return { pdf_url: pdfUrl };
   });
 
-type GetEtiquetaUrlInput = { order_id: string };
+type GetEtiquetaUrlInput = { order_id: string; index: number };
 type GetEtiquetaUrlResult = { url: string; ext: string };
 
 export const getEtiquetaUrl = createServerFn({ method: "POST" })
@@ -235,7 +235,6 @@ export const getEtiquetaUrl = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<GetEtiquetaUrlResult> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/external.server");
 
-    // Verifica se o caller é admin
     const { count: adminCount } = await supabaseAdmin
       .from("user_roles")
       .select("id", { count: "exact", head: true })
@@ -251,12 +250,22 @@ export const getEtiquetaUrl = createServerFn({ method: "POST" })
 
     if (!order?.etiqueta_path) throw new Error("Etiqueta não encontrada para este pedido.");
 
+    // etiqueta_path pode ser JSON array (múltiplas etiquetas) ou string simples (legado)
+    let path: string;
+    try {
+      const parsed = JSON.parse(order.etiqueta_path) as string[];
+      path = parsed[data.index] ?? parsed[0] ?? "";
+    } catch {
+      path = order.etiqueta_path;
+    }
+    if (!path) throw new Error("Etiqueta não encontrada para este pedido.");
+
     const { data: signedData, error } = await supabaseAdmin.storage
       .from("etiquetas")
-      .createSignedUrl(order.etiqueta_path, 120);
+      .createSignedUrl(path, 120);
 
     if (error || !signedData?.signedUrl) throw new Error("Não foi possível gerar o link de download.");
 
-    const ext = order.etiqueta_path.split(".").pop() ?? "pdf";
+    const ext = path.split(".").pop() ?? "pdf";
     return { url: signedData.signedUrl, ext };
   });

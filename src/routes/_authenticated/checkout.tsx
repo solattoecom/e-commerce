@@ -60,7 +60,7 @@ function CheckoutPage() {
   const [desconto, setDesconto] = useState<DiscountResult | null>(null);
   const [shippingLoading, setShippingLoading] = useState(false);
   const [clientTipo, setClientTipo] = useState<"varejo" | "dropshipping">("varejo");
-  const [etiquetaFile, setEtiquetaFile] = useState<File | null>(null);
+  const [etiquetaFiles, setEtiquetaFiles] = useState<(File | null)[]>([]);
   const [etiquetaErro, setEtiquetaErro] = useState<string | null>(null);
 
   const [profileCpf, setProfileCpf] = useState("");
@@ -104,8 +104,8 @@ function CheckoutPage() {
   const frete = selectedShipping?.valor ?? 0;
   const subtotalComDesconto = total - (desconto?.discount_amount ?? 0);
   const totalFinal = subtotalComDesconto + frete;
-  const pixDesconto = subtotalComDesconto * 0.1;
-  const totalPix = subtotalComDesconto * 0.9 + frete;
+  const pixDesconto = clientTipo !== "dropshipping" ? subtotalComDesconto * 0.1 : 0;
+  const totalPix = clientTipo !== "dropshipping" ? subtotalComDesconto * 0.9 + frete : totalFinal;
   const totalEfetivo = paymentMethod === "pix" ? totalPix : totalFinal;
 
   const calcParcela = (n: number) => {
@@ -166,9 +166,12 @@ function CheckoutPage() {
 
   const handleGoToPayment = () => {
     if (!selectedShipping) { setErro("Selecione uma opção de entrega."); return; }
-    if (clientTipo === "dropshipping" && !etiquetaFile) {
-      setErro("Faça upload da sua etiqueta de frete antes de continuar.");
-      return;
+    if (clientTipo === "dropshipping") {
+      const filled = etiquetaFiles.slice(0, items.length).filter(Boolean).length;
+      if (filled < items.length) {
+        setErro(items.length === 1 ? "Faça upload da sua etiqueta de frete antes de continuar." : `Faça upload das ${items.length} etiquetas de frete antes de continuar.`);
+        return;
+      }
     }
     setErro(null);
     setStep("pagamento");
@@ -184,20 +187,18 @@ function CheckoutPage() {
     const telefoneDigits = telefone.replace(/\D/g, "");
     if (telefoneDigits.length < 10) { setErro("Informe um telefone válido com DDD."); return; }
 
-    // Converte etiqueta para base64 (dropshipping)
-    let etiquetaBase64: string | undefined;
-    let etiquetaExt: string | undefined;
-    if (clientTipo === "dropshipping" && etiquetaFile) {
-      etiquetaBase64 = await new Promise<string>((resolve, reject) => {
+    // Converte etiquetas para base64 (dropshipping)
+    let etiquetasBase64: string[] | undefined;
+    let etiquetasExt: string[] | undefined;
+    if (clientTipo === "dropshipping" && etiquetaFiles.length > 0) {
+      const toBase64 = (file: File) => new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
-        reader.onload = () => {
-          const result = reader.result as string;
-          resolve(result.split(",")[1] ?? "");
-        };
+        reader.onload = () => { resolve((reader.result as string).split(",")[1] ?? ""); };
         reader.onerror = reject;
-        reader.readAsDataURL(etiquetaFile);
+        reader.readAsDataURL(file);
       });
-      etiquetaExt = etiquetaFile.name.split(".").pop()?.toLowerCase();
+      etiquetasBase64 = await Promise.all(etiquetaFiles.slice(0, items.length).map((f) => toBase64(f!)));
+      etiquetasExt = etiquetaFiles.slice(0, items.length).map((f) => f!.name.split(".").pop()?.toLowerCase() ?? "pdf");
     }
 
     setBusy(true);
@@ -218,7 +219,7 @@ function CheckoutPage() {
             quantidade: item.quantidade,
           })),
           coupon_id: desconto?.coupon_id ?? null,
-          ...(etiquetaBase64 && { etiqueta_file_base64: etiquetaBase64, etiqueta_file_ext: etiquetaExt }),
+          ...(etiquetasBase64 && { etiqueta_files_base64: etiquetasBase64, etiqueta_files_ext: etiquetasExt }),
           ...(paymentMethod === "cartao" && {
             card_number: card.number,
             card_holder: card.holder,
@@ -346,7 +347,7 @@ function CheckoutPage() {
           </p>
         ) : null}
         {selectedShipping && <p className="text-muted-foreground">Frete: R$ {frete.toFixed(2).replace(".", ",")} — Total: R$ {totalFinal.toFixed(2).replace(".", ",")}</p>}
-        {step === "pagamento" && paymentMethod === "pix" && (
+        {step === "pagamento" && paymentMethod === "pix" && clientTipo !== "dropshipping" && (
           <p className="text-sm font-medium text-green-600">Desconto PIX 10%: -R$ {pixDesconto.toFixed(2).replace(".", ",")} → Total: R$ {totalPix.toFixed(2).replace(".", ",")}</p>
         )}
       </div>
@@ -477,28 +478,46 @@ function CheckoutPage() {
             ))}
           </div>
           {clientTipo === "dropshipping" && (
-            <div className="space-y-2 rounded-lg border border-dashed p-4">
-              <p className="text-sm font-medium">Etiqueta de frete</p>
-              <p className="text-xs text-muted-foreground">
-                Faça upload da etiqueta da sua transportadora. Aceitamos PDF, JPG ou PNG (máx. 10 MB).
-              </p>
-              <input
-                type="file"
-                accept=".pdf,.jpg,.jpeg,.png,.webp"
-                onChange={(e) => {
-                  const file = e.target.files?.[0] ?? null;
-                  if (file && file.size > 10 * 1024 * 1024) {
-                    setEtiquetaErro("Arquivo muito grande. Máximo 10 MB.");
-                    setEtiquetaFile(null);
-                  } else {
-                    setEtiquetaErro(null);
-                    setEtiquetaFile(file);
-                  }
-                }}
-                className="block w-full text-sm text-muted-foreground file:mr-3 file:rounded-md file:border-0 file:bg-foreground file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-background hover:file:bg-foreground/90"
-              />
+            <div className="space-y-3 rounded-lg border border-dashed p-4">
+              <div>
+                <p className="text-sm font-medium">Etiqueta{items.length > 1 ? "s" : ""} de frete</p>
+                <p className="text-xs text-muted-foreground">
+                  {items.length > 1
+                    ? `Anexe uma etiqueta por produto (${items.length} no total). PDF, JPG ou PNG, máx. 10 MB cada.`
+                    : "Faça upload da etiqueta da sua transportadora. Aceitamos PDF, JPG ou PNG (máx. 10 MB)."}
+                </p>
+              </div>
+              {items.map((item, i) => (
+                <div key={i} className="space-y-1">
+                  {items.length > 1 && (
+                    <p className="text-xs font-medium text-muted-foreground">
+                      Etiqueta {i + 1}: {item.products?.nome ?? `Item ${i + 1}`}
+                    </p>
+                  )}
+                  <input
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png,.webp"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] ?? null;
+                      if (file && file.size > 10 * 1024 * 1024) {
+                        setEtiquetaErro("Arquivo muito grande. Máximo 10 MB.");
+                      } else {
+                        setEtiquetaErro(null);
+                        setEtiquetaFiles((prev) => {
+                          const next = [...prev];
+                          next[i] = file;
+                          return next;
+                        });
+                      }
+                    }}
+                    className="block w-full text-sm text-muted-foreground file:mr-3 file:rounded-md file:border-0 file:bg-foreground file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-background hover:file:bg-foreground/90"
+                  />
+                  {etiquetaFiles[i] && (
+                    <p className="text-xs text-green-600">✓ {etiquetaFiles[i]!.name}</p>
+                  )}
+                </div>
+              ))}
               {etiquetaErro && <p className="text-xs text-destructive">{etiquetaErro}</p>}
-              {etiquetaFile && <p className="text-xs text-green-600">Arquivo selecionado: {etiquetaFile.name}</p>}
             </div>
           )}
           <div className="flex gap-2">

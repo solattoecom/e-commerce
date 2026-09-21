@@ -425,13 +425,13 @@ setNfePorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; re
     }
   }
 
-  async function handleDownloadEtiqueta(pedidoId: string) {
+  async function handleDownloadEtiqueta(pedidoId: string, index: number) {
     setEtiquetaOcupado(pedidoId);
     try {
-      const { url, ext } = await getEtiquetaUrl({ data: { order_id: pedidoId } });
+      const { url, ext } = await getEtiquetaUrl({ data: { order_id: pedidoId, index } });
       const a = document.createElement("a");
       a.href = url;
-      a.download = `etiqueta-${pedidoId.slice(0, 8)}.${ext}`;
+      a.download = `etiqueta-${pedidoId.slice(0, 8)}${index > 0 ? `-${index + 1}` : ""}.${ext}`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -873,17 +873,22 @@ setNfePorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; re
                         );
                       })()}
 
-                      {/* Baixar Etiqueta Dropshipping */}
-                      {p.etiqueta_path && (
-                        <button
-                          type="button"
-                          disabled={etiquetaOcupado === p.id}
-                          onClick={() => handleDownloadEtiqueta(p.id)}
-                          className="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-muted disabled:opacity-50"
-                        >
-                          {etiquetaOcupado === p.id ? "Baixando..." : "Baixar Etiqueta"}
-                        </button>
-                      )}
+                      {/* Baixar Etiqueta(s) Dropshipping */}
+                      {p.etiqueta_path && (() => {
+                        let paths: string[];
+                        try { paths = JSON.parse(p.etiqueta_path) as string[]; } catch { paths = [p.etiqueta_path]; }
+                        return paths.map((_, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            disabled={etiquetaOcupado === p.id}
+                            onClick={() => handleDownloadEtiqueta(p.id, idx)}
+                            className="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-muted disabled:opacity-50"
+                          >
+                            {etiquetaOcupado === p.id ? "Baixando..." : paths.length > 1 ? `Baixar Etiqueta ${idx + 1}` : "Baixar Etiqueta"}
+                          </button>
+                        ));
+                      })()}
 
                       {/* Rastreamento ao vivo */}
                       {p.status === "enviado" && p.me_order_id ? (

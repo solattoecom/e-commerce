@@ -31,8 +31,8 @@ type CreateOrderInput = {
   card_parcelas?: number;
   boleto_cpf?: string;
   coupon_id?: string | null;
-  etiqueta_file_base64?: string;
-  etiqueta_file_ext?: string;
+  etiqueta_files_base64?: string[];
+  etiqueta_files_ext?: string[];
 };
 
 export type CreateOrderResult = {
@@ -110,7 +110,7 @@ export const createOrder = createServerFn({ method: "POST" })
 
     // Valida e calcula desconto do cupom server-side
     let desconto = 0;
-    let etiquetaPath: string | null = null;
+    const etiquetaPaths: string[] = [];
     if (data.coupon_id) {
       const { data: coupon } = await supabaseAdmin
         .from("coupons")
@@ -141,7 +141,7 @@ export const createOrder = createServerFn({ method: "POST" })
     const shippingValor = shippingOption.valor;
 
     const totalBase = Math.round((subtotal - desconto + shippingValor) * 100) / 100;
-    const total = data.payment_method === "pix"
+    const total = data.payment_method === "pix" && clientType !== "dropshipping"
       ? Math.round((Math.round((subtotal - desconto) * 0.9 * 100) / 100 + shippingValor) * 100) / 100
       : totalBase;
 
@@ -209,34 +209,38 @@ export const createOrder = createServerFn({ method: "POST" })
           p_quantidade: item.quantidade,
         });
       }
-      if (etiquetaPath) {
-        await supabaseAdmin.storage.from("etiquetas").remove([etiquetaPath]);
+      if (etiquetaPaths.length > 0) {
+        await supabaseAdmin.storage.from("etiquetas").remove(etiquetaPaths);
       }
       await supabaseAdmin.from("orders").delete().eq("id", order.id);
     }
 
-    // Upload da etiqueta para dropshipping
-    if (clientType === "dropshipping" && data.etiqueta_file_base64) {
-      const ext = (data.etiqueta_file_ext ?? "pdf").replace(/[^a-z0-9]/gi, "").toLowerCase();
+    // Upload das etiquetas para dropshipping
+    if (clientType === "dropshipping" && data.etiqueta_files_base64?.length) {
       const allowedExts = ["pdf", "jpg", "jpeg", "png", "webp"];
-      if (allowedExts.includes(ext)) {
-        const path = `${order.id}/etiqueta.${ext}`;
-        const maxBase64Len = 14 * 1024 * 1024; // ~10MB decoded
-        if (data.etiqueta_file_base64.length <= maxBase64Len) {
-          const buf = Buffer.from(data.etiqueta_file_base64, "base64");
-          if (buf.length <= 10 * 1024 * 1024) {
-            const contentType = ext === "pdf" ? "application/pdf" : `image/${ext}`;
-            const { error: uploadErr } = await supabaseAdmin.storage
-              .from("etiquetas")
-              .upload(path, buf, { contentType, upsert: true });
-            if (uploadErr) {
-              await cancelarPedido();
-              throw new Error("Não foi possível salvar a etiqueta. Tente novamente.");
-            }
-            etiquetaPath = path;
-            await supabaseAdmin.from("orders").update({ etiqueta_path: path }).eq("id", order.id);
-          }
+      const maxBase64Len = 14 * 1024 * 1024;
+      for (let i = 0; i < data.etiqueta_files_base64.length; i++) {
+        const b64 = data.etiqueta_files_base64[i] ?? "";
+        const rawExt = (data.etiqueta_files_ext?.[i] ?? "pdf").replace(/[^a-z0-9]/gi, "").toLowerCase();
+        const ext = allowedExts.includes(rawExt) ? rawExt : "pdf";
+        if (b64.length > maxBase64Len) continue;
+        const buf = Buffer.from(b64, "base64");
+        if (buf.length > 10 * 1024 * 1024) continue;
+        const path = `${order.id}/etiqueta-${i}.${ext}`;
+        const contentType = ext === "pdf" ? "application/pdf" : `image/${ext}`;
+        const { error: uploadErr } = await supabaseAdmin.storage
+          .from("etiquetas")
+          .upload(path, buf, { contentType, upsert: true });
+        if (uploadErr) {
+          await cancelarPedido();
+          throw new Error("Não foi possível salvar a etiqueta. Tente novamente.");
         }
+        etiquetaPaths.push(path);
+      }
+      if (etiquetaPaths.length > 0) {
+        await supabaseAdmin.from("orders")
+          .update({ etiqueta_path: JSON.stringify(etiquetaPaths) })
+          .eq("id", order.id);
       }
     }
 
