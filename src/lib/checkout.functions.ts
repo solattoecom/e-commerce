@@ -31,6 +31,8 @@ type CreateOrderInput = {
   card_parcelas?: number;
   boleto_cpf?: string;
   coupon_id?: string | null;
+  etiqueta_file_base64?: string;
+  etiqueta_file_ext?: string;
 };
 
 export type CreateOrderResult = {
@@ -108,6 +110,7 @@ export const createOrder = createServerFn({ method: "POST" })
 
     // Valida e calcula desconto do cupom server-side
     let desconto = 0;
+    let etiquetaPath: string | null = null;
     if (data.coupon_id) {
       const { data: coupon } = await supabaseAdmin
         .from("coupons")
@@ -132,7 +135,7 @@ export const createOrder = createServerFn({ method: "POST" })
       .single();
     if (!address) throw new Error("Endereço não encontrado.");
 
-    const shippingQuote = await quoteShipping({ data: { cep: address.cep, itens: data.items.length, subtotal, clientTipo: clientType as "varejo" | "atacado" | "dropshipping" } });
+    const shippingQuote = await quoteShipping({ data: { cep: address.cep, itens: data.items.length, subtotal, clientTipo: clientType as "varejo" | "dropshipping" } });
     const shippingOption = shippingQuote.opcoes.find((o) => o.id === data.shipping_option_id);
     if (!shippingOption) throw new Error("Opção de frete inválida.");
     const shippingValor = shippingOption.valor;
@@ -207,6 +210,29 @@ export const createOrder = createServerFn({ method: "POST" })
         });
       }
       await supabaseAdmin.from("orders").delete().eq("id", order.id);
+      if (etiquetaPath) {
+        await supabaseAdmin.storage.from("etiquetas").remove([etiquetaPath]);
+      }
+    }
+
+    // Upload da etiqueta para dropshipping
+    if (clientType === "dropshipping" && data.etiqueta_file_base64) {
+      const ext = (data.etiqueta_file_ext ?? "pdf").replace(/[^a-z0-9]/gi, "").toLowerCase();
+      const allowedExts = ["pdf", "jpg", "jpeg", "png", "webp"];
+      if (allowedExts.includes(ext)) {
+        const path = `${order.id}/etiqueta.${ext}`;
+        const buf = Buffer.from(data.etiqueta_file_base64, "base64");
+        if (buf.length <= 10 * 1024 * 1024) {
+          const contentType = ext === "pdf" ? "application/pdf" : `image/${ext}`;
+          const { error: uploadErr } = await supabaseAdmin.storage
+            .from("etiquetas")
+            .upload(path, buf, { contentType, upsert: true });
+          if (!uploadErr) {
+            etiquetaPath = path;
+            await supabaseAdmin.from("orders").update({ etiqueta_path: path }).eq("id", order.id);
+          }
+        }
+      }
     }
 
     const headers = {
