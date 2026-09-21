@@ -295,6 +295,7 @@ export type Database = {
           criado_em: string
           desconto: number
           endereco: Json
+          etiqueta_path: string | null
           frete: number
           id: string
           me_order_id: string | null
@@ -320,6 +321,7 @@ export type Database = {
           criado_em?: string
           desconto?: number
           endereco?: Json
+          etiqueta_path?: string | null
           frete?: number
           id?: string
           me_order_id?: string | null
@@ -345,6 +347,7 @@ export type Database = {
           criado_em?: string
           desconto?: number
           endereco?: Json
+          etiqueta_path?: string | null
           frete?: number
           id?: string
           me_order_id?: string | null
@@ -761,10 +764,7 @@ export type Database = {
     Enums: {
       app_client_type:
         | "varejo"
-        | "atacado"
         | "dropshipping"
-        | "atacado_presencial"
-        | "atacado_distancia"
       app_role: "admin"
       coupon_type: "percent" | "fixed"
       order_status:
@@ -903,10 +903,7 @@ export const Constants = {
     Enums: {
       app_client_type: [
         "varejo",
-        "atacado",
         "dropshipping",
-        "atacado_presencial",
-        "atacado_distancia",
       ],
       app_role: ["admin"],
       coupon_type: ["percent", "fixed"],

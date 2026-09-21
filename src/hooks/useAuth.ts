@@ -3,7 +3,7 @@ import type { Session, User } from "@supabase/supabase-js";
 
 import { supabase } from "@/integrations/supabase/external";
 
-export type ClientType = "varejo" | "atacado" | "dropshipping";
+export type ClientType = "varejo" | "dropshipping";
 
 export function useAuth() {
   const [session, setSession] = useState<Session | null>(null);

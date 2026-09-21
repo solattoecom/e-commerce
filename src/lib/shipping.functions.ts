@@ -21,10 +21,10 @@ type QuoteInput = {
   cep: string;
   itens: number;
   subtotal: number;
-  clientTipo?: "varejo" | "atacado" | "dropshipping";
+  clientTipo?: "varejo" | "dropshipping";
 };
 
-// ── tabela regional (atacado e fallback) ──────────────────────────────────────
+// ── tabela regional (fallback quando Melhor Envio falha) ─────────────────────
 
 const regiao: Record<string, "SE" | "S" | "CO" | "NE" | "N"> = {
   SP: "SE", RJ: "SE", MG: "SE", ES: "SE",
@@ -242,10 +242,39 @@ export const quoteShipping = createServerFn({ method: "POST" })
     const subtotal = Math.max(0, Number(data.subtotal) || 0);
     const clientTipo = data.clientTipo ?? "varejo";
 
-    if (clientTipo !== "atacado") {
-      const resultado = await cotarMelhorEnvio(cep, itens, subtotal);
-      if (resultado) return resultado;
+    if (clientTipo === "dropshipping") {
+      let cidade = "", uf = "", bairro = "", logradouro = "";
+      try {
+        const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+        if (res.ok) {
+          const endereco = await res.json() as { localidade?: string; uf?: string; bairro?: string; logradouro?: string; erro?: boolean };
+          if (!endereco.erro) {
+            cidade = endereco.localidade ?? "";
+            uf = endereco.uf ?? "";
+            bairro = endereco.bairro ?? "";
+            logradouro = endereco.logradouro ?? "";
+          }
+        }
+      } catch { /* ignora */ }
+      return {
+        cep: `${cep.slice(0, 5)}-${cep.slice(5)}`,
+        cidade,
+        uf,
+        bairro,
+        logradouro,
+        opcoes: [
+          {
+            id: "etiqueta_propria",
+            nome: "Etiqueta própria — você fornece a etiqueta",
+            prazo: "Conforme sua transportadora",
+            valor: 0,
+          },
+        ],
+      };
     }
+
+    const resultado = await cotarMelhorEnvio(cep, itens, subtotal);
+    if (resultado) return resultado;
 
     return cotarPorTabela(cep, itens, subtotal);
   });
