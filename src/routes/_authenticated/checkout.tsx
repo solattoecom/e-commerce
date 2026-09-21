@@ -167,9 +167,9 @@ function CheckoutPage() {
   const handleGoToPayment = () => {
     if (!selectedShipping) { setErro("Selecione uma opção de entrega."); return; }
     if (clientTipo === "dropshipping") {
-      const filled = etiquetaFiles.slice(0, items.length).filter(Boolean).length;
-      if (filled < items.length) {
-        setErro(items.length === 1 ? "Faça upload da sua etiqueta de frete antes de continuar." : `Faça upload das ${items.length} etiquetas de frete antes de continuar.`);
+      const filled = etiquetaFiles.slice(0, itemCount).filter(Boolean).length;
+      if (filled < itemCount) {
+        setErro(itemCount === 1 ? "Faça upload da sua etiqueta de frete antes de continuar." : `Faça upload das ${itemCount} etiquetas de frete antes de continuar.`);
         return;
       }
     }
@@ -197,8 +197,8 @@ function CheckoutPage() {
         reader.onerror = reject;
         reader.readAsDataURL(file);
       });
-      etiquetasBase64 = await Promise.all(etiquetaFiles.slice(0, items.length).map((f) => toBase64(f!)));
-      etiquetasExt = etiquetaFiles.slice(0, items.length).map((f) => f!.name.split(".").pop()?.toLowerCase() ?? "pdf");
+      etiquetasBase64 = await Promise.all(etiquetaFiles.slice(0, itemCount).map((f) => toBase64(f!)));
+      etiquetasExt = etiquetaFiles.slice(0, itemCount).map((f) => f!.name.split(".").pop()?.toLowerCase() ?? "pdf");
     }
 
     setBusy(true);
@@ -477,49 +477,59 @@ function CheckoutPage() {
               </button>
             ))}
           </div>
-          {clientTipo === "dropshipping" && (
-            <div className="space-y-3 rounded-lg border border-dashed p-4">
-              <div>
-                <p className="text-sm font-medium">Etiqueta{items.length > 1 ? "s" : ""} de frete</p>
-                <p className="text-xs text-muted-foreground">
-                  {items.length > 1
-                    ? `Anexe uma etiqueta por produto (${items.length} no total). PDF, JPG ou PNG, máx. 10 MB cada.`
-                    : "Faça upload da etiqueta da sua transportadora. Aceitamos PDF, JPG ou PNG (máx. 10 MB)."}
-                </p>
-              </div>
-              {items.map((item, i) => (
-                <div key={i} className="space-y-1">
-                  {items.length > 1 && (
-                    <p className="text-xs font-medium text-muted-foreground">
-                      Etiqueta {i + 1}: {item.products?.nome ?? `Item ${i + 1}`}
-                    </p>
-                  )}
-                  <input
-                    type="file"
-                    accept=".pdf,.jpg,.jpeg,.png,.webp"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0] ?? null;
-                      if (file && file.size > 10 * 1024 * 1024) {
-                        setEtiquetaErro("Arquivo muito grande. Máximo 10 MB.");
-                      } else {
-                        setEtiquetaErro(null);
-                        setEtiquetaFiles((prev) => {
-                          const next = [...prev];
-                          next[i] = file;
-                          return next;
-                        });
-                      }
-                    }}
-                    className="block w-full text-sm text-muted-foreground file:mr-3 file:rounded-md file:border-0 file:bg-foreground file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-background hover:file:bg-foreground/90"
-                  />
-                  {etiquetaFiles[i] && (
-                    <p className="text-xs text-green-600">✓ {etiquetaFiles[i]!.name}</p>
-                  )}
+          {clientTipo === "dropshipping" && (() => {
+            // Um slot por unidade (2x Social = 2 slots)
+            const slots = items.flatMap((item) =>
+              Array.from({ length: item.quantidade }, (_, qi) => ({
+                nome: item.products?.nome ?? "Item",
+                qty: item.quantidade,
+                qi,
+              }))
+            );
+            return (
+              <div className="space-y-3 rounded-lg border border-dashed p-4">
+                <div>
+                  <p className="text-sm font-medium">Etiqueta{slots.length > 1 ? "s" : ""} de frete</p>
+                  <p className="text-xs text-muted-foreground">
+                    {slots.length > 1
+                      ? `Anexe uma etiqueta por unidade (${slots.length} no total). PDF, JPG ou PNG, máx. 10 MB cada.`
+                      : "Faça upload da etiqueta da sua transportadora. Aceitamos PDF, JPG ou PNG (máx. 10 MB)."}
+                  </p>
                 </div>
-              ))}
-              {etiquetaErro && <p className="text-xs text-destructive">{etiquetaErro}</p>}
-            </div>
-          )}
+                {slots.map((slot, i) => (
+                  <div key={i} className="space-y-1">
+                    {slots.length > 1 && (
+                      <p className="text-xs font-medium text-muted-foreground">
+                        Etiqueta {i + 1}: {slot.nome}{slot.qty > 1 ? ` (${slot.qi + 1}/${slot.qty})` : ""}
+                      </p>
+                    )}
+                    <input
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png,.webp"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0] ?? null;
+                        if (file && file.size > 10 * 1024 * 1024) {
+                          setEtiquetaErro("Arquivo muito grande. Máximo 10 MB.");
+                        } else {
+                          setEtiquetaErro(null);
+                          setEtiquetaFiles((prev) => {
+                            const next = [...prev];
+                            next[i] = file;
+                            return next;
+                          });
+                        }
+                      }}
+                      className="block w-full text-sm text-muted-foreground file:mr-3 file:rounded-md file:border-0 file:bg-foreground file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-background hover:file:bg-foreground/90"
+                    />
+                    {etiquetaFiles[i] && (
+                      <p className="text-xs text-green-600">✓ {etiquetaFiles[i]!.name}</p>
+                    )}
+                  </div>
+                ))}
+                {etiquetaErro && <p className="text-xs text-destructive">{etiquetaErro}</p>}
+              </div>
+            );
+          })()}
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setStep("endereco")}><ArrowLeft className="mr-2 h-4 w-4" /> Voltar</Button>
             <Button className="flex-1 bg-foreground text-background hover:bg-foreground/90" disabled={!selectedShipping} onClick={handleGoToPayment}>Continuar <ArrowRight className="ml-2 h-4 w-4" /></Button>
