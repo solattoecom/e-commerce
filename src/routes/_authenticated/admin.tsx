@@ -10,7 +10,7 @@ import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useAdminExists } from "@/hooks/useAdminExists";
 import { claimFirstAdmin } from "@/lib/admin.functions";
 import { notificarMudancaStatus } from "@/lib/email.functions";
-import { generateLabel, getMelhorEnvioSaldo, reprintLabel } from "@/lib/label.functions";
+import { generateLabel, getMelhorEnvioSaldo, reprintLabel, getEtiquetaUrl } from "@/lib/label.functions";
 import { getTrackingEvents, getTrackingByCode, type TrackingEvent } from "@/lib/tracking.functions";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -21,7 +21,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
       {
         name: "description",
         content:
-          "Aprove contas de atacado e dropshipping e acompanhe os pedidos da loja Solatto.",
+          "Aprove contas de dropshipping e acompanhe os pedidos da loja Solatto.",
       },
       { property: "og:title", content: "Painel administrativo | Solatto" },
       {
@@ -71,6 +71,7 @@ type Pedido = {
   label_pdf_url: string | null;
   me_service_id: number | null;
   me_order_id: string | null;
+  etiqueta_path: string | null;
   ultimo_evento_rastreio: string | null;
   criado_em: string;
   usuario_id: string;
@@ -208,6 +209,7 @@ function AdminPanel() {
   const [labelErroPorPedido, setLabelErroPorPedido] = useState<Record<string, string>>({});
   const [labelOcupado, setLabelOcupado] = useState<string | null>(null);
   const [reprintOcupado, setReprintOcupado] = useState<string | null>(null);
+  const [etiquetaOcupado, setEtiquetaOcupado] = useState<string | null>(null);
   const [saldoME, setSaldoME] = useState<number | null>(null);
   const [trackingEventsByOrder, setTrackingEventsByOrder] = useState<Record<string, TrackingEvent[]>>({});
   const [trackingLoadingByOrder, setTrackingLoadingByOrder] = useState<Record<string, boolean>>({});
@@ -223,7 +225,7 @@ function AdminPanel() {
       supabase
         .from("orders")
         .select(
-          "id, status, subtotal, frete, total, coupon_id, payment_method, card_parcelas, nota_fiscal, codigo_rastreio, label_pdf_url, me_service_id, me_order_id, ultimo_evento_rastreio, criado_em, usuario_id, endereco, profiles(nome, email), order_items(id, quantidade, preco_unitario, subtotal, products(nome, slug, product_images(url)), product_variants(tamanho))",
+          "id, status, subtotal, frete, total, coupon_id, payment_method, card_parcelas, nota_fiscal, codigo_rastreio, label_pdf_url, etiqueta_path, me_service_id, me_order_id, ultimo_evento_rastreio, criado_em, usuario_id, endereco, profiles(nome, email), order_items(id, quantidade, preco_unitario, subtotal, products(nome, slug, product_images(url)), product_variants(tamanho))",
         )
         .order("criado_em", { ascending: false }),
     ]);
@@ -251,7 +253,7 @@ function AdminPanel() {
         const { error } = await supabase
           .from("user_client_types")
           .upsert(
-            { user_id: s.user_id, tipo: s.tipo_solicitado as "varejo" | "atacado" | "dropshipping" },
+            { user_id: s.user_id, tipo: s.tipo_solicitado as "varejo" | "dropshipping" },
             { onConflict: "user_id" },
           );
         if (error) throw new Error(error.message);
@@ -420,6 +422,23 @@ setNfePorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; re
       }));
     } finally {
       setReprintOcupado(null);
+    }
+  }
+
+  async function handleDownloadEtiqueta(pedidoId: string) {
+    setEtiquetaOcupado(pedidoId);
+    try {
+      const { url } = await getEtiquetaUrl({ data: { order_id: pedidoId } });
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `etiqueta-${pedidoId.slice(0, 8)}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : "Erro ao baixar etiqueta.");
+    } finally {
+      setEtiquetaOcupado(null);
     }
   }
 
@@ -853,6 +872,18 @@ setNfePorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; re
                           </div>
                         );
                       })()}
+
+                      {/* Baixar Etiqueta Dropshipping */}
+                      {p.etiqueta_path && (
+                        <button
+                          type="button"
+                          disabled={etiquetaOcupado === p.id}
+                          onClick={() => handleDownloadEtiqueta(p.id)}
+                          className="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-muted disabled:opacity-50"
+                        >
+                          {etiquetaOcupado === p.id ? "Baixando..." : "Baixar Etiqueta"}
+                        </button>
+                      )}
 
                       {/* Rastreamento ao vivo */}
                       {p.status === "enviado" && p.me_order_id ? (
