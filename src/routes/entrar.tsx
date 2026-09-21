@@ -83,7 +83,7 @@ const styles = `
 .auth-photo .auth-badge{color:#fff;border-color:rgba(255,255,255,.22);background:rgba(0,0,0,.38)}
 .auth-photo .auth-hl{color:#fff}
 
-.auth-types{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:4px}
+.auth-types{display:grid;grid-template-columns:repeat(2,1fr);gap:5px;margin-bottom:4px}
 .auth-type-btn{display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 6px;
   border:1px solid var(--auth-border);border-radius:6px;background:transparent;color:var(--auth-muted);
   cursor:pointer;font:inherit;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;line-height:1;
@@ -595,7 +595,7 @@ function LoginPage() {
               <>
                 <div className="auth-mark" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="6" fill="#000000"/><text x="16" y="23" fontFamily="serif" fontSize="22" fontWeight="700" fill="#ffffff" textAnchor="middle">S</text></svg></div>
                 <h1 className="auth-h1">Como você vai comprar?</h1>
-                <p className="auth-sub">Escolha o tipo de conta para continuar. Atacado e Drops precisam de aprovação.</p>
+                <p className="auth-sub">Escolha o tipo de conta para continuar. Drops precisam de aprovação.</p>
 
                 <div className="auth-types" style={{ marginTop: 8 }}>
                   {accountTypes.map((t) => (
