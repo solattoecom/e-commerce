@@ -428,9 +428,9 @@ setNfePorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; re
   async function handleDownloadEtiqueta(pedidoId: string, index: number) {
     setEtiquetaOcupado(pedidoId);
     try {
-      const { url, ext } = await getEtiquetaUrl({ data: { order_id: pedidoId, index } });
-      const res = await fetch(url);
-      const blob = await res.blob();
+      const { base64, ext, mimeType } = await getEtiquetaUrl({ data: { order_id: pedidoId, index } });
+      const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+      const blob = new Blob([bytes], { type: mimeType });
       const objectUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = objectUrl;

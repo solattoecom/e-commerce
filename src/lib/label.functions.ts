@@ -227,7 +227,7 @@ export const reprintLabel = createServerFn({ method: "POST" })
   });
 
 type GetEtiquetaUrlInput = { order_id: string; index: number };
-type GetEtiquetaUrlResult = { url: string; ext: string };
+type GetEtiquetaUrlResult = { base64: string; ext: string; mimeType: string };
 
 export const getEtiquetaUrl = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -250,7 +250,6 @@ export const getEtiquetaUrl = createServerFn({ method: "POST" })
 
     if (!order?.etiqueta_path) throw new Error("Etiqueta não encontrada para este pedido.");
 
-    // etiqueta_path pode ser JSON array (múltiplas etiquetas) ou string simples (legado)
     let path: string;
     try {
       const parsed = JSON.parse(order.etiqueta_path) as string[];
@@ -260,12 +259,14 @@ export const getEtiquetaUrl = createServerFn({ method: "POST" })
     }
     if (!path) throw new Error("Etiqueta não encontrada para este pedido.");
 
-    const { data: signedData, error } = await supabaseAdmin.storage
+    const { data: fileData, error } = await supabaseAdmin.storage
       .from("etiquetas")
-      .createSignedUrl(path, 120);
+      .download(path);
 
-    if (error || !signedData?.signedUrl) throw new Error("Não foi possível gerar o link de download.");
+    if (error || !fileData) throw new Error("Não foi possível baixar a etiqueta.");
 
     const ext = path.split(".").pop() ?? "pdf";
-    return { url: signedData.signedUrl, ext };
+    const mimeType = ext === "pdf" ? "application/pdf" : `image/${ext}`;
+    const buf = Buffer.from(await fileData.arrayBuffer());
+    return { base64: buf.toString("base64"), ext, mimeType };
   });
