@@ -227,13 +227,21 @@ export const reprintLabel = createServerFn({ method: "POST" })
   });
 
 type GetEtiquetaUrlInput = { order_id: string };
-type GetEtiquetaUrlResult = { url: string };
+type GetEtiquetaUrlResult = { url: string; ext: string };
 
 export const getEtiquetaUrl = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: GetEtiquetaUrlInput) => input)
-  .handler(async ({ data }): Promise<GetEtiquetaUrlResult> => {
+  .handler(async ({ data, context }): Promise<GetEtiquetaUrlResult> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/external.server");
+
+    // Verifica se o caller é admin
+    const { count: adminCount } = await supabaseAdmin
+      .from("user_roles")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", context.userId)
+      .eq("role", "admin");
+    if (!adminCount) throw new Error("Acesso não autorizado.");
 
     const { data: order } = await supabaseAdmin
       .from("orders")
@@ -249,5 +257,6 @@ export const getEtiquetaUrl = createServerFn({ method: "POST" })
 
     if (error || !signedData?.signedUrl) throw new Error("Não foi possível gerar o link de download.");
 
-    return { url: signedData.signedUrl };
+    const ext = order.etiqueta_path.split(".").pop() ?? "pdf";
+    return { url: signedData.signedUrl, ext };
   });

@@ -428,10 +428,10 @@ setNfePorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; re
   async function handleDownloadEtiqueta(pedidoId: string) {
     setEtiquetaOcupado(pedidoId);
     try {
-      const { url } = await getEtiquetaUrl({ data: { order_id: pedidoId } });
+      const { url, ext } = await getEtiquetaUrl({ data: { order_id: pedidoId } });
       const a = document.createElement("a");
       a.href = url;
-      a.download = `etiqueta-${pedidoId.slice(0, 8)}.pdf`;
+      a.download = `etiqueta-${pedidoId.slice(0, 8)}.${ext}`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
