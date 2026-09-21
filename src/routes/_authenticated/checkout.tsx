@@ -166,7 +166,7 @@ function CheckoutPage() {
 
   const handleGoToPayment = () => {
     if (!selectedShipping) { setErro("Selecione uma opção de entrega."); return; }
-    if (clientTipo === "dropshipping") {
+    if (clientTipo === "dropshipping" && selectedShipping?.id !== "retirar_no_local") {
       const filled = etiquetaFiles.slice(0, itemCount).filter(Boolean).length;
       if (filled < itemCount) {
         setErro(itemCount === 1 ? "Faça upload da sua etiqueta de frete antes de continuar." : `Faça upload das ${itemCount} etiquetas de frete antes de continuar.`);
@@ -190,7 +190,7 @@ function CheckoutPage() {
     // Converte etiquetas para base64 (dropshipping)
     let etiquetasBase64: string[] | undefined;
     let etiquetasExt: string[] | undefined;
-    if (clientTipo === "dropshipping" && etiquetaFiles.length > 0) {
+    if (clientTipo === "dropshipping" && selectedShipping?.id !== "retirar_no_local" && etiquetaFiles.length > 0) {
       const toBase64 = (file: File) => new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => { resolve((reader.result as string).split(",")[1] ?? ""); };
@@ -477,7 +477,7 @@ function CheckoutPage() {
               </button>
             ))}
           </div>
-          {clientTipo === "dropshipping" && (() => {
+          {clientTipo === "dropshipping" && selectedShipping?.id !== "retirar_no_local" && (() => {
             // Um slot por unidade (2x Social = 2 slots)
             const slots = items.flatMap((item) =>
               Array.from({ length: item.quantidade }, (_, qi) => ({

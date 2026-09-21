@@ -269,6 +269,12 @@ export const quoteShipping = createServerFn({ method: "POST" })
             prazo: "Conforme sua transportadora",
             valor: 0,
           },
+          {
+            id: "retirar_no_local",
+            nome: "Retirar no local",
+            prazo: "Combine o horário com a Solatto",
+            valor: 0,
+          },
         ],
       };
     }
