@@ -429,12 +429,16 @@ setNfePorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; re
     setEtiquetaOcupado(pedidoId);
     try {
       const { url, ext } = await getEtiquetaUrl({ data: { order_id: pedidoId, index } });
+      const res = await fetch(url);
+      const blob = await res.blob();
+      const objectUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = url;
+      a.href = objectUrl;
       a.download = `etiqueta-${pedidoId.slice(0, 8)}${index > 0 ? `-${index + 1}` : ""}.${ext}`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
+      URL.revokeObjectURL(objectUrl);
     } catch (e) {
       setErro(e instanceof Error ? e.message : "Erro ao baixar etiqueta.");
     } finally {
