@@ -76,7 +76,7 @@ type Pedido = {
   criado_em: string;
   usuario_id: string;
   endereco: Record<string, string>;
-  profiles: { nome: string; email: string } | null;
+  profiles: { nome: string; email: string; user_client_types: { tipo: string }[] } | null;
   order_items: PedidoItem[];
 };
 
@@ -225,7 +225,7 @@ function AdminPanel() {
       supabase
         .from("orders")
         .select(
-          "id, status, subtotal, frete, total, coupon_id, payment_method, card_parcelas, nota_fiscal, codigo_rastreio, label_pdf_url, etiqueta_path, me_service_id, me_order_id, ultimo_evento_rastreio, criado_em, usuario_id, endereco, profiles(nome, email), order_items(id, quantidade, preco_unitario, subtotal, products(nome, slug, product_images(url)), product_variants(tamanho))",
+          "id, status, subtotal, frete, total, coupon_id, payment_method, card_parcelas, nota_fiscal, codigo_rastreio, label_pdf_url, etiqueta_path, me_service_id, me_order_id, ultimo_evento_rastreio, criado_em, usuario_id, endereco, profiles(nome, email, user_client_types(tipo)), order_items(id, quantidade, preco_unitario, subtotal, products(nome, slug, product_images(url)), product_variants(tamanho))",
         )
         .order("criado_em", { ascending: false }),
     ]);
@@ -674,7 +674,7 @@ setNfePorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; re
                         <span className="flex items-center gap-1.5">
                           <CreditCard className="size-4 shrink-0" />
                           {p.payment_method === "pix"
-                            ? "Pix (desconto 10%)"
+                            ? p.profiles?.user_client_types?.[0]?.tipo === "dropshipping" ? "Pix" : "Pix (desconto 10%)"
                             : p.payment_method === "boleto"
                             ? "Boleto"
                             : p.card_parcelas && p.card_parcelas > 1
@@ -712,7 +712,7 @@ setNfePorPedido((prev) => { const next = { ...prev }; delete next[pedido.id]; re
                       <div className="rounded-xl border border-border p-3 space-y-1 text-xs">
                         <div className="flex justify-between text-muted-foreground"><span>Subtotal</span><span>{brl(Number(p.subtotal))}</span></div>
                         <div className="flex justify-between text-muted-foreground"><span>Frete</span><span>{Number(p.frete) === 0 ? "Grátis" : brl(Number(p.frete))}</span></div>
-                        {p.payment_method === "pix" && (
+                        {p.payment_method === "pix" && p.profiles?.user_client_types?.[0]?.tipo !== "dropshipping" && (
                           <div className="flex justify-between text-green-600"><span>Desconto PIX (10%)</span><span>-{brl(Math.round((Number(p.total) - Number(p.frete)) / 0.9 * 0.1 * 100) / 100)}</span></div>
                         )}
                         {p.card_parcelas && p.card_parcelas >= 11 && (
