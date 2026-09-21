@@ -105,7 +105,7 @@ function Estrelas({
 function ProductPage() {
   const { slug } = Route.useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, clientType } = useAuth();
   const { addItem } = useCart(user?.id ?? null);
 
   const [produto, setProduto] = useState<Produto | null>(null);
@@ -400,8 +400,10 @@ function ProductPage() {
                   ) : null}
                 </p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  <span className="text-green-600 font-medium">{brl(Number(preco.preco) * 0.9)} no PIX</span>
-                  {" · "}ou 10x de {brl(Number(preco.preco) / 10)} sem juros
+                  {clientType !== "dropshipping" && (
+                    <><span className="text-green-600 font-medium">{brl(Number(preco.preco) * 0.9)} no PIX</span>{" · "}</>
+                  )}
+                  ou 10x de {brl(Number(preco.preco) / 10)} sem juros
                 </p>
               </div>
             ) : (

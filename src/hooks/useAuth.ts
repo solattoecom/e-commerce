@@ -9,11 +9,13 @@ export function useAuth() {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [clientType, setClientType] = useState<ClientType | null>(null);
 
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       setSession(nextSession);
       setUser(nextSession?.user ?? null);
+      if (!nextSession?.user) setClientType(null);
     });
 
     supabase.auth.getSession().then(({ data }) => {
@@ -25,7 +27,19 @@ export function useAuth() {
     return () => sub.subscription.unsubscribe();
   }, []);
 
-  return { session, user, loading };
+  useEffect(() => {
+    if (!user?.id) { setClientType(null); return; }
+    void supabase
+      .from("user_client_types")
+      .select("tipo")
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        setClientType((data?.tipo as ClientType) ?? "varejo");
+      });
+  }, [user?.id]);
+
+  return { session, user, loading, clientType };
 }
 
 export async function signUpWithType(params: {

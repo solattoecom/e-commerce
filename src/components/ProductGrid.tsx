@@ -3,6 +3,7 @@ import { Heart } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 
 import { supabase } from "@/integrations/supabase/external";
+import { useAuth } from "@/hooks/useAuth";
 
 type Product = {
   id: string;
@@ -48,6 +49,7 @@ export function ProductGrid({
   wishlistIds?: Set<string>;
   onToggleWishlist?: (produtoId: string) => void;
 }) {
+  const { clientType } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [sizeByProduct, setSizeByProduct] = useState<Record<string, string>>({});
@@ -217,8 +219,10 @@ export function ProductGrid({
                       ) : null}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      <span className="text-green-600 font-medium">{brl(Number(price.preco) * 0.9)} no PIX</span>
-                      {" · "}10x de {brl(Number(price.preco) / 10)}
+                      {clientType !== "dropshipping" && (
+                        <><span className="text-green-600 font-medium">{brl(Number(price.preco) * 0.9)} no PIX</span>{" · "}</>
+                      )}
+                      10x de {brl(Number(price.preco) / 10)}
                     </p>
                     {(() => {
                       const reviews = product.product_reviews ?? [];

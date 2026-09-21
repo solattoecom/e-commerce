@@ -411,7 +411,7 @@ function NewsletterForm() {
 }
 
 function Index() {
-  const { user, loading } = useAuth();
+  const { user, loading, clientType } = useAuth();
   const [activeIndex, setActiveIndex] = useState(0);
   const [refreshKey, setRefreshKey] = useState(0);
   const [scrolled, setScrolled] = useState(false);
@@ -601,12 +601,14 @@ const [tamSelecionado, setTamSelecionado] = useState<string | null>(null);
                   {Number(cart.total - (desconto?.discount_amount ?? 0) + (frete?.valor ?? 0)).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                 </span>
               </div>
-              <div className="mb-3 flex items-center justify-between text-sm">
-                <span className="text-green-600 font-medium">No PIX (10% off)</span>
-                <span className="text-green-600 font-semibold">
-                  {Number((cart.total - (desconto?.discount_amount ?? 0) + (frete?.valor ?? 0)) * 0.9).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                </span>
-              </div>
+              {clientType !== "dropshipping" && (
+                <div className="mb-3 flex items-center justify-between text-sm">
+                  <span className="text-green-600 font-medium">No PIX (10% off)</span>
+                  <span className="text-green-600 font-semibold">
+                    {Number((cart.total - (desconto?.discount_amount ?? 0) + (frete?.valor ?? 0)) * 0.9).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                  </span>
+                </div>
+              )}
               <Button
                 disabled={cart.items.length === 0}
                 className="h-12 w-full rounded-md bg-foreground text-background hover:bg-foreground/90 disabled:opacity-40 disabled:cursor-not-allowed"
