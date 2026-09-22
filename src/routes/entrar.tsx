@@ -438,7 +438,7 @@ function LoginPage() {
 
             {/* login / signup */}
             {(mode === "login" || mode === "signup") && (
-              <>
+              <form onSubmit={isLogin ? handleSignIn : handleSignUp}>
                 <div className="auth-mark" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="6" fill="#000000"/><text x="16" y="23" fontFamily="serif" fontSize="22" fontWeight="700" fill="#ffffff" textAnchor="middle">S</text></svg></div>
                 <h1 className="auth-h1">{isLogin ? "Bem-vindo de volta!" : "Crie sua conta"}</h1>
                 <p className="auth-sub">
@@ -544,10 +544,9 @@ function LoginPage() {
                 )}
 
                 <Button
-                  type="button"
+                  type="submit"
                   className="auth-login"
                   disabled={busy}
-                  onClick={isLogin ? handleSignIn : handleSignUp}
                 >
                   <span>{isLogin ? (busy ? "Entrando…" : "Entrar") : (busy ? "Criando…" : "Criar conta")}</span>
                   <svg viewBox="0 0 22 22" fill="none" aria-hidden="true" style={{ width: 16, height: 16 }}>
@@ -588,7 +587,7 @@ function LoginPage() {
                 <button type="button" className="auth-visitor" onClick={() => void navigate({ to: "/" })}>
                   Continuar como visitante
                 </button>
-              </>
+              </form>
             )}
 
             {mode === "select-type" && (
