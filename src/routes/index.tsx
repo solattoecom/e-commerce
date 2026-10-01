@@ -157,8 +157,9 @@ function StickyHeader({
       }`}
     >
       <div className="mx-auto grid w-full max-w-[1180px] grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 px-4 py-3 sm:grid-cols-[auto_minmax(180px,1fr)_auto] sm:gap-x-4 sm:px-5 xl:flex">
-        <a href="#inicio" className="flex items-center cursor-pointer sm:shrink-0">
+        <a href="#inicio" className="flex items-center gap-2 min-w-0 truncate cursor-pointer text-lg font-bold uppercase tracking-[0.18em] sm:shrink-0 sm:text-xl sm:tracking-[0.22em]">
           <img src="/shoe-logo.png" alt="Solatto" className="h-12 w-12 object-contain" />
+          Solatto
         </a>
 
         <nav className="hidden shrink-0 items-center gap-5 text-sm xl:flex">
@@ -686,8 +687,9 @@ const [tamSelecionado, setTamSelecionado] = useState<string | null>(null);
 
           <div className="absolute left-0 right-0 top-0 z-20 px-6 pt-6 md:px-10">
             <nav className="flex items-center justify-between gap-4">
-              <div className="flex items-center rounded-full bg-neutral-900/90 px-4 py-2 backdrop-blur">
+              <div className="flex items-center gap-2 rounded-full bg-neutral-900/90 px-5 py-3 backdrop-blur">
                 <img src="/shoe-logo.png" alt="Solatto" className="h-10 w-10 object-contain brightness-0 invert" />
+                <span className="hero-readex text-sm font-normal tracking-tight text-white">solatto</span>
               </div>
 
               <div className="hidden items-center gap-1 rounded-full bg-neutral-900/90 px-3 py-2 backdrop-blur md:flex">
