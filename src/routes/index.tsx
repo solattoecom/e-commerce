@@ -708,7 +708,7 @@ const [tamSelecionado, setTamSelecionado] = useState<string | null>(null);
                 <button
                   type="button"
                   onClick={() => signOut()}
-                  className="hero-readex absolute right-0 cursor-pointer rounded-full bg-white px-6 py-3 text-sm font-normal text-black transition-colors hover:bg-neutral-200"
+                  className="hero-readex absolute right-0 cursor-pointer rounded-full bg-white px-5 py-2.5 text-sm font-normal text-black transition-colors hover:bg-neutral-200 md:px-6 md:py-3"
                 >
                   sair
                 </button>
@@ -716,7 +716,7 @@ const [tamSelecionado, setTamSelecionado] = useState<string | null>(null);
                 <button
                   type="button"
                   onClick={() => void navigate({ to: "/entrar" })}
-                  className="hero-readex absolute right-0 cursor-pointer rounded-full bg-white px-6 py-3 text-sm font-normal text-black transition-colors hover:bg-neutral-200"
+                  className="hero-readex absolute right-0 cursor-pointer rounded-full bg-white px-5 py-2.5 text-sm font-normal text-black transition-colors hover:bg-neutral-200 md:px-6 md:py-3"
                 >
                   entrar
                 </button>
