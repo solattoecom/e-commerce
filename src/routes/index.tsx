@@ -158,7 +158,7 @@ function StickyHeader({
     >
       <div className="mx-auto grid w-full max-w-[1180px] grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 px-4 py-3 sm:grid-cols-[auto_minmax(180px,1fr)_auto] sm:gap-x-4 sm:px-5 xl:flex">
         <a href="#inicio" className="flex items-center gap-2 min-w-0 truncate cursor-pointer text-lg font-bold uppercase tracking-[0.18em] sm:shrink-0 sm:text-xl sm:tracking-[0.22em]">
-          <img src="/shoe-logo.png" alt="Solatto" className="h-16 w-16 object-contain" />
+          <img src="/shoe-logo.png" alt="Solatto" className="hidden h-16 w-16 object-contain sm:block" />
           Solatto
         </a>
 
