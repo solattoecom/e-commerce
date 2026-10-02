@@ -686,7 +686,7 @@ const [tamSelecionado, setTamSelecionado] = useState<string | null>(null);
           />
 
           <div className="absolute left-0 right-0 top-0 z-20 px-6 pt-6 md:px-10">
-            <nav className="relative flex items-center justify-center gap-4">
+            <nav className="relative flex items-center justify-end md:justify-center gap-4">
               <div className="hidden items-center gap-1 rounded-full bg-neutral-900/90 px-3 py-2 backdrop-blur md:flex">
                 {[
                   ["calçados", "#categorias"],
@@ -708,7 +708,7 @@ const [tamSelecionado, setTamSelecionado] = useState<string | null>(null);
                 <button
                   type="button"
                   onClick={() => signOut()}
-                  className="hero-readex absolute right-0 cursor-pointer rounded-full bg-white px-5 py-2.5 text-sm font-normal text-black transition-colors hover:bg-neutral-200 md:px-6 md:py-3"
+                  className="hero-readex md:absolute md:right-0 cursor-pointer rounded-full bg-white px-5 py-2.5 text-sm font-normal text-black transition-colors hover:bg-neutral-200 md:px-6 md:py-3"
                 >
                   sair
                 </button>
@@ -716,7 +716,7 @@ const [tamSelecionado, setTamSelecionado] = useState<string | null>(null);
                 <button
                   type="button"
                   onClick={() => void navigate({ to: "/entrar" })}
-                  className="hero-readex absolute right-0 cursor-pointer rounded-full bg-white px-5 py-2.5 text-sm font-normal text-black transition-colors hover:bg-neutral-200 md:px-6 md:py-3"
+                  className="hero-readex md:absolute md:right-0 cursor-pointer rounded-full bg-white px-5 py-2.5 text-sm font-normal text-black transition-colors hover:bg-neutral-200 md:px-6 md:py-3"
                 >
                   entrar
                 </button>
